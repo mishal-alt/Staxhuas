@@ -38,39 +38,37 @@ import {
   Delete,
   Message,
   Gavel,
-  History,
   Send,
   Email,
   Badge,
   CalendarMonth,
   School,
-  FilterList,
-  Sort
+  WarningAmber,
+  FiberManualRecord
 } from '@mui/icons-material';
 
 const INITIAL_STUDENTS = [
-  { id: 1, name: 'Hrithic Raj', email: 'hrithic.raj@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '92%' },
-  { id: 2, name: 'Ananya S', email: 'ananya.s@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-15', course: 'UI/UX Design', attendance: '95%' },
-  { id: 3, name: 'Mohammad Mishal', email: 'mishal@staxhaus.com', status: 'Inactive', batch: 'B-2', joinDate: '2023-09-20', course: 'Data Science', attendance: '45%' },
-  { id: 4, name: 'Sneha Kapoor', email: 'sneha.k@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '88%' },
-  { id: 5, name: 'Rahul V', email: 'rahul.v@staxhaus.com', status: 'Active', batch: 'B-3', joinDate: '2024-01-05', course: 'Mobile App Development', attendance: '91%' },
-  { id: 6, name: 'Priya Mani', email: 'priya.m@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '97%' },
-  { id: 7, name: 'Arun Kumar', email: 'arun@staxhaus.com', status: 'Active', batch: 'B-2', joinDate: '2023-11-05', course: 'Cyber Security', attendance: '85%' },
-  { id: 8, name: 'Divya Nair', email: 'divya@staxhaus.com', status: 'Active', batch: 'B-3', joinDate: '2023-12-10', course: 'Cloud Computing', attendance: '90%' },
-  { id: 9, name: 'Karthik Raja', email: 'karthik@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2024-01-15', course: 'Full Stack Development', attendance: '82%' },
-  { id: 10, name: 'Meera Jasmine', email: 'meera@staxhaus.com', status: 'Inactive', batch: 'B-2', joinDate: '2023-08-25', course: 'Data Science', attendance: '30%' },
-  { id: 11, name: 'Sanjay Dutt', email: 'sanjay@staxhaus.com', status: 'Active', batch: 'B-3', joinDate: '2024-02-01', course: 'Mobile App Development', attendance: '88%' },
-  { id: 12, name: 'Lekshmi S', email: 'lekshmi@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '94%' },
+  { id: 1, name: 'Hrithic Raj', email: 'hrithic.raj@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '92%', academicHealth: 'Excellent', interviewStatus: 'Mock Cleared', leaveStatus: 'None' },
+  { id: 2, name: 'Ananya S', email: 'ananya.s@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-15', course: 'UI/UX Design', attendance: '95%', academicHealth: 'Good Standing', interviewStatus: 'Scheduled', leaveStatus: 'None' },
+  { id: 3, name: 'Mohammad Mishal', email: 'mishal@staxhaus.com', status: 'Inactive', batch: 'B-2', joinDate: '2023-09-20', course: 'Data Science', attendance: '45%', academicHealth: 'Critical Risk', interviewStatus: 'Not Started', leaveStatus: 'Active Leave' },
+  { id: 4, name: 'Sneha Kapoor', email: 'sneha.k@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '88%', academicHealth: 'Good Standing', interviewStatus: 'Mock Cleared', leaveStatus: 'None' },
+  { id: 5, name: 'Rahul V', email: 'rahul.v@staxhaus.com', status: 'Active', batch: 'B-3', joinDate: '2024-01-05', course: 'Mobile App Development', attendance: '91%', academicHealth: 'Good Standing', interviewStatus: 'Pending Review', leaveStatus: 'None' },
+  { id: 6, name: 'Priya Mani', email: 'priya.m@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '97%', academicHealth: 'Excellent', interviewStatus: 'Mock Cleared', leaveStatus: 'None' },
+  { id: 7, name: 'Arun Kumar', email: 'arun@staxhaus.com', status: 'Active', batch: 'B-2', joinDate: '2023-11-05', course: 'Cyber Security', attendance: '85%', academicHealth: 'Needs Review', interviewStatus: 'Scheduled', leaveStatus: 'None' },
+  { id: 8, name: 'Divya Nair', email: 'divya@staxhaus.com', status: 'Active', batch: 'B-3', joinDate: '2023-12-10', course: 'Cloud Computing', attendance: '90%', academicHealth: 'Good Standing', interviewStatus: 'Mock Cleared', leaveStatus: 'None' },
+  { id: 9, name: 'Karthik Raja', email: 'karthik@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2024-01-15', course: 'Full Stack Development', attendance: '68%', academicHealth: 'Needs Review', interviewStatus: 'Not Started', leaveStatus: 'Pending Approval' },
+  { id: 10, name: 'Meera Jasmine', email: 'meera@staxhaus.com', status: 'Inactive', batch: 'B-2', joinDate: '2023-08-25', course: 'Data Science', attendance: '30%', academicHealth: 'Critical Risk', interviewStatus: 'Not Started', leaveStatus: 'None' },
+  { id: 11, name: 'Sanjay Dutt', email: 'sanjay@staxhaus.com', status: 'Active', batch: 'B-3', joinDate: '2024-02-01', course: 'Mobile App Development', attendance: '88%', academicHealth: 'Good Standing', interviewStatus: 'Mock Cleared', leaveStatus: 'Active Leave' },
+  { id: 12, name: 'Lekshmi S', email: 'lekshmi@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '94%', academicHealth: 'Excellent', interviewStatus: 'Mock Cleared', leaveStatus: 'None' }
 ];
 
 const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFilter = 'all' }) => {
   const [students, setStudents] = useState(INITIAL_STUDENTS);
-
   const [selectedStudent, setSelectedStudent] = useState(null);
   
   // Pagination State
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Standard senior developer density defaults to 10 rows
   
   // Dialog States
   const [openActionDialog, setOpenActionDialog] = useState(false);
@@ -162,6 +160,8 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
       setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, status: 'Terminated' } : s));
     } else if (adminAction === 'suspend') {
       setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, status: 'Suspended' } : s));
+    } else if (adminAction === 'warn') {
+      setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, academicHealth: 'Needs Review' } : s));
     }
     handleClose();
   };
@@ -173,121 +173,344 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
 
   return (
     <>
-      <Card sx={{ borderRadius: 1, overflow: 'hidden', boxShadow: 'none', border: '1px solid rgba(0,0,0,0.05)' }}>
+      <Card sx={{ 
+        borderRadius: '8px', 
+        overflow: 'hidden', 
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04)', 
+        border: '1px solid rgba(0,0,0,0.06)',
+        bgcolor: 'white'
+      }}>
         <Box sx={{ 
-          p: 3, 
-          background: 'rgba(0, 0, 0, 0.02)',
+          py: 2, 
+          px: 3, 
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          flexWrap: 'wrap', 
           gap: 2
         }}>
           <Box>
-            <Typography variant="subtitle1" fontWeight={700}>Student List</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {batchId === 'all' ? 'All active students' : `Current students in ${batchId}`}
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#111827', fontSize: '0.9rem' }}>
+              Student Directory
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem', fontWeight: 500 }}>
+              {batchId === 'all' ? 'Showing all enrolled students across batches' : `Active student list for batch ${batchId}`}
             </Typography>
           </Box>
 
+          <Chip 
+            label={`${filteredStudents.length} Students`} 
+            size="small" 
+            sx={{ 
+              fontWeight: 600, 
+              fontSize: '0.75rem', 
+              borderRadius: '6px',
+              bgcolor: '#1E2126',
+              color: 'white',
+              height: '22px'
+            }} 
+          />
         </Box>
 
         <CardContent sx={{ p: 0 }}>
-
-
           <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0 }}>
-            <Table>
+            <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', py: 3 }}>Student Info</TableCell>
-                  <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Batch</TableCell>
-                  <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', pr: 4 }}>Actions</TableCell>
+                <TableRow sx={{ borderBottom: '1px solid rgba(0,0,0,0.06)', bgcolor: 'rgba(0,0,0,0.01)' }}>
+                  <TableCell sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5, pl: 3 }}>Student Info</TableCell>
+                  <TableCell sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5 }}>Batch / Enrolled</TableCell>
+                  <TableCell sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5 }}>Attendance</TableCell>
+                  <TableCell sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5 }}>Academic Health</TableCell>
+                  <TableCell sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5 }}>Interviews</TableCell>
+                  <TableCell sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5 }}>Leave Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5 }}>Status</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.08em', color: '#4b5563', py: 1.5, pr: 3 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedStudents.map((student) => (
-                  <TableRow 
-                    key={student.id} 
-                    sx={{ 
-                      '&:hover': { bgcolor: 'action.hover' },
-                      opacity: student.status === 'Terminated' ? 0.6 : 1,
-                      filter: student.status === 'Terminated' ? 'grayscale(0.8)' : 'none',
-                      bgcolor: student.status === 'Terminated' ? 'rgba(0,0,0,0.02)' : 'inherit'
-                    }}
-                  >
-                    <TableCell sx={{ py: 3 }}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: student.status === 'Terminated' ? '#9e9e9e' : 'secondary.main', fontWeight: 900, borderRadius: 2 }}>{student.name[0]}</Avatar>
+                {paginatedStudents.map((student) => {
+                  const isLowAttendance = parseInt(student.attendance) < 75;
+                  const isSuspended = student.status === 'Suspended';
+                  const isTerminated = student.status === 'Terminated';
+                  
+                  return (
+                    <TableRow 
+                      key={student.id} 
+                      sx={{ 
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.015)' },
+                        opacity: isTerminated ? 0.55 : 1,
+                        bgcolor: isTerminated ? 'rgba(0,0,0,0.01)' : 'inherit'
+                      }}
+                    >
+                      {/* 1. Student Info */}
+                      <TableCell sx={{ py: 1.25, pl: 3 }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar sx={{ 
+                            width: 30, 
+                            height: 30, 
+                            bgcolor: isTerminated ? '#9ca3af' : isSuspended ? '#f59e0b' : '#1E2126', 
+                            fontSize: '0.8rem', 
+                            fontWeight: 700, 
+                            borderRadius: '6px',
+                            fontFamily: 'Outfit'
+                          }}>
+                            {student.name[0]}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ 
+                              fontWeight: 600, 
+                              fontSize: '0.825rem', 
+                              color: '#111827',
+                              textDecoration: isTerminated ? 'line-through' : 'none' 
+                            }}>
+                              {student.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ 
+                              color: '#6b7280', 
+                              fontWeight: 500,
+                              fontSize: '0.7rem' 
+                            }}>
+                              {student.email}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+
+                      {/* 2. Batch / Enrolled */}
+                      <TableCell sx={{ py: 1.25 }}>
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={800} sx={{ textDecoration: student.status === 'Terminated' ? 'line-through' : 'none' }}>{student.name}</Typography>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>{student.email}</Typography>
+                          <Chip 
+                            label={student.batch} 
+                            size="small" 
+                            sx={{ 
+                              fontWeight: 700, 
+                              borderRadius: '4px', 
+                              height: '20px', 
+                              fontSize: '0.675rem',
+                              bgcolor: '#f3f4f6',
+                              color: '#374151',
+                              border: '1px solid rgba(0,0,0,0.04)'
+                            }} 
+                          />
+                          <Typography variant="caption" display="block" sx={{ color: '#9ca3af', fontSize: '0.65rem', mt: 0.25, fontWeight: 500 }}>
+                            Joined {student.joinDate}
+                          </Typography>
                         </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                       <Chip label={student.batch} size="small" sx={{ fontWeight: 900, borderRadius: 1 }} />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={student.status} 
-                        size="small" 
-                        sx={{ 
-                          fontWeight: 900, 
-                          bgcolor: 
-                            student.status === 'Active' ? '#2e7d3215' : 
-                            student.status === 'Terminated' ? '#d32f2f15' : 
-                            student.status === 'Suspended' ? '#ed6c0215' : '#9e9e9e15', 
-                          color: 
-                            student.status === 'Active' ? '#2e7d32' : 
-                            student.status === 'Terminated' ? '#d32f2f' : 
-                            student.status === 'Suspended' ? '#ed6c02' : '#9e9e9e',
-                          minWidth: 80
-                        }} 
-                      />
-                    </TableCell>
-                    <TableCell align="right" sx={{ pr: 2 }}>
-                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                        <Tooltip title={student.status === 'Terminated' ? "Cannot message terminated student" : "Send Message"}>
-                          <span>
+                      </TableCell>
+
+                      {/* 3. Attendance */}
+                      <TableCell sx={{ py: 1.25 }}>
+                        <Box sx={{ width: 100 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                            <Typography variant="caption" sx={{ 
+                              fontWeight: 700, 
+                              fontSize: '0.725rem',
+                              color: isLowAttendance ? '#ef4444' : '#374151' 
+                            }}>
+                              {student.attendance}
+                            </Typography>
+                            {isLowAttendance && (
+                              <Tooltip title="Critical Attendance Risk (< 75%)">
+                                <WarningAmber sx={{ color: '#ef4444', fontSize: 13, ml: 0.5 }} />
+                              </Tooltip>
+                            )}
+                          </Box>
+                          <Box sx={{ width: '100%', height: 4, bgcolor: '#f3f4f6', borderRadius: 2, overflow: 'hidden' }}>
+                            <Box sx={{ 
+                              width: student.attendance, 
+                              height: '100%', 
+                              bgcolor: isLowAttendance ? '#ef4444' : parseInt(student.attendance) < 90 ? '#f59e0b' : '#10b981',
+                              borderRadius: 2 
+                            }} />
+                          </Box>
+                        </Box>
+                      </TableCell>
+
+                      {/* 4. Academic Health */}
+                      <TableCell sx={{ py: 1.25 }}>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <FiberManualRecord sx={{ 
+                            fontSize: 8, 
+                            color: 
+                              student.academicHealth === 'Excellent' ? '#10b981' :
+                              student.academicHealth === 'Good Standing' ? '#3b82f6' :
+                              student.academicHealth === 'Needs Review' ? '#f59e0b' : '#ef4444'
+                          }} />
+                          <Typography variant="body2" sx={{ 
+                            fontSize: '0.75rem', 
+                            fontWeight: 600,
+                            color: 
+                              student.academicHealth === 'Excellent' ? '#047857' :
+                              student.academicHealth === 'Good Standing' ? '#1d4ed8' :
+                              student.academicHealth === 'Needs Review' ? '#b45309' : '#b91c1c'
+                          }}>
+                            {student.academicHealth}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+
+                      {/* 5. Interviews */}
+                      <TableCell sx={{ py: 1.25 }}>
+                        <Chip 
+                          label={student.interviewStatus} 
+                          size="small" 
+                          sx={{ 
+                            fontWeight: 600, 
+                            borderRadius: '4px', 
+                            height: '20px', 
+                            fontSize: '0.675rem',
+                            bgcolor: 
+                              student.interviewStatus === 'Mock Cleared' ? 'rgba(16, 185, 129, 0.08)' :
+                              student.interviewStatus === 'Scheduled' ? 'rgba(59, 130, 246, 0.08)' :
+                              student.interviewStatus === 'Pending Review' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(156, 163, 175, 0.08)',
+                            color: 
+                              student.interviewStatus === 'Mock Cleared' ? '#047857' :
+                              student.interviewStatus === 'Scheduled' ? '#1d4ed8' :
+                              student.interviewStatus === 'Pending Review' ? '#b45309' : '#4b5563',
+                          }} 
+                        />
+                      </TableCell>
+
+                      {/* 6. Leave status */}
+                      <TableCell sx={{ py: 1.25 }}>
+                        {student.leaveStatus !== 'None' ? (
+                          <Chip 
+                            label={student.leaveStatus} 
+                            size="small" 
+                            sx={{ 
+                              fontWeight: 600, 
+                              borderRadius: '4px', 
+                              height: '20px', 
+                              fontSize: '0.675rem',
+                              bgcolor: student.leaveStatus === 'Active Leave' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                              color: student.leaveStatus === 'Active Leave' ? '#b91c1c' : '#b45309',
+                            }} 
+                          />
+                        ) : (
+                          <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500, fontSize: '0.7rem' }}>
+                            None active
+                          </Typography>
+                        )}
+                      </TableCell>
+
+                      {/* 7. Status */}
+                      <TableCell align="center" sx={{ py: 1.25 }}>
+                        <Chip 
+                          label={student.status} 
+                          size="small" 
+                          sx={{ 
+                            fontWeight: 700, 
+                            fontSize: '0.675rem',
+                            borderRadius: '6px',
+                            height: '20px',
+                            bgcolor: 
+                              student.status === 'Active' ? 'rgba(16, 185, 129, 0.1)' : 
+                              student.status === 'Terminated' ? 'rgba(239, 68, 68, 0.1)' : 
+                              student.status === 'Suspended' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(156, 163, 175, 0.1)', 
+                            color: 
+                              student.status === 'Active' ? '#10b981' : 
+                              student.status === 'Terminated' ? '#ef4444' : 
+                              student.status === 'Suspended' ? '#f59e0b' : '#6b7280',
+                            minWidth: 70
+                          }} 
+                        />
+                      </TableCell>
+
+                      {/* 8. Actions */}
+                      <TableCell align="right" sx={{ py: 1.25, pr: 3 }}>
+                        <Stack direction="row" spacing={0.25} justifyContent="flex-end">
+                          <Tooltip title={isTerminated ? "Cannot message terminated student" : "Send Message"}>
+                            <span>
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleOpenMessage(student)} 
+                                disabled={isTerminated}
+                                sx={{ 
+                                  color: '#6b7280',
+                                  borderRadius: '6px',
+                                  p: 0.75,
+                                  '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: 'primary.main' }
+                                }}
+                              >
+                                <Message sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+
+                          <Tooltip title="Administrative Action">
                             <IconButton 
                               size="small" 
-                              color="primary" 
-                              onClick={() => handleOpenMessage(student)} 
-                              disabled={student.status === 'Terminated'}
+                              onClick={() => handleOpenAction(student)}
+                              sx={{ 
+                                color: '#6b7280',
+                                borderRadius: '6px',
+                                p: 0.75,
+                                '&:hover': { bgcolor: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b' }
+                              }}
                             >
-                              <Message fontSize="small" />
+                              <Gavel sx={{ fontSize: 16 }} />
                             </IconButton>
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Administrative Action">
-                          <IconButton size="small" color="warning" onClick={() => handleOpenAction(student)}><Gavel fontSize="small" /></IconButton>
-                        </Tooltip>
-                        <Tooltip title="View Profile">
-                          <IconButton size="small" onClick={() => handleOpenView(student)}><Visibility fontSize="small" /></IconButton>
-                        </Tooltip>
-                        <Tooltip title={student.status === 'Terminated' ? "Cannot edit terminated student" : "Edit Info"}>
-                          <span>
+                          </Tooltip>
+
+                          <Tooltip title="View Profile">
                             <IconButton 
                               size="small" 
-                              onClick={() => handleOpenEdit(student)} 
-                              disabled={student.status === 'Terminated'}
+                              onClick={() => handleOpenView(student)}
+                              sx={{ 
+                                color: '#6b7280',
+                                borderRadius: '6px',
+                                p: 0.75,
+                                '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: '#111827' }
+                              }}
                             >
-                              <Edit fontSize="small" />
+                              <Visibility sx={{ fontSize: 16 }} />
                             </IconButton>
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Delete Record">
-                          <IconButton size="small" color="error" onClick={() => handleOpenDelete(student)}><Delete fontSize="small" /></IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          </Tooltip>
+
+                          <Tooltip title={isTerminated ? "Cannot edit terminated student" : "Edit Info"}>
+                            <span>
+                              <IconButton 
+                                size="small" 
+                                onClick={() => handleOpenEdit(student)} 
+                                disabled={isTerminated}
+                                sx={{ 
+                                  color: '#6b7280',
+                                  borderRadius: '6px',
+                                  p: 0.75,
+                                  '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: '#3b82f6' }
+                                }}
+                              >
+                                <Edit sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+
+                          <Tooltip title="Delete Record">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleOpenDelete(student)}
+                              sx={{ 
+                                color: '#ef4444',
+                                borderRadius: '6px',
+                                p: 0.75,
+                                '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.08)', color: '#b91c1c' }
+                              }}
+                            >
+                              <Delete sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {paginatedStudents.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                      <Typography variant="body2" color="text.secondary">No students found.</Typography>
+                    <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                      <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                        No students match the current filters.
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -303,17 +526,17 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             sx={{
-              bgcolor: 'action.hover',
-              borderTop: '1px solid',
-              borderColor: 'divider',
+              bgcolor: 'rgba(0,0,0,0.01)',
+              borderTop: '1px solid rgba(0,0,0,0.06)',
               '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                fontWeight: 800,
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                fontSize: '0.75rem',
-                letterSpacing: '0.05em'
+                fontSize: '0.7rem',
+                letterSpacing: '0.05em',
+                color: '#4b5563'
               },
               '& .MuiTablePagination-select': {
-                fontWeight: 900
+                fontWeight: 700
               }
             }}
           />
@@ -321,109 +544,224 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
       </Card>
 
       {/* View Profile Dialog */}
-      <Dialog open={openViewDialog} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle sx={{ fontWeight: 900, bgcolor: 'secondary.main', color: 'white' }}>
-          Student Profile: {selectedStudent?.name}
+      <Dialog 
+        open={openViewDialog} 
+        onClose={handleClose} 
+        fullWidth 
+        maxWidth="sm"
+        PaperProps={{
+          sx: { borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          fontSize: '1.1rem', 
+          color: '#111827', 
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          py: 2.2, 
+          px: 3 
+        }}>
+          Student Operational Profile
         </DialogTitle>
-        <DialogContent sx={{ p: 4 }}>
-          <Grid container spacing={4} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
-               <Avatar sx={{ width: 120, height: 120, mx: 'auto', bgcolor: 'primary.main', fontSize: '3rem', fontWeight: 900, mb: 2 }}>
-                  {selectedStudent?.name[0]}
-               </Avatar>
-               <Typography variant="h5" fontWeight={900}>{selectedStudent?.name}</Typography>
-               <Chip label={selectedStudent?.status} color={selectedStudent?.status === 'Active' ? 'success' : 'error'} sx={{ fontWeight: 800, mt: 1 }} />
-            </Grid>
-            <Grid item xs={12} md={8}>
-               <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Email color="action" />
-                    <Box>
-                      <Typography variant="caption" fontWeight={800} color="text.secondary">EMAIL ADDRESS</Typography>
-                      <Typography variant="body1" fontWeight={700}>{selectedStudent?.email}</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <School color="action" />
-                    <Box>
-                      <Typography variant="caption" fontWeight={800} color="text.secondary">COURSE ENROLLED</Typography>
-                      <Typography variant="body1" fontWeight={700}>{selectedStudent?.course}</Typography>
-                    </Box>
-                  </Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Badge color="action" />
-                        <Box>
-                          <Typography variant="caption" fontWeight={800} color="text.secondary">BATCH</Typography>
-                          <Typography variant="body1" fontWeight={700}>{selectedStudent?.batch}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <CalendarMonth color="action" />
-                        <Box>
-                          <Typography variant="caption" fontWeight={800} color="text.secondary">JOIN DATE</Typography>
-                          <Typography variant="body1" fontWeight={700}>{selectedStudent?.joinDate}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                  <MuiDivider />
+        <DialogContent sx={{ p: 3, pt: '24px !important' }}>
+          {selectedStudent && (
+            <Stack spacing={3}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+                <Avatar sx={{ 
+                  width: 60, 
+                  height: 60, 
+                  bgcolor: selectedStudent.status === 'Terminated' ? '#9ca3af' : '#1E2126', 
+                  fontSize: '1.5rem', 
+                  fontWeight: 700, 
+                  borderRadius: '10px',
+                  fontFamily: 'Outfit'
+                }}>
+                  {selectedStudent.name[0]}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#111827', letterSpacing: 'normal', textTransform: 'none' }}>
+                    {selectedStudent.name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500, mt: 0.2 }}>
+                    {selectedStudent.email}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <MuiDivider />
+
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
                   <Box>
-                    <Typography variant="caption" fontWeight={800} color="text.secondary">ATTENDANCE PERFORMANCE</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                       <Box sx={{ flex: 1, height: 8, bgcolor: 'action.hover', borderRadius: 4, overflow: 'hidden' }}>
-                          <Box sx={{ 
-                            width: selectedStudent?.attendance, 
-                            height: '100%', 
-                            background: 'linear-gradient(90deg, #E8391D 0%, #FF5A36 100%)' 
-                          }} />
-                       </Box>
-                       <Typography variant="body2" fontWeight={900}>{selectedStudent?.attendance}</Typography>
-                    </Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
+                      COURSE ENROLLED
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
+                      {selectedStudent.course}
+                    </Typography>
                   </Box>
-               </Stack>
-            </Grid>
-          </Grid>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
+                      BATCH ASSIGNMENT
+                    </Typography>
+                    <Chip 
+                      label={selectedStudent.batch} 
+                      size="small" 
+                      sx={{ fontWeight: 700, borderRadius: '4px', bgcolor: '#f3f4f6', color: '#374151', height: '22px' }} 
+                    />
+                  </Box>
+                </Grid>
+
+                <Grid item xs={6} sx={{ mt: 1 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
+                      ACADEMIC STANDING
+                    </Typography>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <FiberManualRecord sx={{ 
+                        fontSize: 8, 
+                        color: 
+                          selectedStudent.academicHealth === 'Excellent' ? '#10b981' :
+                          selectedStudent.academicHealth === 'Good Standing' ? '#3b82f6' :
+                          selectedStudent.academicHealth === 'Needs Review' ? '#f59e0b' : '#ef4444'
+                      }} />
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
+                        {selectedStudent.academicHealth}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={6} sx={{ mt: 1 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
+                      INTERVIEW & EVAL STATUS
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
+                      {selectedStudent.interviewStatus}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={6} sx={{ mt: 1 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
+                      LEAVE TRACKING
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: selectedStudent.leaveStatus !== 'None' ? '#ef4444' : '#374151' }}>
+                      {selectedStudent.leaveStatus === 'None' ? 'No Active Leaves' : selectedStudent.leaveStatus}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={6} sx={{ mt: 1 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
+                      REGISTRATION DATE
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
+                      {selectedStudent.joinDate}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              <MuiDivider />
+
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 1.2 }}>
+                  ATTENDANCE PERFORMANCE
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box sx={{ flex: 1, height: 6, bgcolor: '#f3f4f6', borderRadius: 3, overflow: 'hidden' }}>
+                    <Box sx={{ 
+                      width: selectedStudent.attendance, 
+                      height: '100%', 
+                      bgcolor: parseInt(selectedStudent.attendance) < 75 ? '#ef4444' : parseInt(selectedStudent.attendance) < 90 ? '#f59e0b' : '#10b981',
+                      borderRadius: 3 
+                    }} />
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#111827', minWidth: 40, textAlign: 'right' }}>
+                    {selectedStudent.attendance}
+                  </Typography>
+                </Box>
+              </Box>
+            </Stack>
+          )}
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} variant="contained" color="secondary" sx={{ borderRadius: 2, fontWeight: 900 }}>Close Profile</Button>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <Button 
+            onClick={handleClose} 
+            variant="contained" 
+            sx={{ 
+              bgcolor: '#1E2126', 
+              color: 'white',
+              boxShadow: 'none',
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              '&:hover': { bgcolor: '#0f1113', boxShadow: 'none' }
+            }}
+          >
+            Close Profile
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit Student Dialog */}
-      <Dialog open={openEditDialog} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 900 }}>Edit Student Information</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={3} sx={{ mt: 1 }}>
+      <Dialog 
+        open={openEditDialog} 
+        onClose={handleClose} 
+        fullWidth 
+        maxWidth="xs"
+        PaperProps={{
+          sx: { borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          fontSize: '1.1rem', 
+          color: '#111827', 
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          py: 2.2, 
+          px: 3 
+        }}>
+          Edit Student Information
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, pt: '24px !important' }}>
+          <Stack spacing={2.5}>
             <TextField 
               label="Full Name" 
               fullWidth 
+              size="small"
               value={editForm.name} 
               onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontSize: '0.85rem' } }}
             />
             <TextField 
               label="Email Address" 
               fullWidth 
+              size="small"
               value={editForm.email} 
               onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontSize: '0.85rem' } }}
             />
             <Grid container spacing={2}>
               <Grid item xs={6}>
-                <FormControl fullWidth>
+                <FormControl fullWidth size="small">
                   <InputLabel>Status</InputLabel>
                   <Select
                     value={editForm.status}
                     label="Status"
                     onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                    sx={{ borderRadius: 2 }}
+                    sx={{ borderRadius: '6px', fontSize: '0.85rem' }}
                   >
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Inactive">Inactive</MenuItem>
+                    <MenuItem value="Suspended">Suspended</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -431,74 +769,177 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
                  <TextField 
                   label="Batch" 
                   fullWidth 
+                  size="small"
                   value={editForm.batch} 
                   onChange={(e) => setEditForm({ ...editForm, batch: e.target.value })}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontSize: '0.85rem' } }}
                 />
               </Grid>
             </Grid>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} color="secondary" sx={{ fontWeight: 800 }}>Cancel</Button>
-          <Button onClick={handleSaveEdit} variant="contained" color="primary" sx={{ borderRadius: 2, fontWeight: 900 }}>Save Changes</Button>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <Button 
+            onClick={handleClose} 
+            sx={{ 
+              fontWeight: 600, 
+              color: '#4b5563', 
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSaveEdit} 
+            variant="contained" 
+            sx={{ 
+              bgcolor: 'primary.main', 
+              color: 'white',
+              boxShadow: 'none',
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              '&:hover': { bgcolor: '#b91c1c', boxShadow: 'none' }
+            }}
+          >
+            Save Changes
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={openDeleteDialog} onClose={handleClose}>
-        <DialogTitle sx={{ fontWeight: 900 }}>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete <b>{selectedStudent?.name}</b>? This action cannot be undone.</Typography>
+      <Dialog 
+        open={openDeleteDialog} 
+        onClose={handleClose}
+        PaperProps={{
+          sx: { borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          fontSize: '1.1rem', 
+          color: '#111827', 
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          py: 2.2, 
+          px: 3 
+        }}>
+          Confirm Student Deletion
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, pt: '20px !important' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: '#4b5563' }}>
+            Are you absolutely sure you want to delete the student record for <strong>{selectedStudent?.name}</strong>? All attendance logs, profile details, and evaluation indicators will be permanently purged. This action cannot be undone.
+          </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} color="secondary" sx={{ fontWeight: 800 }}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} variant="contained" color="error" sx={{ borderRadius: 2, fontWeight: 900 }}>Yes, Delete Student</Button>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <Button 
+            onClick={handleClose} 
+            sx={{ 
+              fontWeight: 600, 
+              color: '#4b5563', 
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            variant="contained" 
+            color="error" 
+            sx={{ 
+              boxShadow: 'none',
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              '&:hover': { boxShadow: 'none' }
+            }}
+          >
+            Delete Student
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Administrative Action Dialog */}
-      <Dialog open={openActionDialog} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 900, textTransform: 'uppercase' }}>
-          Administrative Action: {selectedStudent?.name}
+      <Dialog 
+        open={openActionDialog} 
+        onClose={handleClose} 
+        fullWidth 
+        maxWidth="xs"
+        PaperProps={{
+          sx: { borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          fontSize: '1.1rem', 
+          color: '#111827', 
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          py: 2.2, 
+          px: 3 
+        }}>
+          Administrative Action
         </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <FormControl fullWidth>
+        <DialogContent sx={{ p: 3, pt: '24px !important' }}>
+          <Stack spacing={2.5}>
+            <Typography variant="body2" sx={{ color: '#4b5563', fontSize: '0.825rem' }}>
+              Enforce disciplinary or status changes for <strong>{selectedStudent?.name}</strong>.
+            </Typography>
+            <FormControl fullWidth size="small">
               <InputLabel>Action Type</InputLabel>
               <Select
                 value={adminAction}
                 label="Action Type"
                 onChange={(e) => setAdminAction(e.target.value)}
-                sx={{ borderRadius: 1.5 }}
+                sx={{ borderRadius: '6px', fontSize: '0.85rem' }}
               >
-                <MenuItem value="warn">Official Warning</MenuItem>
+                <MenuItem value="warn">Official Academic Warning</MenuItem>
                 <MenuItem value="suspend">Temporary Suspension</MenuItem>
-                <MenuItem value="terminate">Termination (Expel)</MenuItem>
-                <MenuItem value="transfer">Batch Transfer</MenuItem>
+                <MenuItem value="terminate">Immediate Termination (Expel)</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label="Reason for Action"
+              label="Action Reason & Reference Details"
               multiline
-              rows={4}
+              rows={3}
               fullWidth
               value={actionReason}
               onChange={(e) => setActionReason(e.target.value)}
-              placeholder="Provide detailed notes regarding this decision..."
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+              placeholder="State clear reasons or log details for future administrative reference..."
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontSize: '0.85rem' } }}
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} color="secondary" sx={{ fontWeight: 800 }}>Cancel</Button>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <Button 
+            onClick={handleClose} 
+            sx={{ 
+              fontWeight: 600, 
+              color: '#4b5563', 
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+            }}
+          >
+            Cancel
+          </Button>
           <Button 
             onClick={handleConfirmAction} 
             variant="contained" 
             color="error" 
             disableElevation
             disabled={!adminAction}
-            sx={{ borderRadius: 1.5, fontWeight: 900 }}
+            sx={{ 
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              '&:hover': { boxShadow: 'none' }
+            }}
           >
             Confirm Action
           </Button>
@@ -506,36 +947,74 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
       </Dialog>
 
       {/* Message Dialog */}
-      <Dialog open={openMessageDialog} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Message /> Message Student: {selectedStudent?.name}
+      <Dialog 
+        open={openMessageDialog} 
+        onClose={handleClose} 
+        fullWidth 
+        maxWidth="xs"
+        PaperProps={{
+          sx: { borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          fontSize: '1.1rem', 
+          color: '#111827', 
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          py: 2.2, 
+          px: 3 
+        }}>
+          Direct Faciliator Message
         </DialogTitle>
-        <DialogContent dividers>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Message Content"
-            type="text"
-            fullWidth
-            multiline
-            rows={6}
-            variant="outlined"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type your message here..."
-            sx={{ mt: 1, '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
-          />
+        <DialogContent sx={{ p: 3, pt: '20px !important' }}>
+          <Stack spacing={2}>
+            <Typography variant="body2" sx={{ color: '#4b5563', fontSize: '0.825rem' }}>
+              Send an instant notification/email copy to <strong>{selectedStudent?.name}</strong>.
+            </Typography>
+            <TextField
+              autoFocus
+              label="Message Body"
+              type="text"
+              fullWidth
+              multiline
+              rows={4}
+              variant="outlined"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Enter message text, warning warning, or action details..."
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px', fontSize: '0.85rem' } }}
+            />
+          </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} color="secondary" sx={{ fontWeight: 800 }}>Discard</Button>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <Button 
+            onClick={handleClose} 
+            sx={{ 
+              fontWeight: 600, 
+              color: '#4b5563', 
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+            }}
+          >
+            Discard
+          </Button>
           <Button 
             onClick={handleSendMessage} 
             variant="contained" 
-            color="primary" 
             disableElevation
-            startIcon={<Send />}
+            startIcon={<Send sx={{ fontSize: 12 }} />}
             disabled={!messageText}
-            sx={{ borderRadius: 1.5, fontWeight: 900 }}
+            sx={{ 
+              bgcolor: 'primary.main', 
+              color: 'white',
+              boxShadow: 'none',
+              borderRadius: '6px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.8rem',
+              '&:hover': { bgcolor: '#b91c1c', boxShadow: 'none' }
+            }}
           >
             Send Message
           </Button>

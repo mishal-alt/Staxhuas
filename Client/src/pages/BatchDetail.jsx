@@ -625,7 +625,6 @@ const BatchDetail = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6, pb: 8 }}>
 
           {/* Header */}
-          {/* Header */}
           <Box sx={{
             pt: 4,
             pb: 3,
@@ -637,7 +636,7 @@ const BatchDetail = () => {
             mb: 3
           }}>
             <Breadcrumbs
-              separator={<NavigateNext fontSize="small" sx={{ opacity: 0.5 }} />}
+              separator=">"
               sx={{ mb: 1.5 }}
             >
               <MuiLink
@@ -666,23 +665,25 @@ const BatchDetail = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  p: 1,
-                  borderRadius: 2,
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(232, 57, 29, 0.1)',
                   display: 'flex',
-                  boxShadow: '0 4px 12px rgba(232, 57, 29, 0.2)'
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'primary.main'
                 }}>
-                  <School fontSize="medium" />
+                  <School />
                 </Box>
                 <Box>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', mb: 0.2, fontSize: '1.75rem', textTransform: 'none' }}>
+                    <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2, textTransform: 'uppercase' }}>
                       {batch?.name}
                     </Typography>
                     <Chip label="MANAGED BATCH" size="small" sx={{ bgcolor: 'rgba(232, 57, 29, 0.1)', color: 'primary.main', fontWeight: 900, borderRadius: 2, fontSize: '0.6rem' }} />
                   </Stack>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
                     Facilitator: <b>{batch?.facilitator?.name}</b>
                   </Typography>
                 </Box>

@@ -118,18 +118,31 @@ const Leaves = () => {
 
           {/* Header */}
           <Box sx={{ pt: 4, pb: 3, px: 6, mx: -6, mt: -6, background: 'white', borderBottom: '1px solid #E5E7EB', mb: 1 }}>
-            <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ opacity: 0.5 }} />} sx={{ mb: 1.5 }}>
+            <Breadcrumbs separator=">" sx={{ mb: 1.5 }}>
               <MuiLink component={Link} to="/dashboard" underline="none" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 700 }}>DASHBOARD</MuiLink>
               <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>LEAVE MANAGEMENT</Typography>
             </Breadcrumbs>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 4px 12px rgba(232,57,29,0.25)' }}>
+                <Box sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(232, 57, 29, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'primary.main'
+                }}>
                   <EventBusy />
                 </Box>
                 <Box>
-                  <Typography variant="h5" fontWeight={900} color="secondary" sx={{ letterSpacing: '-0.01em' }}>Leave Management Center</Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight={600}>Institute-wide leave control & monitoring across all batches</Typography>
+                  <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2 }}>
+                    LEAVE MANAGEMENT CENTER
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                    Institute-wide leave control & monitoring across all batches
+                  </Typography>
                 </Box>
               </Box>
               {pending > 0 && (

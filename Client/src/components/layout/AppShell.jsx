@@ -24,8 +24,7 @@ const AppShell = ({ children, fullWidth = false }) => {
           <div className="flex-1"></div> {/* Spacer to maintain layout if needed, or just let menu button stay left */}
         </header>
 
-        {/* Main Content Area */}
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-brand-light ${fullWidth ? 'py-8 px-0' : 'p-4 md:px-6 md:py-8'}`}>
+        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-brand-light ${fullWidth ? 'pt-0 pb-8 px-0' : 'p-4 md:px-6 md:py-8'}`}>
           <div className={`${fullWidth ? 'w-full max-w-none' : 'mx-auto w-full max-w-7xl'}`}>
             {children}
           </div>
