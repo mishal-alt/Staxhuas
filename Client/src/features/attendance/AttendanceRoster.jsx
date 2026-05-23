@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { changeStudentStatus } from '../../api/students.api';
 import { 
   Box, 
   Typography, 
@@ -33,7 +35,6 @@ import {
 } from '@mui/material';
 import { 
   Search, 
-  Visibility,
   Edit,
   Delete,
   Message,
@@ -62,8 +63,85 @@ const INITIAL_STUDENTS = [
   { id: 12, name: 'Lekshmi S', email: 'lekshmi@staxhaus.com', status: 'Active', batch: 'B-1', joinDate: '2023-10-12', course: 'Full Stack Development', attendance: '94%', academicHealth: 'Excellent', interviewStatus: 'Mock Cleared', leaveStatus: 'None' }
 ];
 
-const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFilter = 'all' }) => {
-  const [students, setStudents] = useState(INITIAL_STUDENTS);
+const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFilter = 'all', dbStudents = [] }) => {
+  const navigate = useNavigate();
+  const [students, setStudents] = useState(() => {
+    const saved = localStorage.getItem('staxhaus_students');
+    return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+  });
+
+  // Sync real database students with our local storage roster
+  useEffect(() => {
+    if (!dbStudents || dbStudents.length === 0) return;
+
+    // Load existing roster from localStorage
+    const saved = localStorage.getItem('staxhaus_students');
+    let localRoster = saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+
+    let updated = false;
+
+    // Map each dbStudent to a roster entry
+    const mergedRoster = dbStudents.map(dbStudent => {
+      // Find in localStorage roster
+      let existing = localRoster.find(s => s._id === dbStudent._id || s.email === dbStudent.email);
+      if (existing) {
+        // If status in dbStudent has changed (e.g. from changeStudentStatus API), update it
+        const dbStatusMapped = dbStudent.status === 'active' ? 'Active' : dbStudent.status === 'discontinued' ? 'Suspended' : dbStudent.status === 'terminated' ? 'Terminated' : dbStudent.status;
+        if (existing.status !== dbStatusMapped) {
+          existing.status = dbStatusMapped;
+          updated = true;
+        }
+        // Save database _id if not present
+        if (!existing._id) {
+          existing._id = dbStudent._id;
+          updated = true;
+        }
+        return existing;
+      } else {
+        // Create new entry
+        const status = dbStudent.status === 'active' ? 'Active' : dbStudent.status === 'discontinued' ? 'Suspended' : dbStudent.status === 'terminated' ? 'Terminated' : (dbStudent.status || 'Active');
+        const newEntry = {
+          id: localRoster.length + 1 + Math.random(), // unique local id
+          _id: dbStudent._id,
+          name: dbStudent.name,
+          email: dbStudent.email,
+          status: status,
+          batch: dbStudent.batchName || 'B-1',
+          batchId: dbStudent.batch,
+          joinDate: dbStudent.createdAt ? new Date(dbStudent.createdAt).toISOString().split('T')[0] : '2023-10-15',
+          course: dbStudent.courseName || 'Full Stack Development',
+          attendance: `${dbStudent.attendancePercentage || 94}%`,
+          academicHealth: dbStudent.attendancePercentage && dbStudent.attendancePercentage < 75 ? 'Critical Risk' : 'Good Standing',
+          interviewStatus: 'Scheduled',
+          leaveStatus: 'None'
+        };
+        localRoster.push(newEntry);
+        updated = true;
+        return newEntry;
+      }
+    });
+
+    if (updated) {
+      localStorage.setItem('staxhaus_students', JSON.stringify(localRoster));
+    }
+
+    setStudents(mergedRoster);
+  }, [dbStudents]);
+
+  useEffect(() => {
+    // Only update localStorage if students contains data and it's not a pure initial load
+    if (students.length > 0) {
+      const saved = localStorage.getItem('staxhaus_students');
+      let currentRoster = saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+      // Sync local updates back to the roster store
+      const updatedRoster = currentRoster.map(rItem => {
+        const match = students.find(s => s.id === rItem.id || s._id === rItem._id || s.email === rItem.email);
+        return match ? { ...rItem, ...match } : rItem;
+      });
+      localStorage.setItem('staxhaus_students', JSON.stringify(updatedRoster));
+    }
+  }, [students]);
+
   const [selectedStudent, setSelectedStudent] = useState(null);
   
   // Pagination State
@@ -73,7 +151,6 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
   // Dialog States
   const [openActionDialog, setOpenActionDialog] = useState(false);
   const [openMessageDialog, setOpenMessageDialog] = useState(false);
-  const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
@@ -86,7 +163,7 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
   const filteredStudents = students.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          s.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesBatch = batchId === 'all' || s.batch === batchId;
+    const matchesBatch = batchId === 'all' || s.batchId === batchId || s.batch === batchId;
     const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
     return matchesSearch && matchesBatch && matchesStatus;
   }).sort((a, b) => {
@@ -118,8 +195,7 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
   };
 
   const handleOpenView = (student) => {
-    setSelectedStudent(student);
-    setOpenViewDialog(true);
+    navigate(`/student-profile/${student._id || student.id}`);
   };
 
   const handleOpenEdit = (student) => {
@@ -136,7 +212,6 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
   const handleClose = () => {
     setOpenActionDialog(false);
     setOpenMessageDialog(false);
-    setOpenViewDialog(false);
     setOpenEditDialog(false);
     setOpenDeleteDialog(false);
     setAdminAction('');
@@ -155,13 +230,28 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
     handleClose();
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
+    let backendStatus = '';
     if (adminAction === 'terminate') {
+      backendStatus = 'terminated';
       setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, status: 'Terminated' } : s));
     } else if (adminAction === 'suspend') {
+      backendStatus = 'discontinued';
       setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, status: 'Suspended' } : s));
     } else if (adminAction === 'warn') {
       setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, academicHealth: 'Needs Review' } : s));
+    }
+
+    // Call backend API if it's a real db student and status changes
+    if (selectedStudent._id && backendStatus) {
+      try {
+        await changeStudentStatus(selectedStudent._id, {
+          status: backendStatus,
+          remark: actionReason || 'Disciplinary action applied from facilitator console'
+        });
+      } catch (err) {
+        console.error("Failed to update student status in backend:", err);
+      }
     }
     handleClose();
   };
@@ -244,8 +334,20 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
                       }}
                     >
                       {/* 1. Student Info */}
-                      <TableCell sx={{ py: 1.25, pl: 3 }}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
+                      <TableCell 
+                        onClick={() => handleOpenView(student)}
+                        sx={{ 
+                          py: 1.25, 
+                          pl: 3,
+                          cursor: 'pointer',
+                          '&:hover .student-name': { color: 'primary.main' }
+                        }}
+                      >
+                        <Stack 
+                          direction="row" 
+                          spacing={1.5} 
+                          alignItems="center"
+                        >
                           <Avatar sx={{ 
                             width: 30, 
                             height: 30, 
@@ -258,12 +360,17 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
                             {student.name[0]}
                           </Avatar>
                           <Box>
-                            <Typography variant="subtitle2" sx={{ 
-                              fontWeight: 600, 
-                              fontSize: '0.825rem', 
-                              color: '#111827',
-                              textDecoration: isTerminated ? 'line-through' : 'none' 
-                            }}>
+                            <Typography 
+                              className="student-name"
+                              variant="subtitle2" 
+                              sx={{ 
+                                fontWeight: 600, 
+                                fontSize: '0.825rem', 
+                                color: '#111827',
+                                transition: 'color 0.15s ease',
+                                textDecoration: isTerminated ? 'line-through' : 'none' 
+                              }}
+                            >
                               {student.name}
                             </Typography>
                             <Typography variant="caption" sx={{ 
@@ -453,20 +560,7 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
                             </IconButton>
                           </Tooltip>
 
-                          <Tooltip title="View Profile">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleOpenView(student)}
-                              sx={{ 
-                                color: '#6b7280',
-                                borderRadius: '6px',
-                                p: 0.75,
-                                '&:hover': { bgcolor: 'rgba(0,0,0,0.03)', color: '#111827' }
-                              }}
-                            >
-                              <Visibility sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Tooltip>
+
 
                           <Tooltip title={isTerminated ? "Cannot edit terminated student" : "Edit Info"}>
                             <span>
@@ -543,173 +637,6 @@ const AttendanceRoster = ({ batchId, searchQuery = '', sortBy = 'name', statusFi
         </CardContent>
       </Card>
 
-      {/* View Profile Dialog */}
-      <Dialog 
-        open={openViewDialog} 
-        onClose={handleClose} 
-        fullWidth 
-        maxWidth="sm"
-        PaperProps={{
-          sx: { borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
-        }}
-      >
-        <DialogTitle sx={{ 
-          fontWeight: 700, 
-          fontSize: '1.1rem', 
-          color: '#111827', 
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-          py: 2.2, 
-          px: 3 
-        }}>
-          Student Operational Profile
-        </DialogTitle>
-        <DialogContent sx={{ p: 3, pt: '24px !important' }}>
-          {selectedStudent && (
-            <Stack spacing={3}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-                <Avatar sx={{ 
-                  width: 60, 
-                  height: 60, 
-                  bgcolor: selectedStudent.status === 'Terminated' ? '#9ca3af' : '#1E2126', 
-                  fontSize: '1.5rem', 
-                  fontWeight: 700, 
-                  borderRadius: '10px',
-                  fontFamily: 'Outfit'
-                }}>
-                  {selectedStudent.name[0]}
-                </Avatar>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#111827', letterSpacing: 'normal', textTransform: 'none' }}>
-                    {selectedStudent.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500, mt: 0.2 }}>
-                    {selectedStudent.email}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <MuiDivider />
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                      COURSE ENROLLED
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
-                      {selectedStudent.course}
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                      BATCH ASSIGNMENT
-                    </Typography>
-                    <Chip 
-                      label={selectedStudent.batch} 
-                      size="small" 
-                      sx={{ fontWeight: 700, borderRadius: '4px', bgcolor: '#f3f4f6', color: '#374151', height: '22px' }} 
-                    />
-                  </Box>
-                </Grid>
-
-                <Grid item xs={6} sx={{ mt: 1 }}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                      ACADEMIC STANDING
-                    </Typography>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <FiberManualRecord sx={{ 
-                        fontSize: 8, 
-                        color: 
-                          selectedStudent.academicHealth === 'Excellent' ? '#10b981' :
-                          selectedStudent.academicHealth === 'Good Standing' ? '#3b82f6' :
-                          selectedStudent.academicHealth === 'Needs Review' ? '#f59e0b' : '#ef4444'
-                      }} />
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
-                        {selectedStudent.academicHealth}
-                      </Typography>
-                    </Stack>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={6} sx={{ mt: 1 }}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                      INTERVIEW & EVAL STATUS
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
-                      {selectedStudent.interviewStatus}
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={6} sx={{ mt: 1 }}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                      LEAVE TRACKING
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: selectedStudent.leaveStatus !== 'None' ? '#ef4444' : '#374151' }}>
-                      {selectedStudent.leaveStatus === 'None' ? 'No Active Leaves' : selectedStudent.leaveStatus}
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={6} sx={{ mt: 1 }}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 0.5 }}>
-                      REGISTRATION DATE
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#374151' }}>
-                      {selectedStudent.joinDate}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-
-              <MuiDivider />
-
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em', display: 'block', mb: 1.2 }}>
-                  ATTENDANCE PERFORMANCE
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ flex: 1, height: 6, bgcolor: '#f3f4f6', borderRadius: 3, overflow: 'hidden' }}>
-                    <Box sx={{ 
-                      width: selectedStudent.attendance, 
-                      height: '100%', 
-                      bgcolor: parseInt(selectedStudent.attendance) < 75 ? '#ef4444' : parseInt(selectedStudent.attendance) < 90 ? '#f59e0b' : '#10b981',
-                      borderRadius: 3 
-                    }} />
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#111827', minWidth: 40, textAlign: 'right' }}>
-                    {selectedStudent.attendance}
-                  </Typography>
-                </Box>
-              </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-          <Button 
-            onClick={handleClose} 
-            variant="contained" 
-            sx={{ 
-              bgcolor: '#1E2126', 
-              color: 'white',
-              boxShadow: 'none',
-              borderRadius: '6px',
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.8rem',
-              '&:hover': { bgcolor: '#0f1113', boxShadow: 'none' }
-            }}
-          >
-            Close Profile
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Edit Student Dialog */}
       <Dialog 

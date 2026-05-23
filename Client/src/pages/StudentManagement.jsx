@@ -25,6 +25,7 @@ import AppShell from '../components/layout/AppShell';
 import AttendanceRoster from '../features/attendance/AttendanceRoster';
 import StudentAttendanceAndLeaves from '../features/attendance/StudentAttendanceAndLeaves';
 import * as batchApi from '../api/batches.api';
+import * as studentApi from '../api/students.api';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../utils/constants';
 import { Search, FilterList, Sort, School, NavigateNext, Group, TrendingUp, Mail, Layers } from '@mui/icons-material';
@@ -66,6 +67,30 @@ const StudentManagement = () => {
   });
 
   const batches = batchesRes?.data || [];
+  const { data: dbStudents = [], isLoading: studentsLoading } = useQuery({
+    queryKey: ['db-students-all', batches.map(b => b._id)],
+    queryFn: async () => {
+      if (batches.length === 0) return [];
+      const results = await Promise.all(
+        batches.map(async (b) => {
+          try {
+            const res = await studentApi.getStudentsByBatch(b._id);
+            const studentList = res.data?.data || res.data || [];
+            return studentList.map(s => ({
+              ...s,
+              batchName: b.name,
+              courseName: b.course?.name || 'Full Stack Development'
+            }));
+          } catch (err) {
+            console.error(`Error loading students for batch ${b._id}:`, err);
+            return [];
+          }
+        })
+      );
+      return results.flat();
+    },
+    enabled: batches.length > 0
+  });
   const [selectedBatch, setSelectedBatch] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -161,10 +186,10 @@ const StudentManagement = () => {
             mb: 2
           }}>
             {[
-              { label: 'Total Students', value: '42', icon: <Group />, color: '#1E2126' },
-              { label: 'Active Students', value: '38', icon: <TrendingUp />, color: '#2e7d32' },
-              { label: 'On Leave', value: '04', icon: <Mail />, color: '#E8391D' },
-              { label: 'Active Batches', value: batches.length || '07', icon: <Layers />, color: '#9c27b0' },
+              { label: 'Total Students', value: dbStudents.length || 0, icon: <Group />, color: '#1E2126' },
+              { label: 'Active Students', value: dbStudents.filter(s => s.status?.toLowerCase() === 'active').length || 0, icon: <TrendingUp />, color: '#2e7d32' },
+              { label: 'On Leave', value: dbStudents.filter(s => s.leavesTaken > 0).length || 0, icon: <Mail />, color: '#E8391D' },
+              { label: 'Active Batches', value: batches.length || 0, icon: <Layers />, color: '#9c27b0' },
             ].map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -416,6 +441,7 @@ const StudentManagement = () => {
               searchQuery={searchQuery}
               sortBy={sortBy}
               statusFilter={statusFilter}
+              dbStudents={dbStudents}
             />
           </Box>
 

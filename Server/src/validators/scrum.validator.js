@@ -4,6 +4,8 @@ export const createScrumCallSchema = Joi.object({
   batch: Joi.string().hex().length(24).required(),
   date: Joi.date().iso().required(),
   agenda: Joi.string().required(),
+  status: Joi.string().valid('In Progress', 'Completed').default('Completed'),
+  startTime: Joi.string().allow('', null),
   entries: Joi.array()
     .items(
       Joi.object({

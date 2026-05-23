@@ -110,8 +110,6 @@ const ACADEMIC_HEALTH_OVERVIEW_DATA = [
   { label: 'Interview Pass Ratio', value: '88.5%', trend: '+1.2%', up: true, status: 'Optimal Rate', threshold: 'Target: 80.0%', progress: 88.5, color: '#1976d2' },
   { label: 'Leave Impact Score', value: '4.2%', trend: '-0.8%', up: false, status: 'Low Impact', threshold: 'Target: < 5.0%', progress: 42.0, color: '#ed6c02' },
   { label: 'Scrum Consistency', value: '91.8%', trend: '+2.1%', up: true, status: 'Healthy participation', threshold: 'Target: 90.0%', progress: 91.8, color: '#9c27b0' },
-  { label: 'Student Engagement', value: '87.6%', trend: '+3.4%', up: true, status: 'Active Interaction', threshold: 'Target: 85.0%', progress: 87.6, color: '#1976d2' },
-  ,
 ];
 
 const COHORT_MATRIX_DATA = [
@@ -144,28 +142,6 @@ const SCRUM_INSIGHT_DATA = {
     { name: 'Vikram Seth', score: '14 PRs merged', help: '4 blocker solves' },
     { name: 'Simran Kaur', score: '12 PRs merged', help: '6 code reviews' },
     { name: 'Aniket Rao', score: '9 PRs merged', help: '5 peer sessions' }
-  ]
-};
-
-const LEAVE_ANALYTICS_DATA = {
-  types: [
-    { name: 'Medical', percentage: 42, rate: '98% Appr.' },
-    { name: 'Personal/Family', percentage: 35, rate: '82% Appr.' },
-    { name: 'Academic/Exam', percentage: 15, rate: '100% Appr.' },
-    { name: 'Emergency/Unplanned', percentage: 8, rate: '65% Appr.' }
-  ],
-  metrics: [
-    { name: 'Average duration', value: '2.4 Days', desc: 'Per leave event' },
-    { name: 'Emergency ratio', value: '12%', desc: 'Of total leaves' },
-    { name: 'Approval velocity', value: '3.4 Hours', desc: 'Average response time' }
-  ],
-  trends: [
-    { month: 'December', count: 45 },
-    { month: 'January', count: 32 },
-    { month: 'February', count: 50 },
-    { month: 'March', count: 28 },
-    { month: 'April', count: 65 },
-    { month: 'May (Current)', count: 38 }
   ]
 };
 
@@ -224,6 +200,14 @@ const Reports = () => {
     animation: 'spin 1s infinite linear',
   };
 
+  const growProgressAnimation = {
+    '@keyframes growProgress': {
+      '0%': { width: '0%' },
+      '100%': { width: '100%' },
+    },
+    animation: 'growProgress 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <AppShell fullWidth={true}>
@@ -239,9 +223,9 @@ const Reports = () => {
             background: 'white',
             borderBottom: '1px solid #E5E7EB',
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            alignItems: { xs: 'stretch', sm: 'center' },
             gap: 2
           }}>
             <Box>
@@ -275,17 +259,24 @@ const Reports = () => {
                   <Assessment fontSize="small" />
                 </Box>
                 <Box>
-                  <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', mb: 0.1, fontSize: '1.5rem', textTransform: 'none' }}>
+                  <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', mb: 0.1, fontSize: { xs: '1.25rem', sm: '1.5rem' }, textTransform: 'none' }}>
                     Performance Analytics
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ fontSize: '0.8rem' }}>
+                  <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
                     Comprehensive overview of student and cohort performance
                   </Typography>
                 </Box>
               </Box>
             </Box>
 
-            <Stack direction="row" spacing={2}>
+            <Stack 
+              direction="row" 
+              spacing={1.5} 
+              sx={{ 
+                width: { xs: '100%', sm: 'auto' }, 
+                justifyContent: { xs: 'space-between', sm: 'flex-start' }
+              }}
+            >
               <Button 
                 variant="outlined" 
                 startIcon={<DateRange />} 
@@ -295,7 +286,8 @@ const Reports = () => {
                   borderRadius: 2,
                   px: 2.5,
                   py: 1,
-                  fontSize: '0.75rem'
+                  fontSize: '0.75rem',
+                  flex: { xs: 1, sm: 'none' }
                 }}
               >
                 Timeframe
@@ -308,7 +300,8 @@ const Reports = () => {
                   py: 1,
                   borderRadius: 2,
                   fontSize: '0.75rem',
-                  boxShadow: '0 4px 12px rgba(232, 57, 29, 0.15)'
+                  boxShadow: '0 4px 12px rgba(232, 57, 29, 0.15)',
+                  flex: { xs: 1, sm: 'none' }
                 }}
               >
                 Export Ledger
@@ -329,7 +322,8 @@ const Reports = () => {
                 '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(0,0,0,0.06)' },
                 borderRadius: '16px',
                 border: '1px solid rgba(0,0,0,0.04)',
-                height: { xs: 72, sm: 88 },
+                minHeight: { xs: 72, sm: 88 },
+                height: 'auto',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                 display: 'flex',
                 alignItems: 'center',
@@ -338,10 +332,10 @@ const Reports = () => {
                 bgcolor: 'white'
               }}>
                 <CardContent sx={{ 
-                  p: 1.5, 
+                  p: { xs: 1.2, sm: 1.5 }, 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: 1.5,
+                  gap: { xs: 1, sm: 1.5 },
                   width: '100%',
                   '&:last-child': { pb: 1.5 }
                 }}>
@@ -400,6 +394,7 @@ const Reports = () => {
           </Box>
 
           {/* Section 1: Performance Control Center */}
+          {/* Section 1: Performance Control Center */}
           <Card sx={{ 
             borderRadius: '12px', 
             border: '1px solid rgba(0,0,0,0.05)', 
@@ -407,23 +402,39 @@ const Reports = () => {
             bgcolor: 'white'
           }}>
             <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', md: 'row' }, 
+                justifyContent: 'space-between', 
+                alignItems: { xs: 'stretch', md: 'center' }, 
+                gap: 1.5 
+              }}>
                 
                 {/* Filters */}
-                <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                <Stack 
+                  direction="row" 
+                  spacing={1.5} 
+                  sx={{ 
+                    flexWrap: 'wrap', 
+                    gap: 1, 
+                    width: { xs: '100%', md: 'auto' }, 
+                    justifyContent: { xs: 'space-between', md: 'flex-start' } 
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
                     <FilterList sx={{ color: 'text.secondary', fontSize: '0.95rem' }} />
                     <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em', fontSize: '0.68rem' }}>FILTERS:</Typography>
                   </Box>
                   
                   {/* Timeframe Select */}
-                  <select
+                  <Box
+                    component="select"
                     value={timeframe}
                     onChange={(e) => {
                       setTimeframe(e.target.value);
                       toast.info(`Timeframe filtered to: ${e.target.value}`);
                     }}
-                    style={{
+                    sx={{
                       padding: '4px 10px',
                       borderRadius: '6px',
                       border: '1px solid #E5E7EB',
@@ -433,23 +444,25 @@ const Reports = () => {
                       fontWeight: 600,
                       fontSize: '0.7rem',
                       cursor: 'pointer',
-                      outline: 'none'
+                      outline: 'none',
+                      flex: { xs: '1 1 auto', md: 'none' }
                     }}
                   >
                     <option value="This Week">This Week</option>
                     <option value="This Month">This Month</option>
                     <option value="This Quarter">This Quarter</option>
                     <option value="All Time">All Time</option>
-                  </select>
+                  </Box>
 
                   {/* Batch Select */}
-                  <select
+                  <Box
+                    component="select"
                     value={batchFilter}
                     onChange={(e) => {
                       setBatchFilter(e.target.value);
                       toast.info(`Batch filtered to: ${e.target.value}`);
                     }}
-                    style={{
+                    sx={{
                       padding: '4px 10px',
                       borderRadius: '6px',
                       border: '1px solid #E5E7EB',
@@ -459,7 +472,8 @@ const Reports = () => {
                       fontWeight: 600,
                       fontSize: '0.7rem',
                       cursor: 'pointer',
-                      outline: 'none'
+                      outline: 'none',
+                      flex: { xs: '1 1 auto', md: 'none' }
                     }}
                   >
                     <option value="All Batches">All Batches</option>
@@ -468,16 +482,17 @@ const Reports = () => {
                     <option value="JAVA-LEGACY-02">JAVA-LEGACY-02</option>
                     <option value="UX-UI-DESIGN-B1">UX-UI-DESIGN-B1</option>
                     <option value="DATA-SCIENCE-B3">DATA-SCIENCE-B3</option>
-                  </select>
+                  </Box>
 
                   {/* Module Select */}
-                  <select
+                  <Box
+                    component="select"
                     value={moduleFilter}
                     onChange={(e) => {
                       setModuleFilter(e.target.value);
                       toast.info(`Module filtered to: ${e.target.value}`);
                     }}
-                    style={{
+                    sx={{
                       padding: '4px 10px',
                       borderRadius: '6px',
                       border: '1px solid #E5E7EB',
@@ -487,7 +502,8 @@ const Reports = () => {
                       fontWeight: 600,
                       fontSize: '0.7rem',
                       cursor: 'pointer',
-                      outline: 'none'
+                      outline: 'none',
+                      flex: { xs: '1 1 auto', md: 'none' }
                     }}
                   >
                     <option value="All Modules">All Modules</option>
@@ -496,11 +512,21 @@ const Reports = () => {
                     <option value="React">React</option>
                     <option value="Node">Node</option>
                     <option value="DB">Database</option>
-                  </select>
+                  </Box>
                 </Stack>
 
                 {/* Live Sync Status & Trigger */}
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack 
+                  direction="row" 
+                  spacing={1.5} 
+                  alignItems="center"
+                  justifyContent={{ xs: 'space-between', md: 'flex-end' }}
+                  sx={{ 
+                    width: { xs: '100%', md: 'auto' },
+                    borderTop: { xs: '1px dashed rgba(0,0,0,0.06)', md: 'none' },
+                    pt: { xs: 1.5, md: 0 }
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
                     <Box sx={{
                       width: 6,
@@ -553,87 +579,110 @@ const Reports = () => {
               </Typography>
             </Box>
 
-            <Grid container spacing={1.5} sx={{ width: '100%', m: 0 }}>
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
+              gap: 3, 
+              width: '100%' 
+            }}>
               {ACADEMIC_HEALTH_OVERVIEW_DATA.map((metric, i) => (
-                <Grid item xs={12} sm={6} md={4} lg={2} key={i}>
-                  <Card sx={{
-                    borderRadius: '12px',
-                    border: '1px solid rgba(0,0,0,0.05)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
-                    bgcolor: 'white',
-                    height: '100%',
-                    transition: 'all 0.2s ease',
-                    '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 6px 16px rgba(0,0,0,0.04)' }
-                  }}>
-                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-                        <Typography 
-                          variant="caption" 
-                          fontWeight={900} 
-                          color="text.secondary"
-                          sx={{ 
-                            fontSize: '0.58rem', 
-                            letterSpacing: '0.03em', 
-                            textTransform: 'uppercase',
-                            lineHeight: 1.1,
-                            mr: 1
-                          }}
-                        >
-                          {metric.label}
-                        </Typography>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          color: metric.up ? 'success.main' : (metric.label.includes('Risk') || metric.label.includes('Leave') ? 'success.main' : 'error.main')
-                        }}>
-                          {metric.up ? <TrendingUp sx={{ fontSize: 10 }} /> : <TrendingDown sx={{ fontSize: 10 }} />}
-                          <Typography variant="caption" sx={{ fontSize: '0.55rem', fontWeight: 900, ml: 0.1 }}>
-                            {metric.trend}
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Outfit', color: 'secondary.main', mb: 0.5, fontSize: '1.15rem' }}>
-                        {metric.value}
+                <Card key={i} sx={{
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.015)',
+                  bgcolor: 'white',
+                  transition: 'all 0.25s ease',
+                  '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(0,0,0,0.04)' }
+                }}>
+                  <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+                    {/* Top Row: label and trend badge */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                      <Typography 
+                        variant="subtitle2" 
+                        sx={{ 
+                          fontWeight: 800, 
+                          color: '#4B5563',
+                          fontSize: '0.75rem', 
+                          letterSpacing: '0.04em', 
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        {metric.label}
                       </Typography>
-
-                      <Box sx={{ width: '100%', mb: 0.8 }}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={metric.progress}
-                          sx={{
-                            height: 3,
-                            borderRadius: 1.5,
-                            bgcolor: 'rgba(0,0,0,0.04)',
-                            '& .MuiLinearProgress-bar': { bgcolor: metric.color }
-                          }}
-                        />
-                      </Box>
-
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Chip
-                          label={metric.status}
-                          size="small"
-                          sx={{
-                            fontWeight: 900,
-                            fontSize: '0.5rem',
-                            height: 14,
-                            bgcolor: `${metric.color}10`,
-                            color: metric.color,
-                            borderRadius: '3px',
-                            letterSpacing: '0.02em',
-                            px: 0.5
-                          }}
-                        />
-                        <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.5rem', fontWeight: 600 }}>
-                          {metric.threshold}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 0.5,
+                        px: 1.2,
+                        py: 0.4,
+                        borderRadius: '20px',
+                        bgcolor: metric.up ? 'rgba(46, 125, 50, 0.08)' : 'rgba(211, 47, 47, 0.08)',
+                        color: metric.up ? '#2e7d32' : '#d32f2f'
+                      }}>
+                        {metric.up ? <TrendingUp sx={{ fontSize: 13 }} /> : <TrendingDown sx={{ fontSize: 13 }} />}
+                        <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 800 }}>
+                          {metric.trend}
                         </Typography>
                       </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
+                    </Box>
+
+                    {/* Middle Row: big number */}
+                    <Typography 
+                      variant="h3" 
+                      sx={{ 
+                        fontFamily: 'Outfit', 
+                        fontWeight: 900, 
+                        color: '#1E2126', 
+                        mt: 0.5, 
+                        mb: 1.5, 
+                        fontSize: { xs: '1.75rem', md: '2.25rem' },
+                        lineHeight: 1
+                      }}
+                    >
+                      {metric.value}
+                    </Typography>
+
+                    {/* Progress Bar */}
+                    <Box sx={{ width: '100%', mb: 2 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={metric.progress}
+                        sx={{
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: 'rgba(0,0,0,0.04)',
+                          '& .MuiLinearProgress-bar': { 
+                            bgcolor: metric.color,
+                            borderRadius: 3
+                          },
+                          ...growProgressAnimation
+                        }}
+                      />
+                    </Box>
+
+                    {/* Bottom Row: Status and Threshold */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                      <Chip
+                        label={metric.status}
+                        size="small"
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: '0.7rem',
+                          height: '24px',
+                          bgcolor: `${metric.color}12`,
+                          color: metric.color,
+                          borderRadius: '6px',
+                          px: 0.75
+                        }}
+                      />
+                      <Typography variant="caption" sx={{ color: '#6B7280', fontSize: '0.72rem', fontWeight: 600 }}>
+                        {metric.threshold}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
               ))}
-            </Grid>
+            </Box>
           </Box>
 
           {/* Section 3: Cohort Performance Matrix */}
@@ -650,7 +699,7 @@ const Reports = () => {
                 sx={{ fontWeight: 900, bgcolor: 'secondary.main', color: 'white', borderRadius: 1, fontSize: '0.58rem', height: 18 }}
               />
             </Box>
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0 }}>
+            <TableContainer component={Paper} elevation={0} sx={{ display: { xs: 'none', md: 'block' }, borderRadius: 0 }}>
               <Table sx={{ minWidth: 800 }} size="small">
                 <TableHead sx={{ bgcolor: '#F9FAFB', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                   <TableRow>
@@ -796,6 +845,134 @@ const Reports = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {/* Mobile Cards View */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2, p: 2 }}>
+              {COHORT_MATRIX_DATA.map((cohort, i) => (
+                <Box 
+                  key={i} 
+                  sx={{ 
+                    p: 2, 
+                    border: '1px solid rgba(0,0,0,0.06)', 
+                    borderRadius: '12px', 
+                    bgcolor: 'white',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.5,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Stack direction="row" spacing={1.2} alignItems="center">
+                      <Box sx={{ 
+                        width: 30, 
+                        height: 30, 
+                        bgcolor: `${cohort.statusColor}12`, 
+                        color: cohort.statusColor, 
+                        borderRadius: '6px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        fontWeight: 900,
+                        fontSize: '0.8rem'
+                      }}>
+                        {cohort.name[0]}
+                      </Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.78rem', color: 'secondary.main' }}>
+                        {cohort.name}
+                      </Typography>
+                    </Stack>
+                    
+                    <Chip
+                      label={cohort.risk}
+                      size="small"
+                      icon={cohort.risk === 'High' ? <Warning style={{ color: 'inherit', fontSize: '0.75rem' }} /> : undefined}
+                      sx={{
+                        fontWeight: 900,
+                        fontSize: '0.58rem',
+                        height: 18,
+                        bgcolor: cohort.risk === 'Low' ? '#2e7d3212' : (cohort.risk === 'Medium' ? '#ed6c0212' : '#d32f2f12'),
+                        color: cohort.risk === 'Low' ? '#2e7d32' : (cohort.risk === 'Medium' ? '#ed6c02' : '#d32f2f'),
+                        border: `1px solid ${cohort.risk === 'Low' ? '#2e7d3220' : (cohort.risk === 'Medium' ? '#ed6c0220' : '#d32f2f20')}`,
+                        borderRadius: '4px',
+                        letterSpacing: '0.01em'
+                      }}
+                    />
+                  </Box>
+
+                  <Divider />
+
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>ACTIVE STUDENTS</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.students} Profiles</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>AVG ATTENDANCE</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.attendance}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>SCRUM SCORE</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.scrum}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>INTERVIEW PASS %</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.interview}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>LEAVE VECTOR</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.leave}</Typography>
+                    </Box>
+                  </Box>
+
+                  <Divider />
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem' }}>DEPLOYMENT PROMPTNESS</Typography>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={cohort.progress}
+                          sx={{
+                            height: 4,
+                            borderRadius: 2,
+                            bgcolor: 'rgba(0,0,0,0.04)',
+                            '& .MuiLinearProgress-bar': { bgcolor: cohort.statusColor }
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.7rem' }}>
+                        {cohort.progress}%
+                      </Typography>
+                    </Stack>
+                  </Box>
+
+                  <Button 
+                    fullWidth
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleInspectBatch(cohort.name)}
+                    sx={{ 
+                      py: 0.6,
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      borderRadius: '6px',
+                      color: 'secondary.main',
+                      borderColor: 'rgba(0,0,0,0.1)',
+                      textTransform: 'uppercase',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        color: 'primary.main',
+                        bgcolor: 'rgba(232, 57, 29, 0.01)'
+                      }
+                    }}
+                  >
+                    INSPECT COHORT
+                  </Button>
+                </Box>
+              ))}
+            </Box>
           </Card>
 
           {/* Side by side: Section 4 (Student Risk Monitor) & Section 6 (Scrum Insight Panel) */}
@@ -813,7 +990,7 @@ const Reports = () => {
               borderRadius: '16px', 
               boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
               bgcolor: 'white', 
-              height: 400, 
+              height: { xs: 'auto', md: 400 }, 
               display: 'flex', 
               flexDirection: 'column',
               width: '100%'
@@ -855,7 +1032,13 @@ const Reports = () => {
                       gap: 1.2
                     }}
                   >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: { xs: 'column', sm: 'row' }, 
+                      justifyContent: 'space-between', 
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      gap: 1.5
+                    }}>
                       <Stack direction="row" spacing={1.5} alignItems="center">
                         <Avatar sx={{ 
                           width: 32, 
@@ -878,7 +1061,7 @@ const Reports = () => {
                         </Box>
                       </Stack>
 
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
                         <Chip 
                           label={student.category.toUpperCase()}
                           size="small"
@@ -955,7 +1138,7 @@ const Reports = () => {
               borderRadius: '16px', 
               boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
               bgcolor: 'white', 
-              height: 400, 
+              height: { xs: 'auto', md: 400 }, 
               display: 'flex', 
               flexDirection: 'column',
               width: '100%'
@@ -982,6 +1165,8 @@ const Reports = () => {
                 <Box sx={{ 
                   borderRight: { sm: '1px solid rgba(0,0,0,0.08)' }, 
                   pr: { sm: 2 }, 
+                  pb: { xs: 2, sm: 0 },
+                  borderBottom: { xs: '1px solid rgba(0,0,0,0.08)', sm: 'none' },
                   display: 'flex', 
                   flexDirection: 'column', 
                   gap: 1.2,
@@ -1011,6 +1196,8 @@ const Reports = () => {
                 <Box sx={{ 
                   borderRight: { sm: '1px solid rgba(0,0,0,0.08)' }, 
                   px: { sm: 2 }, 
+                  pb: { xs: 2, sm: 0 },
+                  borderBottom: { xs: '1px solid rgba(0,0,0,0.08)', sm: 'none' },
                   display: 'flex', 
                   flexDirection: 'column', 
                   gap: 1.2,
@@ -1034,6 +1221,7 @@ const Reports = () => {
                 {/* Column 3: Contributors */}
                 <Box sx={{ 
                   pl: { sm: 1 }, 
+                  pt: { xs: 1, sm: 0 },
                   display: 'flex', 
                   flexDirection: 'column', 
                   gap: 1.2,
@@ -1141,129 +1329,7 @@ const Reports = () => {
 
           </Box>
 
-          {/* Section 7: Leave Analytics Center */}
-          <Card sx={{ 
-            p: 2, 
-            border: '1px solid rgba(0,0,0,0.05)', 
-            borderRadius: '16px', 
-            boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
-            bgcolor: 'white' 
-          }}>
-            <Box sx={{ pb: 1, borderBottom: '1px solid rgba(0,0,0,0.05)', mb: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                Leave Analytics Center
-              </Typography>
-            </Box>
 
-            <Grid container spacing={2} sx={{ width: '100%', m: 0 }}>
-              
-              {/* Column 1: Leave Distribution */}
-              <Grid item xs={12} md={4} sx={{ borderRight: { md: '1px solid rgba(0,0,0,0.05)' }, pr: { md: 2 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 1 }}>
-                  <PieChart sx={{ color: 'primary.main', fontSize: '0.95rem' }} />
-                  <Typography variant="caption" fontWeight={900} color="secondary.main" sx={{ letterSpacing: '0.05em', fontSize: '0.65rem' }}>LEAVE CATEGORY SPREAD</Typography>
-                </Box>
-
-                <Stack spacing={1}>
-                  {LEAVE_ANALYTICS_DATA.types.map((type, idx) => (
-                    <Box key={idx}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.2 }}>
-                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ fontSize: '0.65rem' }}>{type.name}</Typography>
-                        <Stack direction="row" spacing={0.8} alignItems="center">
-                          <Typography variant="caption" fontWeight={800} color="secondary.main" sx={{ fontSize: '0.65rem' }}>{type.percentage}%</Typography>
-                          <Chip label={type.rate} size="small" sx={{ height: 12, fontSize: '0.48rem', fontWeight: 900, bgcolor: 'rgba(0,0,0,0.03)', color: 'text.secondary', borderRadius: '3px' }} />
-                        </Stack>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={type.percentage} 
-                        sx={{ 
-                          height: 3, 
-                          borderRadius: 1.5, 
-                          bgcolor: 'rgba(0,0,0,0.04)',
-                          '& .MuiLinearProgress-bar': { bgcolor: 'primary.main' }
-                        }} 
-                      />
-                    </Box>
-                  ))}
-                </Stack>
-              </Grid>
-
-              {/* Column 2: Key Operational Metrics */}
-              <Grid item xs={12} md={4} sx={{ borderRight: { md: '1px solid rgba(0,0,0,0.05)' }, px: { md: 2 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 1 }}>
-                  <Timer sx={{ color: 'secondary.main', fontSize: '0.95rem' }} />
-                  <Typography variant="caption" fontWeight={900} color="secondary.main" sx={{ letterSpacing: '0.05em', fontSize: '0.65rem' }}>KEY OPERATIONAL VELOCITY</Typography>
-                </Box>
-
-                <Grid container spacing={1}>
-                  {LEAVE_ANALYTICS_DATA.metrics.map((metric, idx) => (
-                    <Grid item xs={12} key={idx}>
-                      <Box sx={{ 
-                        p: 1, 
-                        border: '1px solid rgba(0,0,0,0.05)', 
-                        borderRadius: '8px', 
-                        bgcolor: '#F9FAFB',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <Box>
-                          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ fontSize: '0.62rem', display: 'block' }}>{metric.name.toUpperCase()}</Typography>
-                          <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.52rem', fontWeight: 500 }}>{metric.desc}</Typography>
-                        </Box>
-                        <Typography variant="subtitle2" fontWeight={900} color="primary.main" sx={{ fontFamily: 'Outfit' }}>
-                          {metric.value}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Grid>
-
-              {/* Column 3: Monthly Comparisons */}
-              <Grid item xs={12} md={4} sx={{ pl: { md: 2 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 1 }}>
-                  <TrendingUp sx={{ color: 'success.main', fontSize: '0.95rem' }} />
-                  <Typography variant="caption" fontWeight={900} color="secondary.main" sx={{ letterSpacing: '0.05em', fontSize: '0.65rem' }}>MONTHLY COMPARISONS</Typography>
-                </Box>
-
-                <Stack spacing={0.8} sx={{ overflowY: 'auto', maxHeight: 120 }}>
-                  {LEAVE_ANALYTICS_DATA.trends.map((trend, idx) => (
-                    <Box 
-                      key={idx} 
-                      sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        p: 0.5,
-                        borderRadius: '4px',
-                        borderBottom: '1px solid rgba(0,0,0,0.02)',
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.01)' }
-                      }}
-                    >
-                      <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ fontSize: '0.68rem' }}>{trend.month}</Typography>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="caption" fontWeight={800} color="secondary.main" sx={{ fontSize: '0.68rem' }}>{trend.count} logs</Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={Math.min((trend.count / 70) * 100, 100)} 
-                          sx={{ 
-                            width: 50,
-                            height: 2, 
-                            borderRadius: 1, 
-                            bgcolor: 'rgba(0,0,0,0.04)',
-                            '& .MuiLinearProgress-bar': { bgcolor: trend.count > 50 ? '#d32f2f' : '#2e7d32' }
-                          }} 
-                        />
-                      </Stack>
-                    </Box>
-                  ))}
-                </Stack>
-              </Grid>
-
-            </Grid>
-          </Card>
 
           {/* Section 8: Export & Report Actions (Footer Toolbar) */}
           <Card sx={{ 
@@ -1273,7 +1339,13 @@ const Reports = () => {
             bgcolor: 'white'
           }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' }, 
+                justifyContent: 'space-between', 
+                alignItems: { xs: 'stretch', sm: 'center' }, 
+                gap: 2 
+              }}>
                 
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -1284,7 +1356,16 @@ const Reports = () => {
                   </Typography>
                 </Box>
 
-                <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 0.8 }}>
+                <Stack 
+                  direction="row" 
+                  spacing={1} 
+                  sx={{ 
+                    flexWrap: 'wrap', 
+                    gap: 1,
+                    width: { xs: '100%', sm: 'auto' },
+                    justifyContent: { xs: 'space-between', sm: 'flex-start' }
+                  }}
+                >
                   
                   {/* Export PDF Button */}
                   <Button 
@@ -1300,6 +1381,7 @@ const Reports = () => {
                       px: 1.8,
                       py: 0.6,
                       fontSize: '0.65rem',
+                      flex: { xs: 1, sm: 'none' },
                       '&:hover': {
                         borderColor: '#E8391D',
                         bgcolor: 'rgba(232, 57, 29, 0.04)'
@@ -1323,6 +1405,7 @@ const Reports = () => {
                       px: 1.8,
                       py: 0.6,
                       fontSize: '0.65rem',
+                      flex: { xs: 1, sm: 'none' },
                       '&:hover': {
                         borderColor: '#2e7d32',
                         bgcolor: 'rgba(46, 125, 50, 0.04)'
@@ -1345,6 +1428,7 @@ const Reports = () => {
                       px: 1.8,
                       py: 0.6,
                       fontSize: '0.65rem',
+                      flex: { xs: 1, sm: 'none' },
                       '&:hover': {
                         borderColor: 'secondary.main',
                         bgcolor: 'rgba(0,0,0,0.02)'
@@ -1367,6 +1451,7 @@ const Reports = () => {
                       py: 0.6,
                       fontSize: '0.65rem',
                       boxShadow: 'none',
+                      flex: { xs: 1, sm: 'none' },
                       '&:hover': {
                         boxShadow: 'none'
                       }

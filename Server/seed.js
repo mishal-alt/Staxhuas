@@ -22,7 +22,12 @@ const seedDatabase = async () => {
     const seedUser = async (userData) => {
       const existing = await User.findOne({ email: userData.email });
       if (existing) {
-        console.log(`User ${userData.email} already exists. Skipping.`);
+        if (userData.phone !== undefined) existing.phone = userData.phone;
+        if (userData.address !== undefined) existing.address = userData.address;
+        if (userData.emergencyContact !== undefined) existing.emergencyContact = userData.emergencyContact;
+        if (userData.batch !== undefined) existing.batch = userData.batch;
+        await existing.save();
+        console.log(`User ${userData.email} updated in database.`);
         return existing;
       }
       const user = new User(userData);
@@ -51,6 +56,9 @@ const seedDatabase = async () => {
       email: 'student@staxhaus.com',
       password: 'password123',
       role: ROLES.STUDENT,
+      phone: '+91 974550001',
+      address: 'Flat 505, Oasis Park, HSR Layout, Bengaluru',
+      emergencyContact: 'P. Kumar (Father) - +91 90011 22334'
     });
 
     await seedUser({
@@ -102,11 +110,56 @@ const seedDatabase = async () => {
 
     // 6. Seed multiple students in this batch
     const studentsData = [
-      { name: 'Ahmed Khan', email: 'ahmed@staxhaus.com', password: 'password123', role: ROLES.STUDENT, batch: batch._id },
-      { name: 'Sara Ali', email: 'sara@staxhaus.com', password: 'password123', role: ROLES.STUDENT, batch: batch._id },
-      { name: 'Zaid Mirza', email: 'zaid@staxhaus.com', password: 'password123', role: ROLES.STUDENT, batch: batch._id },
-      { name: 'Fatima Noor', email: 'fatima@staxhaus.com', password: 'password123', role: ROLES.STUDENT, batch: batch._id },
-      { name: 'Umar Farooq', email: 'umar@staxhaus.com', password: 'password123', role: ROLES.STUDENT, batch: batch._id },
+      { 
+        name: 'Ahmed Khan', 
+        email: 'ahmed@staxhaus.com', 
+        password: 'password123', 
+        role: ROLES.STUDENT, 
+        batch: batch._id,
+        phone: '+91 974550006', 
+        address: 'No. 45, Crescent Heights, MG Road, Bengaluru',
+        emergencyContact: 'M. Ali (Uncle) - +91 90082 11200'
+      },
+      { 
+        name: 'Sara Ali', 
+        email: 'sara@staxhaus.com', 
+        password: 'password123', 
+        role: ROLES.STUDENT, 
+        batch: batch._id,
+        phone: '+91 974550007', 
+        address: 'Flat 302, Starlight Residency, Koramangala, Bengaluru',
+        emergencyContact: 'Sundar S. (Father) - +91 98452 38450'
+      },
+      { 
+        name: 'Zaid Mirza', 
+        email: 'zaid@staxhaus.com', 
+        password: 'password123', 
+        role: ROLES.STUDENT, 
+        batch: batch._id,
+        phone: '+91 974550008', 
+        address: 'No. 89, Orchid Green Villa, Indiranagar, Bengaluru',
+        emergencyContact: 'S. Mirza (Mother) - +91 99011 23456'
+      },
+      { 
+        name: 'Fatima Noor', 
+        email: 'fatima@staxhaus.com', 
+        password: 'password123', 
+        role: ROLES.STUDENT, 
+        batch: batch._id,
+        phone: '+91 974550009', 
+        address: 'No. 12, Rosewood Garden, Whitefield, Bengaluru',
+        emergencyContact: 'A. Noor (Brother) - +91 98860 12345'
+      },
+      { 
+        name: 'Umar Farooq', 
+        email: 'umar@staxhaus.com', 
+        password: 'password123', 
+        role: ROLES.STUDENT, 
+        batch: batch._id,
+        phone: '+91 974550010', 
+        address: 'Flat 101, Prestige Palms, Electronic City, Bengaluru',
+        emergencyContact: 'H. Farooq (Father) - +91 97402 38450'
+      },
     ];
 
     const seededStudents = [];

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CircularProgress,
@@ -165,6 +165,7 @@ const theme = createTheme({
 
 const BatchDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -276,6 +277,123 @@ const BatchDetail = () => {
   // Scrum Session State
   const [localScrumEntries, setLocalScrumEntries] = useState([]); // Array of { studentId, isPresent, yesterdayProgress, todayPlan, blockers, blockerStatus, actionItems }
   const [scrumEditModal, setScrumEditModal] = useState({ open: false, studentId: null, field: null, title: '' });
+  const [scrumStatus, setScrumStatus] = useState('Not Started');
+  const [scrumStartTime, setScrumStartTime] = useState(null);
+  const [scrumData, setScrumData] = useState({});
+  const [scrumDate, setScrumDate] = useState(new Date());
+  const [scrumEditMode, setScrumEditMode] = useState(false);
+  const [savingStudentId, setSavingStudentId] = useState(null);
+
+  const { data: scrumsRes } = useQuery({
+    queryKey: ['scrums', id],
+    queryFn: () => scrumApi.getScrums(id),
+    enabled: !!id,
+  });
+
+  const saveScrumMutation = useMutation({
+    mutationFn: (data) => scrumApi.logScrum(data),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['scrums', id] });
+      if (variables.status === 'Completed') {
+        queryClient.invalidateQueries({ queryKey: ['attendance', id, new Date().toISOString().split('T')[0]] });
+        localStorage.removeItem(`scrum_draft_${id}`);
+        toast.success('Daily Scrum Session Completed and Saved');
+      } else {
+        toast.success('Scrum progress saved to database');
+      }
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Error saving scrum session');
+    }
+  });
+
+  const saveScrumDraft = (statusVal, startTimeVal, dataVal) => {
+    try {
+      const todayStr = new Date().toLocaleDateString();
+      localStorage.setItem(`scrum_draft_${id}`, JSON.stringify({
+        date: todayStr,
+        status: statusVal,
+        startTime: startTimeVal,
+        data: dataVal
+      }));
+    } catch (e) {
+      console.error('Error saving local scrum draft', e);
+    }
+  };
+
+  // Helper to parse a scrum call document into scrumData map
+  const parseScrumEntries = (scrumDoc) => {
+    const result = {};
+    scrumDoc.entries.forEach(entry => {
+      const studentId = entry.student?._id || entry.student;
+      let yesterday = '', today = '', status = 'No Update';
+      if (entry.progressUpdate) {
+        entry.progressUpdate.split('\n').forEach(line => {
+          if (line.startsWith('Yesterday: ')) yesterday = line.replace('Yesterday: ', '');
+          else if (line.startsWith('Today: ')) today = line.replace('Today: ', '');
+          else if (line.startsWith('Status: ')) status = line.replace('Status: ', '');
+        });
+      }
+      let blocker = 'No Issues', blockerNote = '';
+      if (entry.blockers && !entry.blockers.startsWith('No Issues')) {
+        const dashIndex = entry.blockers.indexOf(' - ');
+        if (dashIndex !== -1) {
+          blocker = entry.blockers.substring(0, dashIndex);
+          blockerNote = entry.blockers.substring(dashIndex + 3);
+        } else { blocker = entry.blockers; }
+      }
+      result[studentId] = { yesterday, today, blocker, blockerNote, notes: entry.actionItems || '', status };
+    });
+    return result;
+  };
+
+  React.useEffect(() => {
+    if (scrumsRes?.data) {
+      const selectedDateStr = scrumDate.toDateString();
+      const matchingScrum = scrumsRes.data.find(s => new Date(s.date).toDateString() === selectedDateStr);
+      const isToday = new Date().toDateString() === selectedDateStr;
+
+      if (matchingScrum) {
+        const dbStatus = matchingScrum.status || 'Completed';
+        setScrumStatus(dbStatus);
+        setScrumEditMode(false);
+        if (matchingScrum.startTime) {
+          setScrumStartTime(matchingScrum.startTime);
+        } else if (matchingScrum.createdAt) {
+          setScrumStartTime(new Date(matchingScrum.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        }
+        setScrumData(parseScrumEntries(matchingScrum));
+        if (dbStatus === 'Completed' && isToday) {
+          localStorage.removeItem(`scrum_draft_${id}`);
+        }
+      } else if (isToday) {
+        // No DB scrum for today — try local draft
+        try {
+          const rawDraft = localStorage.getItem(`scrum_draft_${id}`);
+          if (rawDraft) {
+            const draft = JSON.parse(rawDraft);
+            if (draft.date === new Date().toLocaleDateString()) {
+              setScrumStatus(draft.status || 'Not Started');
+              setScrumStartTime(draft.startTime || null);
+              setScrumData(draft.data || {});
+              setScrumEditMode(false);
+              return;
+            }
+          }
+        } catch (e) { console.error('Failed to parse local scrum draft', e); }
+        setScrumStatus('Not Started');
+        setScrumStartTime(null);
+        setScrumData({});
+        setScrumEditMode(false);
+      } else {
+        // Past date with no scrum
+        setScrumStatus('No Record');
+        setScrumStartTime(null);
+        setScrumData({});
+        setScrumEditMode(false);
+      }
+    }
+  }, [scrumsRes, id, scrumDate]);
 
   const { data: interviewsRes, isLoading: interviewsLoading } = useQuery({
     queryKey: ['interviews', id],
@@ -364,20 +482,24 @@ const BatchDetail = () => {
   };
 
   const handleUpdateScrum = (studentId, field, value) => {
-    setScrumData(prev => ({
-      ...prev,
-      [studentId]: {
-        ...(prev[studentId] || {
-          yesterday: '',
-          today: '',
-          blocker: 'No Issues',
-          blockerNote: '',
-          notes: '',
-          status: 'No Update'
-        }),
-        [field]: value
-      }
-    }));
+    setScrumData(prev => {
+      const updated = {
+        ...prev,
+        [studentId]: {
+          ...(prev[studentId] || {
+            yesterday: '',
+            today: '',
+            blocker: 'No Issues',
+            blockerNote: '',
+            notes: '',
+            status: 'No Update'
+          }),
+          [field]: value
+        }
+      };
+      saveScrumDraft(scrumStatus, scrumStartTime, updated);
+      return updated;
+    });
   };
 
   const getScrumStatusColor = (status) => {
@@ -390,15 +512,107 @@ const BatchDetail = () => {
   };
 
   const startScrumSession = () => {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setScrumStatus('In Progress');
-    setScrumStartTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setScrumStartTime(timeStr);
+    saveScrumDraft('In Progress', timeStr, scrumData);
     toast.success('Daily Scrum Session Started');
   };
 
-  const completeScrumSession = () => {
-    setScrumStatus('Completed');
-    toast.success('Daily Scrum Session Completed');
+  const buildScrumPayload = (statusVal, overrideDate) => {
+    const targetDate = overrideDate || scrumDate;
+    const entries = students.map((student) => {
+      const data = scrumData[student._id] || {};
+      const isPresent = attendanceMap[student._id] !== 'A';
+      const yesterdayText = data.yesterday ? `Yesterday: ${data.yesterday}` : '';
+      const todayText = data.today ? `Today: ${data.today}` : '';
+      const statusText = data.status ? `Status: ${data.status}` : '';
+      const progressUpdate = [yesterdayText, todayText, statusText].filter(Boolean).join('\n') || 'No Update';
+      const blockers = data.blocker !== 'No Issues'
+        ? `${data.blocker}${data.blockerNote ? ` - ${data.blockerNote}` : ''}`
+        : 'No Issues';
+      return { student: student._id, isPresent, progressUpdate, blockers, actionItems: data.notes || '' };
+    });
+    return {
+      batch: id,
+      date: targetDate.toISOString(),
+      agenda: `Daily Morning Scrum - ${targetDate.toLocaleDateString()}`,
+      status: statusVal,
+      startTime: scrumStartTime,
+      entries
+    };
   };
+
+  const handleSaveProgress = () => {
+    const payload = buildScrumPayload('In Progress');
+    if (payload.entries.length === 0) { toast.error('No students in batch to log scrum call.'); return; }
+    saveScrumMutation.mutate(payload);
+  };
+
+  const completeScrumSession = () => {
+    const payload = buildScrumPayload('Completed');
+    if (payload.entries.length === 0) { toast.error('No students in batch to log scrum call.'); return; }
+    saveScrumMutation.mutate(payload);
+    setScrumEditMode(false);
+  };
+
+  const restartScrumSession = () => {
+    setScrumStatus('Not Started');
+    setScrumStartTime(null);
+    setScrumData({});
+    setScrumEditMode(false);
+    localStorage.removeItem(`scrum_draft_${id}`);
+    toast.success('Scrum session restarted');
+  };
+
+  const handleSaveStudentRow = async (student) => {
+    if (students.length === 0) { toast.error('No students found.'); return; }
+    setSavingStudentId(student._id);
+    const data = scrumData[student._id] || {};
+    const isPresent = attendanceMap[student._id] !== 'A';
+    const yesterdayText = data.yesterday ? `Yesterday: ${data.yesterday}` : '';
+    const todayText = data.today ? `Today: ${data.today}` : '';
+    const statusText = data.status ? `Status: ${data.status}` : '';
+    const progressUpdate = [yesterdayText, todayText, statusText].filter(Boolean).join('\n') || 'No Update';
+    const blockers = data.blocker !== 'No Issues'
+      ? `${data.blocker}${data.blockerNote ? ` - ${data.blockerNote}` : ''}`
+      : 'No Issues';
+    // Build full payload (upsert) with all students, patching this student's data
+    const allEntries = students.map((s) => {
+      const d = scrumData[s._id] || {};
+      const sYesterday = d.yesterday ? `Yesterday: ${d.yesterday}` : '';
+      const sToday = d.today ? `Today: ${d.today}` : '';
+      const sStatusText = d.status ? `Status: ${d.status}` : '';
+      const sProgress = [sYesterday, sToday, sStatusText].filter(Boolean).join('\n') || 'No Update';
+      const sBlockers = d.blocker !== 'No Issues'
+        ? `${d.blocker}${d.blockerNote ? ` - ${d.blockerNote}` : ''}`
+        : 'No Issues';
+      return { student: s._id, isPresent: attendanceMap[s._id] !== 'A', progressUpdate: sProgress, blockers: sBlockers, actionItems: d.notes || '' };
+    });
+    const payload = {
+      batch: id,
+      date: scrumDate.toISOString(),
+      agenda: `Daily Morning Scrum - ${scrumDate.toLocaleDateString()}`,
+      status: scrumStatus === 'Completed' ? 'Completed' : 'In Progress',
+      startTime: scrumStartTime,
+      entries: allEntries
+    };
+    try {
+      await scrumApi.logScrum(payload);
+      queryClient.invalidateQueries({ queryKey: ['scrums', id] });
+      toast.success(`Saved ${student.name}'s entry`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Failed to save ${student.name}'s entry`);
+    } finally {
+      setSavingStudentId(null);
+    }
+  };
+
+  // Scrum date navigation helpers
+  const isScrumToday = new Date().toDateString() === scrumDate.toDateString();
+  const scrumGoToPrevDay = () => setScrumDate(prev => { const d = new Date(prev); d.setDate(d.getDate() - 1); return d; });
+  const scrumGoToNextDay = () => setScrumDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + 1); return d; });
+  const scrumGoToToday = () => { setScrumDate(new Date()); };
 
 
   // Leave helpers
@@ -622,83 +836,58 @@ const BatchDetail = () => {
   return (
     <ThemeProvider theme={theme}>
       <AppShell>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6, pb: 8 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 4 }, pb: { xs: 10, md: 8 } }}>
 
           {/* Header */}
           <Box sx={{
-            pt: 4,
-            pb: 3,
-            px: 6,
-            mx: -6,
-            mt: -6,
+            pt: { xs: 2, md: 4 },
+            pb: { xs: 2, md: 3 },
+            px: { xs: 2, md: 6 },
+            mx: { xs: -2, md: -6 },
+            mt: { xs: -2, md: -6 },
             background: 'white',
             borderBottom: '1px solid #E5E7EB',
-            mb: 3
+            mb: { xs: 1, md: 3 }
           }}>
-            <Breadcrumbs
-              separator=">"
-              sx={{ mb: 1.5 }}
-            >
-              <MuiLink
-                component={Link}
-                to="/dashboard"
-                underline="none"
-                color="text.secondary"
-                sx={{ fontSize: '0.75rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
-              >
-                DASHBOARD
-              </MuiLink>
-              <MuiLink
-                component={Link}
-                to="/batches"
-                underline="none"
-                color="text.secondary"
-                sx={{ fontSize: '0.75rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
-              >
-                BATCHES
-              </MuiLink>
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>
-                DETAIL
-              </Typography>
+            <Breadcrumbs separator=">" sx={{ mb: 1 }}>
+              <MuiLink component={Link} to="/dashboard" underline="none" color="text.secondary"
+                sx={{ fontSize: '0.7rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}>DASHBOARD</MuiLink>
+              <MuiLink component={Link} to="/batches" underline="none" color="text.secondary"
+                sx={{ fontSize: '0.7rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}>BATCHES</MuiLink>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.primary' }}>DETAIL</Typography>
             </Breadcrumbs>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
+                  width: 40, height: 40, borderRadius: '50%',
                   bgcolor: 'rgba(232, 57, 29, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'primary.main'
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'primary.main', flexShrink: 0
                 }}>
-                  <School />
+                  <School sx={{ fontSize: 20 }} />
                 </Box>
                 <Box>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2, textTransform: 'uppercase' }}>
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                    <Typography variant="h4" fontWeight={900}
+                      sx={{ fontSize: { xs: '1rem', md: '1.5rem' }, color: '#1E2126', lineHeight: 1.2, textTransform: 'uppercase' }}>
                       {batch?.name}
                     </Typography>
-                    <Chip label="MANAGED BATCH" size="small" sx={{ bgcolor: 'rgba(232, 57, 29, 0.1)', color: 'primary.main', fontWeight: 900, borderRadius: 2, fontSize: '0.6rem' }} />
+                    <Chip label="MANAGED" size="small"
+                      sx={{ bgcolor: 'rgba(232,57,29,0.1)', color: 'primary.main', fontWeight: 900, borderRadius: 2, fontSize: '0.55rem' }} />
                   </Stack>
-                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: '0.7rem' }}>
                     Facilitator: <b>{batch?.facilitator?.name}</b>
                   </Typography>
                 </Box>
               </Box>
 
+              {/* Date/Time — hidden on xs */}
               <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                px: 2.5,
-                py: 1,
-                borderRadius: '12px',
-                border: '1px solid rgba(0,0,0,0.08)',
-                bgcolor: 'white',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                display: { xs: 'none', sm: 'flex' },
+                alignItems: 'center', gap: 2, px: 2.5, py: 1,
+                borderRadius: '12px', border: '1px solid rgba(0,0,0,0.08)',
+                bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
               }}>
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <CalendarToday sx={{ fontSize: 18, color: 'primary.main' }} />
@@ -713,6 +902,18 @@ const BatchDetail = () => {
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </Typography>
                 </Stack>
+              </Box>
+
+              {/* Compact date badge — xs only */}
+              <Box sx={{
+                display: { xs: 'flex', sm: 'none' },
+                alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
+                borderRadius: 2, bgcolor: 'rgba(232,57,29,0.07)', color: 'primary.main'
+              }}>
+                <CalendarToday sx={{ fontSize: 14 }} />
+                <Typography variant="caption" fontWeight={900} sx={{ fontSize: '0.65rem' }}>
+                  {currentTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}
+                </Typography>
               </Box>
             </Box>
           </Box>
@@ -819,113 +1020,152 @@ const BatchDetail = () => {
               onChange={(e, v) => setActiveTab(v)}
               textColor="primary"
               indicatorColor="primary"
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
-                '& .MuiTabs-indicator': {
-                  height: 3,
-                  borderRadius: '3px 3px 0 0'
-                },
+                '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' },
+                '& .MuiTabs-scrollButtons': { color: 'primary.main' },
                 '& .MuiTab-root': {
                   fontWeight: 900,
-                  fontSize: '0.85rem',
+                  fontSize: { xs: '0.65rem', md: '0.85rem' },
                   letterSpacing: '0.02em',
-                  px: 4,
-                  minHeight: 48,
+                  px: { xs: 1.5, md: 3 },
+                  minWidth: { xs: 'auto', md: 80 },
+                  minHeight: 44,
                   color: 'text.secondary',
-                  '&.Mui-selected': {
-                    color: 'primary.main',
-                  }
+                  '&.Mui-selected': { color: 'primary.main' }
                 }
               }}
             >
-              <Tab label="STUDENTS" />
-              <Tab label="ATTENDANCE" />
-              <Tab label="LEAVES" />
-              <Tab label="SCRUM" />
-              <Tab label="INTERVIEWS" />
-              <Tab label="ANALYTICS" />
+              <Tab label="Students" />
+              <Tab label="Attendance" />
+              <Tab label="Leaves" />
+              <Tab label="Scrum" />
+              <Tab label="Interviews" />
+              <Tab label="Analytics" />
             </Tabs>
           </Box>
 
-          {/* Students Table - Only visible on Students Tab */}
+          {/* Students Tab */}
           {activeTab === 0 && (
-            <Card sx={{ borderRadius: 2, overflow: 'hidden', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
-              <TableContainer>
-                <Table sx={{ minWidth: 800 }}>
-                  <TableHead sx={{ bgcolor: 'rgba(247, 247, 245, 0.5)' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem', py: 2 }}>Student</TableCell>
-                      <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Attendance</TableCell>
-                      <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Leaves</TableCell>
-                      <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Curr. Module</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {students.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.email.toLowerCase().includes(searchQuery.toLowerCase())).map((student) => (
-                      <TableRow key={student._id} sx={{ '&:hover': { bgcolor: 'rgba(247, 247, 245, 0.8)' } }}>
-                        <TableCell sx={{ py: 3 }}>
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Avatar
-                              sx={{
-                                bgcolor: 'secondary.main',
-                                borderRadius: 2,
-                                fontWeight: 900,
-                                width: 40,
-                                height: 40
-                              }}
-                            >
-                              {student.name[0]}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'secondary.main', lineHeight: 1.2 }}>{student.name}</Typography>
-                              <Typography variant="caption" color="text.secondary" fontWeight={600}>{student.email}</Typography>
-                            </Box>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={student.status.toLowerCase()}
-                            size="small"
-                            sx={{
-                              fontWeight: 900,
-                              textTransform: 'lowercase',
-                              fontSize: '0.65rem',
-                              bgcolor: student.status === STUDENT_STATUS.ACTIVE ? '#228B22' : 'rgba(0,0,0,0.06)',
-                              color: student.status === STUDENT_STATUS.ACTIVE ? 'white' : 'text.secondary',
-                              borderRadius: 1.5,
-                              px: 0.5,
-                              height: 20
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={700} color="text.primary">94%</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={700} color="text.primary">3/10</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={600} color="text.secondary">React Foundations</Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" sx={{ color: 'text.disabled' }}>
-                            <MoreVert />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {students.length === 0 && (
+            <>
+              {/* Desktop table */}
+              <Card sx={{ display: { xs: 'none', md: 'block' }, borderRadius: 2, overflow: 'hidden', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+                <TableContainer>
+                  <Table sx={{ minWidth: 800 }}>
+                    <TableHead sx={{ bgcolor: 'rgba(247, 247, 245, 0.5)' }}>
                       <TableRow>
-                        <TableCell colSpan={6} sx={{ py: 12, textAlign: 'center' }}>
-                          <Typography variant="body1" color="text.secondary" fontWeight={600}>No students found in this batch.</Typography>
-                        </TableCell>
+                        <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem', py: 2 }}>Student</TableCell>
+                        <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Attendance</TableCell>
+                        <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Leaves</TableCell>
+                        <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Curr. Module</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem' }}>Actions</TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Card>
+                    </TableHead>
+                    <TableBody>
+                      {students.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.email.toLowerCase().includes(searchQuery.toLowerCase())).map((student) => (
+                        <TableRow key={student._id} sx={{ '&:hover': { bgcolor: 'rgba(247, 247, 245, 0.8)' } }}>
+                          <TableCell 
+                            onClick={() => navigate(`/student-profile/${student._id}`)}
+                            sx={{ 
+                              py: 3,
+                              cursor: 'pointer',
+                              '&:hover .student-name': { color: 'primary.main' }
+                            }}
+                          >
+                            <Stack 
+                              direction="row" 
+                              spacing={2} 
+                              alignItems="center"
+                            >
+                              <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, fontWeight: 900, width: 40, height: 40 }}>{student.name[0]}</Avatar>
+                              <Box>
+                                <Typography 
+                                  className="student-name"
+                                  variant="subtitle2" 
+                                  fontWeight={800} 
+                                  sx={{ 
+                                    color: 'secondary.main', 
+                                    lineHeight: 1.2,
+                                    transition: 'color 0.15s ease'
+                                  }}
+                                >
+                                  {student.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>{student.email}</Typography>
+                              </Box>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Chip label={student.status.toLowerCase()} size="small" sx={{ fontWeight: 900, fontSize: '0.65rem', bgcolor: student.status === STUDENT_STATUS.ACTIVE ? '#228B22' : 'rgba(0,0,0,0.06)', color: student.status === STUDENT_STATUS.ACTIVE ? 'white' : 'text.secondary', borderRadius: 1.5, height: 20 }} />
+                          </TableCell>
+                          <TableCell><Typography variant="body2" fontWeight={700}>94%</Typography></TableCell>
+                          <TableCell><Typography variant="body2" fontWeight={700}>3/10</Typography></TableCell>
+                          <TableCell><Typography variant="body2" fontWeight={600} color="text.secondary">React Foundations</Typography></TableCell>
+                          <TableCell align="right"><IconButton size="small" sx={{ color: 'text.disabled' }}><MoreVert /></IconButton></TableCell>
+                        </TableRow>
+                      ))}
+                      {students.length === 0 && (
+                        <TableRow><TableCell colSpan={6} sx={{ py: 12, textAlign: 'center' }}><Typography color="text.secondary" fontWeight={600}>No students found.</Typography></TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Card>
+
+              {/* Mobile card list */}
+              <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+                {students.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.email.toLowerCase().includes(searchQuery.toLowerCase())).map((student) => (
+                  <Card key={student._id} sx={{ borderRadius: 2, border: '1px solid rgba(0,0,0,0.06)', bgcolor: 'white' }}>
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Stack 
+                        direction="row" 
+                        spacing={1.5} 
+                        alignItems="center" 
+                        sx={{ 
+                          mb: 1.5,
+                          cursor: 'pointer',
+                          '&:hover .student-name': { color: 'primary.main' }
+                        }}
+                        onClick={() => navigate(`/student-profile/${student._id}`)}
+                      >
+                        <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, fontWeight: 900, width: 40, height: 40, fontSize: '1rem' }}>{student.name[0]}</Avatar>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography 
+                            className="student-name"
+                            variant="subtitle2" 
+                            fontWeight={800} 
+                            color="secondary" 
+                            noWrap
+                            sx={{ transition: 'color 0.15s ease' }}
+                          >
+                            {student.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>{student.email}</Typography>
+                        </Box>
+                        <Chip label={student.status.toLowerCase()} size="small" sx={{ fontWeight: 900, fontSize: '0.6rem', bgcolor: student.status === STUDENT_STATUS.ACTIVE ? '#228B22' : 'rgba(0,0,0,0.06)', color: student.status === STUDENT_STATUS.ACTIVE ? 'white' : 'text.secondary', borderRadius: 1.5, flexShrink: 0 }} />
+                      </Stack>
+                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                        <Box sx={{ bgcolor: 'rgba(46,125,50,0.08)', px: 1.5, py: 0.5, borderRadius: 1.5 }}>
+                          <Typography variant="caption" fontWeight={900} color="#2e7d32" sx={{ fontSize: '0.65rem' }}>ATTENDANCE: 94%</Typography>
+                        </Box>
+                        <Box sx={{ bgcolor: 'rgba(21,101,192,0.08)', px: 1.5, py: 0.5, borderRadius: 1.5 }}>
+                          <Typography variant="caption" fontWeight={900} color="#1565c0" sx={{ fontSize: '0.65rem' }}>LEAVES: 3/10</Typography>
+                        </Box>
+                        <Box sx={{ bgcolor: 'rgba(0,0,0,0.04)', px: 1.5, py: 0.5, borderRadius: 1.5 }}>
+                          <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ fontSize: '0.65rem' }}>React Foundations</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                ))}
+                {students.length === 0 && (
+                  <Box sx={{ py: 8, textAlign: 'center' }}><Typography color="text.secondary" fontWeight={600}>No students found.</Typography></Box>
+                )}
+              </Stack>
+            </>
           )}
 
           {/* ============== ATTENDANCE TAB PANEL ============== */}
@@ -966,30 +1206,6 @@ const BatchDetail = () => {
                       </Button>
                     </Stack>
 
-                    {/* Scrum Status Toggle */}
-                      <Box
-                        onClick={() => setScrumCompleted(prev => !prev)}
-                      sx={{
-                        display: 'flex', alignItems: 'center', gap: 1.5,
-                        px: 2.5, py: 1, borderRadius: '10px',
-                        border: `1.5px solid ${scrumCompleted ? 'rgba(46,125,50,0.4)' : 'rgba(0,0,0,0.12)'}`,
-                        bgcolor: scrumCompleted ? 'rgba(46,125,50,0.06)' : 'rgba(0,0,0,0.02)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        '&:hover': { borderColor: 'primary.main' }
-                      }}
-                    >
-                      {scrumCompleted
-                        ? <CheckCircle sx={{ fontSize: 18, color: '#2e7d32' }} />
-                        : <RadioButtonUnchecked sx={{ fontSize: 18, color: 'text.disabled' }} />}
-                      <Box>
-                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', fontSize: '0.6rem', letterSpacing: '0.08em' }}>SCRUM STATUS</Typography>
-                        <Typography variant="subtitle2" fontWeight={900} color={scrumCompleted ? '#2e7d32' : 'text.secondary'} sx={{ lineHeight: 1 }}>
-                          {scrumCompleted ? 'Completed' : 'Not Completed'}
-                        </Typography>
-                      </Box>
-                    </Box>
-
                   </Box>
                 </CardContent>
               </Card>
@@ -1007,26 +1223,28 @@ const BatchDetail = () => {
               )}
 
               {/* Bulk Actions */}
-              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.1em', mr: 1 }}>BULK MARK:</Typography>
-                {[{ code: 'P', label: 'Mark All Present', color: '#2e7d32' },
-                { code: 'A', label: 'Mark All Absent', color: '#d32f2f' },
-                { code: 'L', label: 'Mark All Leave', color: '#7b1fa2' },
-                { code: 'H', label: 'Mark All Half Day', color: '#e65100' },
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.1em', mr: 0.5, flexShrink: 0 }}>BULK MARK:</Typography>
+                {[{ code: 'P', label: 'All Present', color: '#2e7d32' },
+                { code: 'A', label: 'All Absent', color: '#d32f2f' },
+                { code: 'L', label: 'All Leave', color: '#7b1fa2' },
+                { code: 'H', label: 'Half Day', color: '#e65100' },
                 ].map(({ code, label, color }) => (
                   <Button
                     key={code}
                     size="small"
                     onClick={() => markAll(code)}
                     sx={{
-                      fontWeight: 900, fontSize: '0.7rem', px: 2,
+                      fontWeight: 900, fontSize: '0.7rem', px: { xs: 1.5, md: 2 },
                       borderRadius: 2, textTransform: 'uppercase',
                       bgcolor: `${color}12`, color,
                       border: `1px solid ${color}40`,
-                      '&:hover': { bgcolor: `${color}20` }
+                      '&:hover': { bgcolor: `${color}20` },
+                      minWidth: 'unset'
                     }}
                   >
-                    {label}
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{label}</Box>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>{code}</Box>
                   </Button>
                 ))}
                 <Box sx={{ ml: 'auto' }}>
@@ -1042,8 +1260,8 @@ const BatchDetail = () => {
                 </Box>
               </Box>
 
-              {/* Attendance Table */}
-              <Card sx={{ borderRadius: 2, overflow: 'hidden', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+              {/* Attendance Table — desktop */}
+              <Card sx={{ display: { xs: 'none', md: 'block' }, borderRadius: 2, overflow: 'hidden', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
                 <TableContainer>
                   <Table sx={{ minWidth: 650 }}>
                     <TableHead sx={{ bgcolor: 'rgba(247,247,245,0.8)' }}>
@@ -1059,100 +1277,97 @@ const BatchDetail = () => {
                         const status = attendanceMap[student._id];
                         const style = getAttendanceStatusColor(status);
                         return (
-                          <TableRow
-                            key={student._id}
-                            sx={{
-                              bgcolor: style.bg,
-                              borderLeft: `3px solid ${status ? style.border : 'transparent'}`,
-                              transition: 'all 0.15s ease',
-                              '&:hover': { filter: 'brightness(0.97)' }
-                            }}
-                          >
-                            {/* Student */}
+                          <TableRow key={student._id} sx={{ bgcolor: style.bg, borderLeft: `3px solid ${status ? style.border : 'transparent'}`, transition: 'all 0.15s ease', '&:hover': { filter: 'brightness(0.97)' } }}>
                             <TableCell sx={{ py: 2 }}>
                               <Stack direction="row" spacing={1.5} alignItems="center">
-                                <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, width: 36, height: 36, fontSize: '0.9rem', fontWeight: 900 }}>
-                                  {student.name[0]}
-                                </Avatar>
+                                <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, width: 36, height: 36, fontSize: '0.9rem', fontWeight: 900 }}>{student.name[0]}</Avatar>
                                 <Box>
                                   <Typography variant="subtitle2" fontWeight={800} color="secondary" sx={{ lineHeight: 1.2 }}>{student.name}</Typography>
                                   <Typography variant="caption" color="text.secondary">{student.email}</Typography>
                                 </Box>
                               </Stack>
                             </TableCell>
-
-                            {/* One-click Buttons */}
                             <TableCell>
                               <Stack direction="row" spacing={0.8}>
                                 {[{ code: 'P', color: '#2e7d32' }, { code: 'A', color: '#d32f2f' }, { code: 'L', color: '#7b1fa2' }, { code: 'H', color: '#e65100' }].map(({ code, color }) => (
-                                  <Box
-                                    key={code}
-                                    onClick={() => markStudent(student._id, status === code ? undefined : code)}
-                                    sx={{
-                                      width: 32, height: 32,
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                      borderRadius: '8px',
-                                      cursor: 'pointer',
-                                      fontWeight: 900, fontSize: '0.75rem',
-                                      bgcolor: status === code ? color : `${color}15`,
-                                      color: status === code ? 'white' : color,
-                                      border: `1.5px solid ${status === code ? color : `${color}40`}`,
-                                      transition: 'all 0.15s ease',
-                                      '&:hover': { bgcolor: status === code ? color : `${color}30` },
-                                      userSelect: 'none'
-                                    }}
-                                  >
-                                    {code}
-                                  </Box>
+                                  <Box key={code} onClick={() => markStudent(student._id, status === code ? undefined : code)}
+                                    sx={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', cursor: 'pointer', fontWeight: 900, fontSize: '0.75rem', bgcolor: status === code ? color : `${color}15`, color: status === code ? 'white' : color, border: `1.5px solid ${status === code ? color : `${color}40`}`, transition: 'all 0.15s ease', '&:hover': { bgcolor: status === code ? color : `${color}30` }, userSelect: 'none' }}
+                                  >{code}</Box>
                                 ))}
                               </Stack>
                             </TableCell>
-
-                            {/* Status Badge */}
                             <TableCell>
                               {status ? (
-                                <Chip
-                                  label={style.label}
-                                  size="small"
-                                  sx={{
-                                    fontWeight: 900, fontSize: '0.65rem',
-                                    bgcolor: style.bg,
-                                    color: style.text,
-                                    border: `1px solid ${style.border}`,
-                                    borderRadius: 1.5
-                                  }}
-                                />
+                                <Chip label={style.label} size="small" sx={{ fontWeight: 900, fontSize: '0.65rem', bgcolor: style.bg, color: style.text, border: `1px solid ${style.border}`, borderRadius: 1.5 }} />
                               ) : (
                                 <Typography variant="caption" color="text.disabled" fontWeight={600}>Not marked</Typography>
                               )}
                             </TableCell>
-
-                            {/* Remarks */}
                             <TableCell sx={{ minWidth: 200 }}>
-                              <TextField
-                                size="small"
-                                placeholder="Optional remark..."
-                                value={remarksMap[student._id] || ''}
-                                onChange={e => setRemarksMap(prev => ({ ...prev, [student._id]: e.target.value }))}
-                                onBlur={() => handleRemarkBlur(student._id)}
-                                InputProps={{ sx: { borderRadius: 2, fontSize: '0.8rem', bgcolor: 'rgba(255,255,255,0.8)' } }}
-                                sx={{ width: '100%' }}
-                              />
+                              <TextField size="small" placeholder="Optional remark..." value={remarksMap[student._id] || ''} onChange={e => setRemarksMap(prev => ({ ...prev, [student._id]: e.target.value }))} onBlur={() => handleRemarkBlur(student._id)} InputProps={{ sx: { borderRadius: 2, fontSize: '0.8rem', bgcolor: 'rgba(255,255,255,0.8)' } }} sx={{ width: '100%' }} />
                             </TableCell>
                           </TableRow>
                         );
                       })}
                       {students.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} sx={{ py: 12, textAlign: 'center' }}>
-                            <Typography variant="body1" color="text.secondary" fontWeight={600}>No students in this batch.</Typography>
-                          </TableCell>
-                        </TableRow>
+                        <TableRow><TableCell colSpan={4} sx={{ py: 12, textAlign: 'center' }}><Typography color="text.secondary" fontWeight={600}>No students.</Typography></TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </TableContainer>
               </Card>
+
+              {/* Attendance Mobile Card List */}
+              <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+                {students.map((student) => {
+                  const status = attendanceMap[student._id];
+                  const style = getAttendanceStatusColor(status);
+                  return (
+                    <Card key={student._id} sx={{ borderRadius: 2, border: `2px solid ${status ? style.border : 'rgba(0,0,0,0.06)'}`, bgcolor: style.bg || 'white', transition: 'all 0.2s ease' }}>
+                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                        {/* Student info */}
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                          <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, width: 38, height: 38, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{student.name[0]}</Avatar>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle2" fontWeight={800} color="secondary" noWrap>{student.name}</Typography>
+                            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>{student.email}</Typography>
+                          </Box>
+                          {status && <Chip label={style.label} size="small" sx={{ fontWeight: 900, fontSize: '0.6rem', bgcolor: style.bg, color: style.text, border: `1px solid ${style.border}`, borderRadius: 1.5, flexShrink: 0 }} />}
+                        </Stack>
+
+                        {/* Large touch-friendly mark buttons in 2x2 grid */}
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1.5 }}>
+                          {[
+                            { code: 'P', color: '#2e7d32', label: 'Present' },
+                            { code: 'A', color: '#d32f2f', label: 'Absent' },
+                            { code: 'L', color: '#7b1fa2', label: 'On Leave' },
+                            { code: 'H', color: '#e65100', label: 'Half Day' }
+                          ].map(({ code, color, label }) => (
+                            <Box key={code} onClick={() => markStudent(student._id, status === code ? undefined : code)}
+                              sx={{
+                                py: 1, px: 1.5, borderRadius: 2, cursor: 'pointer', textAlign: 'center',
+                                bgcolor: status === code ? color : `${color}12`,
+                                color: status === code ? 'white' : color,
+                                border: `1.5px solid ${status === code ? color : `${color}40`}`,
+                                transition: 'all 0.15s ease', userSelect: 'none',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5
+                              }}
+                            >
+                              <Typography variant="caption" fontWeight={900} sx={{ fontSize: '0.7rem', lineHeight: 1 }}>{code} — {label}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
+
+                        {/* Remark field */}
+                        <TextField size="small" fullWidth placeholder="Optional remark..." value={remarksMap[student._id] || ''} onChange={e => setRemarksMap(prev => ({ ...prev, [student._id]: e.target.value }))} onBlur={() => handleRemarkBlur(student._id)} InputProps={{ sx: { borderRadius: 2, fontSize: '0.8rem', bgcolor: 'rgba(255,255,255,0.8)' } }} />
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                {students.length === 0 && (
+                  <Box sx={{ py: 8, textAlign: 'center' }}><Typography color="text.secondary" fontWeight={600}>No students.</Typography></Box>
+                )}
+              </Stack>
 
 
 
@@ -1307,6 +1522,47 @@ const BatchDetail = () => {
           {activeTab === 3 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
+              {/* Date Navigator */}
+              <Card sx={{ borderRadius: 2, border: '1px solid rgba(0,0,0,0.06)', bgcolor: 'white' }}>
+                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <IconButton onClick={scrumGoToPrevDay} size="small" sx={{ border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2 }}>
+                      <ChevronLeft />
+                    </IconButton>
+                    <Box sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      px: 2.5, py: 1, borderRadius: '10px',
+                      border: '1px solid rgba(0,0,0,0.1)', bgcolor: 'rgba(0,0,0,0.01)'
+                    }}>
+                      <CalendarToday sx={{ fontSize: 16, color: 'primary.main' }} />
+                      <Typography variant="subtitle2" fontWeight={900} color="secondary">
+                        {formatDisplayDate(scrumDate).toUpperCase()}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      onClick={scrumGoToNextDay}
+                      disabled={isScrumToday}
+                      size="small"
+                      sx={{ border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2 }}
+                    >
+                      <ChevronRight />
+                    </IconButton>
+                    {!isScrumToday && (
+                      <Button
+                        size="small" variant="outlined" color="primary"
+                        onClick={scrumGoToToday}
+                        sx={{ borderRadius: 2, fontWeight: 900, textTransform: 'uppercase', fontSize: '0.7rem', px: 2 }}
+                      >
+                        Today
+                      </Button>
+                    )}
+                    {scrumStatus === 'No Record' && (
+                      <Chip label="NO SCRUM RECORDED" size="small" sx={{ fontWeight: 900, fontSize: '0.6rem', bgcolor: 'rgba(0,0,0,0.05)', color: 'text.secondary', borderRadius: 1.5 }} />
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+
               {/* Scrum Control Header */}
               <Card sx={{ borderRadius: 2, border: '1px solid rgba(0,0,0,0.06)', bgcolor: 'white' }}>
                 <CardContent sx={{ p: 2.5 }}>
@@ -1325,24 +1581,24 @@ const BatchDetail = () => {
                             DAILY MORNING SCRUM
                           </Typography>
                           <Chip
-                            label={scrumStatus.toUpperCase()}
+                            label={(scrumEditMode && scrumStatus === 'Completed') ? 'EDITING' : scrumStatus.toUpperCase()}
                             size="small"
                             sx={{
                               fontWeight: 900, fontSize: '0.6rem',
-                              bgcolor: scrumStatus === 'Completed' ? 'rgba(46,125,50,0.1)' : scrumStatus === 'In Progress' ? 'rgba(232,57,29,0.1)' : 'rgba(0,0,0,0.05)',
-                              color: scrumStatus === 'Completed' ? '#2e7d32' : scrumStatus === 'In Progress' ? 'primary.main' : 'text.disabled',
+                              bgcolor: scrumEditMode ? 'rgba(21,101,192,0.1)' : scrumStatus === 'Completed' ? 'rgba(46,125,50,0.1)' : scrumStatus === 'In Progress' ? 'rgba(232,57,29,0.1)' : 'rgba(0,0,0,0.05)',
+                              color: scrumEditMode ? '#1565c0' : scrumStatus === 'Completed' ? '#2e7d32' : scrumStatus === 'In Progress' ? 'primary.main' : 'text.disabled',
                               borderRadius: 1.5, border: '1px solid currentColor'
                             }}
                           />
                         </Stack>
                         <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                          Session: {scrumStartTime ? `Started at ${scrumStartTime}` : 'Not yet started'} | Date: {formatDisplayDate(new Date())}
+                          Session: {scrumStartTime ? `Started at ${scrumStartTime}` : 'Not yet started'} | Date: {formatDisplayDate(scrumDate)}
                         </Typography>
                       </Box>
                     </Box>
 
                     <Stack direction="row" spacing={2}>
-                      {scrumStatus === 'Not Started' ? (
+                      {scrumStatus === 'Not Started' && isScrumToday ? (
                         <Button
                           variant="contained"
                           startIcon={<PlayArrow />}
@@ -1351,202 +1607,233 @@ const BatchDetail = () => {
                         >
                           Start Scrum
                         </Button>
-                      ) : scrumStatus === 'In Progress' ? (
+                      ) : scrumStatus === 'In Progress' || (scrumStatus === 'Completed' && scrumEditMode) ? (
                         <>
-                          <Button variant="outlined" color="secondary" startIcon={<Save />} onClick={() => toast.success('Scrum Progress Saved')}>
+                          <Button variant="outlined" color="secondary" startIcon={<Save />} onClick={handleSaveProgress} disabled={saveScrumMutation.isPending}>
                             Save Progress
                           </Button>
-                          <Button variant="contained" color="primary" startIcon={<DoneAll />} onClick={completeScrumSession}>
+                          <Button variant="contained" color="primary" startIcon={<DoneAll />} onClick={completeScrumSession} disabled={saveScrumMutation.isPending}>
                             Complete Scrum
                           </Button>
+                          {scrumEditMode && (
+                            <Button variant="outlined" color="inherit" onClick={() => setScrumEditMode(false)} sx={{ borderRadius: 2 }}>
+                              Cancel
+                            </Button>
+                          )}
                         </>
-                      ) : (
-                        <Button variant="outlined" color="primary" startIcon={<Refresh fontSize="small" />} onClick={() => setScrumStatus('Not Started')} sx={{ borderRadius: 2 }}>
-                          Restart Session
-                        </Button>
-                      )}
+                      ) : scrumStatus === 'Completed' ? (
+                        <Stack direction="row" spacing={1.5}>
+                          <Button variant="outlined" color="primary" startIcon={<Edit fontSize="small" />} onClick={() => setScrumEditMode(true)} sx={{ borderRadius: 2 }}>
+                            Edit Scrum
+                          </Button>
+                          {isScrumToday && (
+                            <Button variant="outlined" color="error" startIcon={<Refresh fontSize="small" />} onClick={restartScrumSession} sx={{ borderRadius: 2 }}>
+                              Restart
+                            </Button>
+                          )}
+                        </Stack>
+                      ) : scrumStatus === 'No Record' ? (
+                        isScrumToday ? (
+                          <Button variant="contained" startIcon={<PlayArrow />} onClick={startScrumSession} sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: '#000' } }}>
+                            Start Scrum
+                          </Button>
+                        ) : null
+                      ) : null}
                     </Stack>
                   </Box>
                 </CardContent>
               </Card>
 
-              {scrumStatus === 'Not Started' ? (
+              {(scrumStatus === 'Not Started' || scrumStatus === 'No Record') ? (
                 <Box sx={{ py: 12, textAlign: 'center', bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 3, border: '2px dashed rgba(0,0,0,0.05)' }}>
                   <Assignment sx={{ fontSize: 64, color: 'text.disabled', mb: 2, opacity: 0.3 }} />
                   <Typography variant="h6" fontWeight={800} color="text.secondary" gutterBottom>
-                    Today's scrum session has not started yet.
+                    {scrumStatus === 'No Record' ? `No scrum recorded for ${formatDisplayDate(scrumDate)}.` : "Today's scrum session has not started yet."}
                   </Typography>
                   <Typography variant="body2" color="text.disabled" sx={{ mb: 4 }}>
-                    Start the session to begin recording student progress and participation.
+                    {scrumStatus === 'No Record' ? 'Navigate to a different date or go to Today.' : 'Start the session to begin recording student progress and participation.'}
                   </Typography>
-                  <Button variant="contained" size="large" startIcon={<PlayArrow />} onClick={startScrumSession}>
-                    Start Today's Scrum
-                  </Button>
+                  {isScrumToday && scrumStatus !== 'No Record' && (
+                    <Button variant="contained" size="large" startIcon={<PlayArrow />} onClick={startScrumSession}>
+                      Start Today's Scrum
+                    </Button>
+                  )}
                 </Box>
               ) : (
-                <Card sx={{ borderRadius: 2, overflow: 'hidden', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
-                  <TableContainer sx={{ maxHeight: '70vh' }}>
-                    <Table stickyHeader sx={{ minWidth: 1200 }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Student Info</TableCell>
-                          <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Attendance</TableCell>
-                          <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Yesterday's Progress</TableCell>
-                          <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Today's Plan</TableCell>
-                          <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Blockers</TableCell>
-                          <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Notes & Status</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {students.map((student) => {
-                          const data = scrumData[student._id] || { yesterday: '', today: '', blocker: 'No Issues', blockerNote: '', notes: '', status: 'No Update' };
-                          const attendance = attendanceMap[student._id];
-                          return (
-                            <TableRow key={student._id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.01)' } }}>
-                              {/* Student Info */}
-                              <TableCell sx={{ py: 2, verticalAlign: 'top', minWidth: 200 }}>
-                                <Stack direction="row" spacing={1.5} alignItems="center">
-                                  <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, width: 36, height: 36, fontSize: '0.85rem', fontWeight: 900 }}>
-                                    {student.name[0]}
-                                  </Avatar>
-                                  <Box>
-                                    <Typography variant="subtitle2" fontWeight={800} color="secondary" sx={{ lineHeight: 1.2 }}>{student.name}</Typography>
-                                    <Typography variant="caption" color="text.secondary">{student.email}</Typography>
-                                  </Box>
-                                </Stack>
-                              </TableCell>
-
-                              {/* Attendance */}
-                              <TableCell sx={{ verticalAlign: 'top' }}>
-                                <Stack direction="row" spacing={0.5}>
-                                  {['P', 'A'].map((code) => (
-                                    <Box
-                                      key={code}
-                                      onClick={() => markStudent(student._id, attendance === code ? undefined : code)}
-                                      sx={{
-                                        width: 28, height: 28, borderRadius: 1.5,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer',
-                                        bgcolor: attendance === code ? (code === 'P' ? '#2e7d32' : '#d32f2f') : 'rgba(0,0,0,0.04)',
-                                        color: attendance === code ? 'white' : 'text.secondary',
-                                        transition: 'all 0.2s',
-                                        '&:hover': { bgcolor: attendance === code ? undefined : 'rgba(0,0,0,0.1)' }
-                                      }}
-                                    >
-                                      {code}
+                <>
+                  {/* Scrum Desktop Table */}
+                  <Card sx={{ display: { xs: 'none', md: 'block' }, borderRadius: 2, overflow: 'hidden', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
+                    <TableContainer sx={{ maxHeight: '70vh' }}>
+                      <Table stickyHeader sx={{ minWidth: 1200 }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Student Info</TableCell>
+                            <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Attendance</TableCell>
+                            <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Yesterday's Progress</TableCell>
+                            <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Today's Plan</TableCell>
+                            <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Blockers</TableCell>
+                            <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Notes & Status</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 900, textTransform: 'uppercase', fontSize: '0.65rem', bgcolor: '#F9FAFB', zIndex: 3 }}>Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {students.map((student) => {
+                            const data = scrumData[student._id] || { yesterday: '', today: '', blocker: 'No Issues', blockerNote: '', notes: '', status: 'No Update' };
+                            const attendance = attendanceMap[student._id];
+                            const isEditable = scrumStatus === 'In Progress' || (scrumStatus === 'Completed' && scrumEditMode);
+                            return (
+                              <TableRow key={student._id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.01)' } }}>
+                                <TableCell sx={{ py: 2, verticalAlign: 'top', minWidth: 200 }}>
+                                  <Stack direction="row" spacing={1.5} alignItems="center">
+                                    <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, width: 36, height: 36, fontSize: '0.85rem', fontWeight: 900 }}>{student.name[0]}</Avatar>
+                                    <Box>
+                                      <Typography variant="subtitle2" fontWeight={800} color="secondary" sx={{ lineHeight: 1.2 }}>{student.name}</Typography>
+                                      <Typography variant="caption" color="text.secondary">{student.email}</Typography>
                                     </Box>
-                                  ))}
-                                </Stack>
-                              </TableCell>
+                                  </Stack>
+                                </TableCell>
+                                <TableCell sx={{ verticalAlign: 'top' }}>
+                                  <Stack direction="row" spacing={0.5}>
+                                    {['P', 'A'].map((code) => (
+                                      <Box key={code} onClick={() => markStudent(student._id, attendance === code ? undefined : code)}
+                                        sx={{ width: 28, height: 28, borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900, cursor: 'pointer', bgcolor: attendance === code ? (code === 'P' ? '#2e7d32' : '#d32f2f') : 'rgba(0,0,0,0.04)', color: attendance === code ? 'white' : 'text.secondary', transition: 'all 0.2s', '&:hover': { bgcolor: attendance === code ? undefined : 'rgba(0,0,0,0.1)' } }}
+                                      >{code}</Box>
+                                    ))}
+                                  </Stack>
+                                </TableCell>
+                                <TableCell sx={{ minWidth: 250, verticalAlign: 'top' }}>
+                                  <Box onClick={() => isEditable && setScrumEditModal({ open: true, studentId: student._id, field: 'yesterday', title: "Yesterday's Progress" })}
+                                    sx={{ minHeight: 52, p: 1.5, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2, cursor: isEditable ? 'pointer' : 'default', bgcolor: isEditable ? 'rgba(0,0,0,0.01)' : 'rgba(0,0,0,0.005)', fontSize: '0.8rem', color: data.yesterday ? 'text.primary' : 'text.disabled', whiteSpace: 'pre-wrap', wordBreak: 'break-word', '&:hover': isEditable ? { bgcolor: 'rgba(0,0,0,0.03)' } : {} }}
+                                  >{data.yesterday || (isEditable ? "Click to add progress..." : "—")}</Box>
+                                </TableCell>
+                                <TableCell sx={{ minWidth: 250, verticalAlign: 'top' }}>
+                                  <Box onClick={() => isEditable && setScrumEditModal({ open: true, studentId: student._id, field: 'today', title: "Today's Plan" })}
+                                    sx={{ minHeight: 52, p: 1.5, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2, cursor: isEditable ? 'pointer' : 'default', bgcolor: isEditable ? 'rgba(0,0,0,0.01)' : 'rgba(0,0,0,0.005)', fontSize: '0.8rem', color: data.today ? 'text.primary' : 'text.disabled', whiteSpace: 'pre-wrap', wordBreak: 'break-word', '&:hover': isEditable ? { bgcolor: 'rgba(0,0,0,0.03)' } : {} }}
+                                  >{data.today || (isEditable ? "Click to add plan..." : "—")}</Box>
+                                </TableCell>
+                                <TableCell sx={{ minWidth: 200, verticalAlign: 'top' }}>
+                                  <Stack spacing={1}>
+                                    <FormControl size="small" fullWidth disabled={!isEditable}>
+                                      <Select value={data.blocker} onChange={(e) => isEditable && handleUpdateScrum(student._id, 'blocker', e.target.value)} sx={{ borderRadius: 2, fontSize: '0.8rem', fontWeight: 700 }}>
+                                        {['No Issues', 'Technical Issue', 'Laptop Issue', 'Internet Problem', 'Personal Reason', 'Waiting for Review', 'Lack of Progress'].map(opt => (<MenuItem key={opt} value={opt} sx={{ fontSize: '0.8rem', fontWeight: 700 }}>{opt}</MenuItem>))}
+                                      </Select>
+                                    </FormControl>
+                                    {data.blocker !== 'No Issues' && (<TextField size="small" fullWidth placeholder="Blocker note..." value={data.blockerNote} onChange={(e) => isEditable && handleUpdateScrum(student._id, 'blockerNote', e.target.value)} disabled={!isEditable} InputProps={{ sx: { fontSize: '0.75rem', borderRadius: 1.5 } }} />)}
+                                  </Stack>
+                                </TableCell>
+                                <TableCell sx={{ minWidth: 180, verticalAlign: 'top' }}>
+                                  <Stack spacing={1}>
+                                    <Box onClick={() => isEditable && setScrumEditModal({ open: true, studentId: student._id, field: 'notes', title: "Facilitator Notes" })}
+                                      sx={{ minHeight: 36, p: 1, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 1.5, cursor: isEditable ? 'pointer' : 'default', bgcolor: isEditable ? 'rgba(0,0,0,0.01)' : 'rgba(0,0,0,0.005)', fontSize: '0.75rem', color: data.notes ? 'text.primary' : 'text.disabled', whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'flex', alignItems: 'center', '&:hover': isEditable ? { bgcolor: 'rgba(0,0,0,0.03)' } : {} }}
+                                    >{data.notes || (isEditable ? "Add notes..." : "—")}</Box>
+                                    <FormControl size="small" fullWidth disabled={!isEditable}>
+                                      <Select value={data.status} onChange={(e) => isEditable && handleUpdateScrum(student._id, 'status', e.target.value)} sx={{ borderRadius: 1.5, fontSize: '0.75rem', fontWeight: 900, bgcolor: `${getScrumStatusColor(data.status)}15`, color: getScrumStatusColor(data.status), '& fieldset': { border: 'none' } }}>
+                                        {['On Track', 'Delayed', 'Blocked', 'No Update'].map(opt => (<MenuItem key={opt} value={opt} sx={{ fontSize: '0.8rem', fontWeight: 700 }}>{opt}</MenuItem>))}
+                                      </Select>
+                                    </FormControl>
+                                  </Stack>
+                                </TableCell>
+                                <TableCell align="right" sx={{ verticalAlign: 'top' }}>
+                                  <Tooltip title={isEditable ? `Save ${student.name}'s entry to DB` : 'Enable Edit mode to modify'}>
+                                    <span>
+                                      <IconButton size="small" onClick={() => handleSaveStudentRow(student)} disabled={savingStudentId === student._id} sx={{ color: savingStudentId === student._id ? 'text.disabled' : 'primary.main', '&:hover': { bgcolor: 'rgba(232,57,29,0.08)' } }}>
+                                        {savingStudentId === student._id ? <CircularProgress size={16} color="inherit" /> : <Save sx={{ fontSize: 18 }} />}
+                                      </IconButton>
+                                    </span>
+                                  </Tooltip>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Card>
 
-                              {/* Yesterday */}
-                              <TableCell sx={{ minWidth: 250, verticalAlign: 'top' }}>
-                                <Box
-                                  onClick={() => setScrumEditModal({ open: true, studentId: student._id, field: 'yesterday', title: "Yesterday's Progress" })}
-                                  sx={{
-                                    minHeight: 52, p: 1.5, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2,
-                                    cursor: 'pointer', bgcolor: 'rgba(0,0,0,0.01)', fontSize: '0.8rem',
-                                    color: data.yesterday ? 'text.primary' : 'text.disabled',
-                                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' }
-                                  }}
-                                >
-                                  {data.yesterday || "Click to add progress..."}
-                                </Box>
-                              </TableCell>
+                  {/* Scrum Mobile Card List */}
+                  <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+                    {students.map((student) => {
+                      const data = scrumData[student._id] || { yesterday: '', today: '', blocker: 'No Issues', blockerNote: '', notes: '', status: 'No Update' };
+                      const attendance = attendanceMap[student._id];
+                      const isEditable = scrumStatus === 'In Progress' || (scrumStatus === 'Completed' && scrumEditMode);
+                      return (
+                        <Card key={student._id} sx={{ borderRadius: 2, border: '1px solid rgba(0,0,0,0.07)', bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                            {/* Header row */}
+                            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+                              <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, width: 40, height: 40, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{student.name[0]}</Avatar>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="subtitle2" fontWeight={800} color="secondary" noWrap>{student.name}</Typography>
+                                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>{student.email}</Typography>
+                              </Box>
+                              <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
+                                {['P', 'A'].map((code) => (
+                                  <Box key={code} onClick={() => markStudent(student._id, attendance === code ? undefined : code)}
+                                    sx={{ width: 32, height: 32, borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 900, cursor: 'pointer', bgcolor: attendance === code ? (code === 'P' ? '#2e7d32' : '#d32f2f') : 'rgba(0,0,0,0.05)', color: attendance === code ? 'white' : 'text.secondary', transition: 'all 0.2s' }}
+                                  >{code}</Box>
+                                ))}
+                              </Stack>
+                              <Chip label={data.status} size="small" sx={{ fontWeight: 900, fontSize: '0.6rem', bgcolor: `${getScrumStatusColor(data.status)}15`, color: getScrumStatusColor(data.status), borderRadius: 1.5, flexShrink: 0 }} />
+                            </Stack>
 
-                              {/* Today */}
-                              <TableCell sx={{ minWidth: 250, verticalAlign: 'top' }}>
-                                <Box
-                                  onClick={() => setScrumEditModal({ open: true, studentId: student._id, field: 'today', title: "Today's Plan" })}
-                                  sx={{
-                                    minHeight: 52, p: 1.5, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2,
-                                    cursor: 'pointer', bgcolor: 'rgba(0,0,0,0.01)', fontSize: '0.8rem',
-                                    color: data.today ? 'text.primary' : 'text.disabled',
-                                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' }
-                                  }}
-                                >
-                                  {data.today || "Click to add plan..."}
-                                </Box>
-                              </TableCell>
+                            {/* Yesterday */}
+                            <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.06em', display: 'block', mb: 0.5 }}>YESTERDAY</Typography>
+                            <Box onClick={() => isEditable && setScrumEditModal({ open: true, studentId: student._id, field: 'yesterday', title: "Yesterday's Progress" })}
+                              sx={{ minHeight: 44, p: 1.5, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2, cursor: isEditable ? 'pointer' : 'default', bgcolor: isEditable ? 'rgba(0,0,0,0.01)' : 'rgba(0,0,0,0.005)', fontSize: '0.82rem', color: data.yesterday ? 'text.primary' : 'text.disabled', mb: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                            >{data.yesterday || (isEditable ? "Tap to add yesterday's progress..." : "—")}</Box>
 
-                              {/* Blockers */}
-                              <TableCell sx={{ minWidth: 200, verticalAlign: 'top' }}>
-                                <Stack spacing={1}>
-                                  <FormControl size="small" fullWidth>
-                                    <Select
-                                      value={data.blocker}
-                                      onChange={(e) => handleUpdateScrum(student._id, 'blocker', e.target.value)}
-                                      sx={{ borderRadius: 2, fontSize: '0.8rem', fontWeight: 700 }}
-                                    >
-                                      {['No Issues', 'Technical Issue', 'Laptop Issue', 'Internet Problem', 'Personal Reason', 'Waiting for Review', 'Lack of Progress'].map(opt => (
-                                        <MenuItem key={opt} value={opt} sx={{ fontSize: '0.8rem', fontWeight: 700 }}>{opt}</MenuItem>
-                                      ))}
-                                    </Select>
-                                  </FormControl>
-                                  {data.blocker !== 'No Issues' && (
-                                    <TextField
-                                      size="small" fullWidth placeholder="Blocker note..."
-                                      value={data.blockerNote}
-                                      onChange={(e) => handleUpdateScrum(student._id, 'blockerNote', e.target.value)}
-                                      InputProps={{ sx: { fontSize: '0.75rem', borderRadius: 1.5 } }}
-                                    />
-                                  )}
-                                </Stack>
-                              </TableCell>
+                            {/* Today */}
+                            <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.06em', display: 'block', mb: 0.5 }}>TODAY</Typography>
+                            <Box onClick={() => isEditable && setScrumEditModal({ open: true, studentId: student._id, field: 'today', title: "Today's Plan" })}
+                              sx={{ minHeight: 44, p: 1.5, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 2, cursor: isEditable ? 'pointer' : 'default', bgcolor: isEditable ? 'rgba(0,0,0,0.01)' : 'rgba(0,0,0,0.005)', fontSize: '0.82rem', color: data.today ? 'text.primary' : 'text.disabled', mb: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                            >{data.today || (isEditable ? "Tap to add today's plan..." : "—")}</Box>
 
-                              {/* Notes & Status */}
-                              <TableCell sx={{ minWidth: 180, verticalAlign: 'top' }}>
-                                <Stack spacing={1}>
-                                  <Box
-                                    onClick={() => setScrumEditModal({ open: true, studentId: student._id, field: 'notes', title: "Facilitator Notes" })}
-                                    sx={{
-                                      minHeight: 36, p: 1, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 1.5,
-                                      cursor: 'pointer', bgcolor: 'rgba(0,0,0,0.01)', fontSize: '0.75rem',
-                                      color: data.notes ? 'text.primary' : 'text.disabled',
-                                      whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                                      display: 'flex', alignItems: 'center',
-                                      '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' }
-                                    }}
-                                  >
-                                    {data.notes || "Add notes..."}
-                                  </Box>
-                                  <FormControl size="small" fullWidth>
-                                    <Select
-                                      value={data.status}
-                                      onChange={(e) => handleUpdateScrum(student._id, 'status', e.target.value)}
-                                      sx={{
-                                        borderRadius: 1.5, fontSize: '0.75rem', fontWeight: 900,
-                                        bgcolor: `${getScrumStatusColor(data.status)}15`,
-                                        color: getScrumStatusColor(data.status),
-                                        '& fieldset': { border: 'none' }
-                                      }}
-                                    >
-                                      {['On Track', 'Delayed', 'Blocked', 'No Update'].map(opt => (
-                                        <MenuItem key={opt} value={opt} sx={{ fontSize: '0.8rem', fontWeight: 700 }}>{opt}</MenuItem>
-                                      ))}
-                                    </Select>
-                                  </FormControl>
-                                </Stack>
-                              </TableCell>
+                            {/* Blocker + Status row */}
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.5 }}>
+                              <Box>
+                                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.06em', display: 'block', mb: 0.5 }}>BLOCKER</Typography>
+                                <FormControl size="small" fullWidth disabled={!isEditable}>
+                                  <Select value={data.blocker} onChange={(e) => isEditable && handleUpdateScrum(student._id, 'blocker', e.target.value)} sx={{ borderRadius: 2, fontSize: '0.75rem', fontWeight: 700 }}>
+                                    {['No Issues', 'Technical Issue', 'Laptop Issue', 'Internet Problem', 'Personal Reason', 'Waiting for Review', 'Lack of Progress'].map(opt => (<MenuItem key={opt} value={opt} sx={{ fontSize: '0.8rem' }}>{opt}</MenuItem>))}
+                                  </Select>
+                                </FormControl>
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.06em', display: 'block', mb: 0.5 }}>STATUS</Typography>
+                                <FormControl size="small" fullWidth disabled={!isEditable}>
+                                  <Select value={data.status} onChange={(e) => isEditable && handleUpdateScrum(student._id, 'status', e.target.value)} sx={{ borderRadius: 2, fontSize: '0.75rem', fontWeight: 900, bgcolor: `${getScrumStatusColor(data.status)}15`, color: getScrumStatusColor(data.status), '& fieldset': { border: 'none' } }}>
+                                    {['On Track', 'Delayed', 'Blocked', 'No Update'].map(opt => (<MenuItem key={opt} value={opt} sx={{ fontSize: '0.8rem', fontWeight: 700 }}>{opt}</MenuItem>))}
+                                  </Select>
+                                </FormControl>
+                              </Box>
+                            </Box>
 
-                              {/* Actions */}
-                              <TableCell align="right" sx={{ verticalAlign: 'top' }}>
-                                <Tooltip title="Save Row">
-                                  <IconButton size="small" onClick={() => toast.success(`Saved for ${student.name}`)} sx={{ color: 'primary.main' }}>
-                                    <Save sx={{ fontSize: 18 }} />
+                            {data.blocker !== 'No Issues' && (
+                              <TextField size="small" fullWidth placeholder="Blocker note..." value={data.blockerNote} onChange={(e) => isEditable && handleUpdateScrum(student._id, 'blockerNote', e.target.value)} disabled={!isEditable} sx={{ mb: 1.5 }} InputProps={{ sx: { fontSize: '0.8rem', borderRadius: 1.5 } }} />
+                            )}
+
+                            {/* Notes + Save */}
+                            <Stack direction="row" spacing={1} alignItems="flex-start">
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.06em', display: 'block', mb: 0.5 }}>NOTES</Typography>
+                                <Box onClick={() => isEditable && setScrumEditModal({ open: true, studentId: student._id, field: 'notes', title: "Facilitator Notes" })}
+                                  sx={{ minHeight: 36, p: 1, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 1.5, cursor: isEditable ? 'pointer' : 'default', bgcolor: isEditable ? 'rgba(0,0,0,0.01)' : 'rgba(0,0,0,0.005)', fontSize: '0.8rem', color: data.notes ? 'text.primary' : 'text.disabled', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                                >{data.notes || (isEditable ? "Add notes..." : "—")}</Box>
+                              </Box>
+                              <Tooltip title={isEditable ? `Save ${student.name}'s entry` : 'Enable Edit mode'}>
+                                <span>
+                                  <IconButton size="small" onClick={() => handleSaveStudentRow(student)} disabled={savingStudentId === student._id} sx={{ mt: 2.8, color: savingStudentId === student._id ? 'text.disabled' : 'primary.main', border: '1px solid rgba(232,57,29,0.2)', borderRadius: 1.5, '&:hover': { bgcolor: 'rgba(232,57,29,0.08)' } }}>
+                                    {savingStudentId === student._id ? <CircularProgress size={16} color="inherit" /> : <Save sx={{ fontSize: 18 }} />}
                                   </IconButton>
-                                </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Card>
+                                </span>
+                              </Tooltip>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </Stack>
+                </>
               )}
             </Box>
           )}

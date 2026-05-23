@@ -460,7 +460,8 @@ const EvaluationManagement = () => {
               </Box>
               <Box>
                 <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', mb: 0.2, fontSize: '1.75rem', textTransform: 'none' }}>
-                  Module Evaluations
+                  
+                  Interviews Evaluations
                 </Typography>
                 <Typography variant="body2" color="text.secondary" fontWeight={500}>
                   Schedule interviews, assign interviewers, and record final scores

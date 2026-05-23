@@ -30,3 +30,11 @@ export const uploadProfilePic = async (formData) => {
     },
   });
 };
+
+export const uploadFile = async (formData) => {
+  return await api.post('/users/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};

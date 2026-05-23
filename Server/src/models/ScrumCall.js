@@ -6,6 +6,8 @@ const scrumCallSchema = new mongoose.Schema(
     date: { type: Date, required: true },
     agenda: { type: String, required: true },
     conductedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    status: { type: String, enum: ['In Progress', 'Completed'], default: 'Completed' },
+    startTime: { type: String },
   },
   { timestamps: true }
 );

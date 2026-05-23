@@ -23,6 +23,7 @@ import EvaluationManagement from '../pages/EvaluationManagement';
 import Invitations from '../pages/Invitations';
 import Reports from '../pages/Reports';
 import CourseManager from '../pages/CourseManager';
+import StudentProfile from '../pages/StudentProfile';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -61,6 +62,7 @@ const AppRoutes = () => {
       <Route path="/course-management" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><CourseManager /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]}><StudentTasks /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/student-profile/:id" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR, ROLES.STUDENT, ROLES.INTERVIEWER]}><StudentProfile /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
 

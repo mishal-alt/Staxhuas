@@ -8,7 +8,7 @@ import { ROLES, ATTENDANCE_STATUS } from '../utils/constants.js';
 import { logAction } from './audit.service.js';
 
 export const logScrumCall = async (facilitator, data) => {
-  const { batch: batchId, date, agenda, entries } = data;
+  const { batch: batchId, date, agenda, status, startTime, entries } = data;
 
   const batch = await Batch.findById(batchId);
   if (!batch) throw new ApiError(404, 'Batch not found');
@@ -21,22 +21,34 @@ export const logScrumCall = async (facilitator, data) => {
   const scrumDate = new Date(date);
   scrumDate.setUTCHours(0, 0, 0, 0);
 
-  const existingScrum = await ScrumCall.findOne({ batch: batchId, date: scrumDate });
-  if (existingScrum) {
-    throw new ApiError(400, 'A scrum call is already logged for this batch on this date');
-  }
-
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const scrumCall = new ScrumCall({
-      batch: batchId,
-      date: scrumDate,
-      agenda,
-      conductedBy: facilitator._id,
-    });
-    await scrumCall.save({ session });
+    let scrumCall = await ScrumCall.findOne({ batch: batchId, date: scrumDate }).session(session);
+
+    if (scrumCall) {
+      // If it exists, update it
+      scrumCall.agenda = agenda;
+      scrumCall.status = status || 'Completed';
+      scrumCall.startTime = startTime || scrumCall.startTime;
+      scrumCall.conductedBy = facilitator._id;
+      await scrumCall.save({ session });
+
+      // Delete old entries for this scrum call
+      await ScrumCallEntry.deleteMany({ scrumCall: scrumCall._id }).session(session);
+    } else {
+      // Create new one
+      scrumCall = new ScrumCall({
+        batch: batchId,
+        date: scrumDate,
+        agenda,
+        status: status || 'Completed',
+        startTime,
+        conductedBy: facilitator._id,
+      });
+      await scrumCall.save({ session });
+    }
 
     const entryDocs = entries.map((entry) => ({
       scrumCall: scrumCall._id,
@@ -49,25 +61,42 @@ export const logScrumCall = async (facilitator, data) => {
 
     await ScrumCallEntry.insertMany(entryDocs, { session });
 
-    // Business Rule: Missing scrum call without an approved leave = Absent
-    // We update the daily attendance. If the attendance is already "Leave", we don't overwrite it.
-    // If they were absent from scrum, we set them to absent if they don't have a leave.
-    const attendanceOperations = [];
+    // Business Rule: Update attendance ONLY when completed
+    if (status === 'Completed') {
+      const attendanceOperations = [];
 
-    // First, find existing attendance records for these students on this day
-    const studentIds = entries.map(e => e.student);
-    const existingAttendance = await Attendance.find({
-      student: { $in: studentIds },
-      date: scrumDate
-    }).session(session);
+      // Find existing attendance records for these students on this day
+      const studentIds = entries.map(e => e.student);
+      const existingAttendance = await Attendance.find({
+        student: { $in: studentIds },
+        date: scrumDate
+      }).session(session);
 
-    const attendanceMap = {};
-    existingAttendance.forEach(a => { attendanceMap[a.student.toString()] = a.status; });
+      const attendanceMap = {};
+      existingAttendance.forEach(a => { attendanceMap[a.student.toString()] = a.status; });
 
-    for (const entry of entries) {
-      if (!entry.isPresent) {
-        // Only mark absent if they are not already on an approved leave
-        if (attendanceMap[entry.student.toString()] !== ATTENDANCE_STATUS.LEAVE) {
+      for (const entry of entries) {
+        if (!entry.isPresent) {
+          // Only mark absent if they are not already on an approved leave
+          if (attendanceMap[entry.student.toString()] !== ATTENDANCE_STATUS.LEAVE) {
+            attendanceOperations.push({
+              updateOne: {
+                filter: { student: entry.student, date: scrumDate },
+                update: {
+                  $set: {
+                    student: entry.student,
+                    batch: batchId,
+                    date: scrumDate,
+                    status: ATTENDANCE_STATUS.ABSENT,
+                    markedBy: facilitator._id,
+                  },
+                },
+                upsert: true,
+              },
+            });
+          }
+        } else {
+          // If present, mark them present
           attendanceOperations.push({
             updateOne: {
               filter: { student: entry.student, date: scrumDate },
@@ -76,7 +105,7 @@ export const logScrumCall = async (facilitator, data) => {
                   student: entry.student,
                   batch: batchId,
                   date: scrumDate,
-                  status: ATTENDANCE_STATUS.ABSENT,
+                  status: ATTENDANCE_STATUS.PRESENT,
                   markedBy: facilitator._id,
                 },
               },
@@ -84,28 +113,11 @@ export const logScrumCall = async (facilitator, data) => {
             },
           });
         }
-      } else {
-        // If present, mark them present (unless somehow they had a leave, we override to present because they showed up)
-        attendanceOperations.push({
-          updateOne: {
-            filter: { student: entry.student, date: scrumDate },
-            update: {
-              $set: {
-                student: entry.student,
-                batch: batchId,
-                date: scrumDate,
-                status: ATTENDANCE_STATUS.PRESENT,
-                markedBy: facilitator._id,
-              },
-            },
-            upsert: true,
-          },
-        });
       }
-    }
 
-    if (attendanceOperations.length > 0) {
-      await Attendance.bulkWrite(attendanceOperations, { session });
+      if (attendanceOperations.length > 0) {
+        await Attendance.bulkWrite(attendanceOperations, { session });
+      }
     }
 
     await logAction(
@@ -114,7 +126,7 @@ export const logScrumCall = async (facilitator, data) => {
         performedBy: facilitator._id,
         entityType: 'ScrumCall',
         entityId: scrumCall._id,
-        details: { batchId, date: scrumDate, agenda },
+        details: { batchId, date: scrumDate, agenda, status },
       },
       session
     );
