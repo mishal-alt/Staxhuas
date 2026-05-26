@@ -46,7 +46,6 @@ import {
   School,
   CalendarMonth,
   Close,
-  Assignment,
   Search,
   Edit,
   Delete,
@@ -61,7 +60,6 @@ import {
   Launch,
   PersonAdd,
   Archive,
-  TrendingUp,
   BarChart,
   Groups,
   AccessTime,
@@ -562,20 +560,20 @@ const CoursesAndBatches = () => {
               <Table sx={{ minWidth: 1000 }}>
                 <TableHead sx={{ bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
                   <TableRow>
-                    <TableCell sx={{ pl: 3, py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cohort Identity</TableCell>
-                    <TableCell sx={{ py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Program Track</TableCell>
-                    <TableCell sx={{ py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Facilitator Operations</TableCell>
-                    <TableCell sx={{ py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cohort Health</TableCell>
-                    <TableCell sx={{ py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Timeline</TableCell>
-                    <TableCell sx={{ py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</TableCell>
-                    <TableCell align="right" sx={{ pr: 3, py: 2, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</TableCell>
+                    <TableCell sx={{ pl: 3, py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Cohort Identity</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Program Track</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Facilitator Operations</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Cohort Health</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Timeline</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Status</TableCell>
+                    <TableCell align="right" sx={{ pr: 3, py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {batchesLoading || coursesLoading ? (
                     [...Array(5)].map((_, idx) => (
                       <TableRow key={idx}>
-                        <TableCell sx={{ borderLeft: '4px solid #e0e0e0', pl: 3, py: 2 }}>
+                        <TableCell sx={{ borderLeft: '4px solid #e0e0e0', pl: 3, py: 1.5 }}>
                           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                             <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2.5 }} animation="wave" />
                             <Box sx={{ flexGrow: 1 }}>
@@ -584,11 +582,11 @@ const CoursesAndBatches = () => {
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ py: 2 }}>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Skeleton variant="text" width="100px" height={18} animation="wave" />
                           <Skeleton variant="rounded" width={60} height={16} sx={{ mt: 0.5, borderRadius: 1 }} animation="wave" />
                         </TableCell>
-                        <TableCell sx={{ py: 2 }}>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                             <Skeleton variant="circular" width={36} height={36} animation="wave" />
                             <Box sx={{ flexGrow: 1 }}>
@@ -597,18 +595,18 @@ const CoursesAndBatches = () => {
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ py: 2 }}>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Skeleton variant="text" width="80px" height={16} animation="wave" />
                           <Skeleton variant="text" width="60px" height={14} animation="wave" sx={{ mt: 0.5 }} />
                         </TableCell>
-                        <TableCell sx={{ py: 2 }}>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Skeleton variant="text" width="100px" height={16} animation="wave" />
                           <Skeleton variant="rounded" width={80} height={18} sx={{ mt: 0.5 }} animation="wave" />
                         </TableCell>
-                        <TableCell sx={{ py: 2 }}>
+                        <TableCell sx={{ py: 1.5 }}>
                           <Skeleton variant="rounded" width={70} height={20} sx={{ borderRadius: 1.5 }} animation="wave" />
                         </TableCell>
-                        <TableCell align="right" sx={{ pr: 3, py: 2 }}>
+                        <TableCell align="right" sx={{ pr: 3, py: 1.5 }}>
                           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                             <Skeleton variant="circular" width={32} height={32} animation="wave" />
                             <Skeleton variant="circular" width={32} height={32} animation="wave" />
@@ -669,7 +667,7 @@ const CoursesAndBatches = () => {
                               cohortStatus === 'onboarding' ? '#9c27b0' : '#2e7d32'
                             }`,
                             pl: 3, 
-                            py: 2 
+                            py: 1.5
                           }}>
                             <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                               <Box sx={{
@@ -681,17 +679,17 @@ const CoursesAndBatches = () => {
                               }}>
                                 <School sx={{ fontSize: 20 }} />
                               </Box>
-                              <Box>
-                                <Typography variant="subtitle2" fontWeight={900} sx={{ color: 'text.primary', mb: 0.25, lineHeight: 1.2 }}>{batch.name}</Typography>
-                                <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="subtitle2" fontWeight={900} sx={{ color: 'text.primary', mb: 0.25, lineHeight: 1.2, whiteSpace: 'nowrap' }}>{batch.name}</Typography>
+                                <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5, whiteSpace: 'nowrap' }}>
                                   CODE: {cohortCode}
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                                  <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
                                     {batch.students?.length || 0} students
                                   </Typography>
                                   <Divider orientation="vertical" flexItem sx={{ height: 10, alignSelf: 'center' }} />
-                                  <Typography variant="caption" fontWeight={800} color="primary.main" sx={{ fontSize: '0.65rem' }}>
+                                  <Typography variant="caption" fontWeight={800} color="primary.main" sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
                                     Week {elapsedWeeks}/{totalWeeks}
                                   </Typography>
                                 </Box>
@@ -702,10 +700,10 @@ const CoursesAndBatches = () => {
                             </Box>
                           </TableCell>
 
-                          <TableCell sx={{ py: 2 }}>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary', mb: 0.5 }}>{batch.course?.name || 'N/A'}</Typography>
-                              <Typography variant="caption" sx={{ px: 1, py: 0.25, bgcolor: 'secondary.main', color: 'white', borderRadius: 1, fontWeight: 800, fontSize: '0.6rem', display: 'inline-block', mb: 0.5 }}>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary', mb: 0.5, whiteSpace: 'nowrap' }}>{batch.course?.name || 'N/A'}</Typography>
+                              <Typography variant="caption" sx={{ px: 1, py: 0.25, bgcolor: 'secondary.main', color: 'white', borderRadius: 1, fontWeight: 800, fontSize: '0.6rem', display: 'inline-block', mb: 0.5, whiteSpace: 'nowrap' }}>
                                 {phase.toUpperCase()}
                               </Typography>
                               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.7rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={currentModule}>
@@ -714,54 +712,54 @@ const CoursesAndBatches = () => {
                             </Box>
                           </TableCell>
 
-                          <TableCell sx={{ py: 2 }}>
-                            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-                              <Avatar sx={{ width: 36, height: 36, bgcolor: 'secondary.main', fontWeight: 900, fontSize: '0.9rem' }}>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0 }}>
+                              <Avatar sx={{ width: 36, height: 36, bgcolor: 'secondary.main', fontWeight: 900, fontSize: '0.9rem', flexShrink: 0 }}>
                                 {batch.facilitator?.name?.[0] || 'U'}
                               </Avatar>
-                              <Box>
-                                <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary', mb: 0.25, lineHeight: 1.1 }}>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary', mb: 0.25, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
                                   {batch.facilitator?.name || 'Unassigned'}
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                  <Typography variant="caption" fontWeight={700} color="text.secondary">
+                                  <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
                                     Load: {charCode % 3 + 1} cohorts
                                   </Typography>
-                                  <Box sx={{ width: 6, height: 6, bgcolor: charCode % 3 === 2 ? 'warning.main' : 'success.main', borderRadius: '50%' }} />
+                                  <Box sx={{ width: 6, height: 6, bgcolor: charCode % 3 === 2 ? 'warning.main' : 'success.main', borderRadius: '50%', flexShrink: 0 }} />
                                 </Box>
                               </Box>
                             </Box>
                           </TableCell>
 
-                          <TableCell sx={{ py: 2 }}>
+                          <TableCell sx={{ py: 1.5 }}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                              <Typography variant="caption" fontWeight={850} color={attendance < 85 ? 'error.main' : 'text.primary'} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography variant="caption" fontWeight={850} color={attendance < 85 ? 'error.main' : 'text.primary'} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, whiteSpace: 'nowrap' }}>
                                 Attendance: <b>{attendance}%</b>
                               </Typography>
-                              <Typography variant="caption" fontWeight={800} color="text.secondary">
+                              <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
                                 Interviews: {interviewPassed}% done
                               </Typography>
-                              <Typography variant="caption" fontWeight={800} color="text.secondary">
+                              <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
                                 Scrum: {scrumConsistency}% consistent
                               </Typography>
                             </Box>
                           </TableCell>
 
-                          <TableCell sx={{ py: 2 }}>
+                          <TableCell sx={{ py: 1.5 }}>
                             <Box>
-                              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.25 }}>
+                              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.25, whiteSpace: 'nowrap' }}>
                                 START: {startDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5 }}>
+                              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', mb: 0.5, whiteSpace: 'nowrap' }}>
                                 END: {expectedEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </Typography>
-                              <Typography variant="caption" sx={{ px: 1, py: 0.25, bgcolor: remainingWeeks < 6 ? 'error.50' : 'rgba(0,0,0,0.05)', color: remainingWeeks < 6 ? 'error.main' : 'text.secondary', borderRadius: 1, fontWeight: 800, fontSize: '0.6rem' }}>
+                              <Typography variant="caption" sx={{ px: 1, py: 0.25, bgcolor: remainingWeeks < 6 ? 'error.50' : 'rgba(0,0,0,0.05)', color: remainingWeeks < 6 ? 'error.main' : 'text.secondary', borderRadius: 1, fontWeight: 800, fontSize: '0.6rem', whiteSpace: 'nowrap' }}>
                                 {remainingWeeks > 0 ? `${remainingWeeks} WEEKS LEFT` : 'COMPLETED'}
                               </Typography>
                             </Box>
                           </TableCell>
 
-                          <TableCell sx={{ py: 2 }}>
+                          <TableCell sx={{ py: 1.5 }}>
                             <Chip
                               label={cohortStatus.toUpperCase()}
                               size="small"
@@ -770,7 +768,7 @@ const CoursesAndBatches = () => {
                             />
                           </TableCell>
 
-                          <TableCell align="right" sx={{ pr: 3, py: 2 }}>
+                          <TableCell align="right" sx={{ pr: 3, py: 1.5 }}>
                             <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'flex-end' }}>
                               <IconButton
                                 size="small"
@@ -996,208 +994,7 @@ const CoursesAndBatches = () => {
           )}
 
 
-          {/* Institutional Operational Command Sections */}
-          <Box sx={{ mt: 5 }}>
-            <Divider sx={{ mb: 4, opacity: 0.6 }} />
-            
 
-
-            {/* Level 2: Two-column Operations Grid */}
-            <Grid container spacing={4}>
-              {/* Left Column (60% equivalent) */}
-              <Grid item xs={12} sm={7} md={7}>
-                <Stack spacing={4}>
-                  
-                  {/* SECTION C — FACILITATOR LOAD MATRIX */}
-                  <Box>
-                    <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, pl: 1 }}>
-                      <People color="primary" /> Facilitator Workload Matrix
-                    </Typography>
-                    <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #E5E7EB', borderRadius: '16px', overflow: 'hidden' }}>
-                      <Table size="small">
-                        <TableHead sx={{ bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 800, py: 2, width: '25%', pl: 3.5 }}>Facilitator</TableCell>
-                            <TableCell sx={{ fontWeight: 800, py: 2, width: '18%' }}>Cohorts</TableCell>
-                            <TableCell sx={{ fontWeight: 800, py: 2, width: '18%' }}>Response Rate</TableCell>
-                            <TableCell sx={{ fontWeight: 800, py: 2, width: '18%' }}>Pending Ops</TableCell>
-                            <TableCell sx={{ fontWeight: 800, py: 2, width: '21%', pr: 3.5 }}>Load Utilization</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {[
-                            { name: 'Sarah Jenkins', cohorts: 2, response: '98%', pending: 0, util: 80, color: 'success' },
-                            { name: 'Michael Chen', cohorts: 4, response: '84%', pending: 3, util: 110, color: 'error' },
-                            { name: 'Elena Rostova', cohorts: 1, response: '96%', pending: 0, util: 45, color: 'success' },
-                            { name: 'David Kalu', cohorts: 3, response: '92%', pending: 1, util: 90, color: 'warning' }
-                          ].map((fac, idx) => (
-                            <TableRow key={idx} hover sx={{ '&:last-child td': { border: 0 } }}>
-                              <TableCell sx={{ fontWeight: 800, py: 2, pl: 3.5 }}>{fac.name}</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 2, color: 'text.secondary' }}>{fac.cohorts} active</TableCell>
-                              <TableCell sx={{ fontWeight: 750, py: 2, color: 'text.primary' }}>{fac.response}</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 2, color: 'text.secondary' }}>{fac.pending} tasks</TableCell>
-                              <TableCell sx={{ py: 2, pr: 3.5 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
-                                  <Box sx={{ flexGrow: 1, height: 6, bgcolor: '#f0f0f0', borderRadius: 3, minWidth: 50, maxWidth: 100 }}>
-                                    <Box sx={{ width: `${Math.min(fac.util, 100)}%`, height: '100%', bgcolor: `${fac.color}.main`, borderRadius: 3 }} />
-                                  </Box>
-                                  <Typography variant="caption" fontWeight={900} color={`${fac.color}.main`} sx={{ minWidth: 32, textAlign: 'right' }}>
-                                    {fac.util}%
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Box>
-
-                  {/* SECTION E — RECENT OPERATIONAL EVENTS */}
-                  <Box>
-                    <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, pl: 1 }}>
-                      <Assignment color="primary" /> Recent Operational Events
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 3, borderRadius: '16px', bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)' }}>
-                      <Stack spacing={3.5} sx={{ position: 'relative', pl: 3, '&::before': { content: '""', position: 'absolute', left: 7, top: 8, bottom: 8, width: 2, bgcolor: 'rgba(0,0,0,0.08)' } }}>
-                        {[
-                          { time: '08:30 AM', title: 'Cohort STX-26-MERN-12 initialized', desc: 'Sarah Jenkins assigned as Lead Facilitator.', badge: 'System', age: '12m ago', color: '#E8391D' },
-                          { time: '11:15 AM', title: 'Attendance drop alert triggered', desc: 'STX-UIUX-B2 fell below the 85% attendance SLA threshold.', badge: 'SLA Alert', age: '2h ago', color: '#ed6c02' },
-                          { time: '02:00 PM', title: 'Technical evaluation cycle finished', desc: '14 Mock interview reports uploaded for STX-MERN-B1.', badge: 'Academic', age: '5h ago', color: '#1976d2' },
-                          { time: '04:30 PM', title: 'Facilitator load rebalance request', desc: 'Michael Chen exceeded cohort load limit (current: 4).', badge: 'Ops', age: '7h ago', color: '#2e7d32' }
-                        ].map((evt, idx) => (
-                          <Box key={idx} sx={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
-                            {/* Dot indicator on the timeline line */}
-                            <Box sx={{ 
-                              position: 'absolute', 
-                              left: -28, 
-                              top: 6, 
-                              width: 10, 
-                              height: 10, 
-                              borderRadius: '50%', 
-                              bgcolor: evt.color, 
-                              border: '2px solid white', 
-                              boxShadow: `0 0 0 2px ${evt.color}22` 
-                            }} />
-                            
-                            {/* Left details */}
-                            <Box sx={{ flexGrow: 1 }}>
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                                <Typography variant="caption" sx={{ px: 1, py: 0.25, bgcolor: 'rgba(0,0,0,0.04)', color: 'secondary.main', borderRadius: 1, fontWeight: 900, fontSize: '0.65rem' }}>
-                                  {evt.time}
-                                </Typography>
-                                <Chip 
-                                  label={evt.badge} 
-                                  size="small" 
-                                  sx={{ 
-                                    height: 18, 
-                                    fontSize: '0.6rem', 
-                                    fontWeight: 900, 
-                                    bgcolor: `${evt.color}11`, 
-                                    color: evt.color,
-                                    border: `1px solid ${evt.color}22`
-                                  }} 
-                                />
-                              </Box>
-                              <Typography variant="subtitle2" fontWeight={800} color="secondary.main" sx={{ mb: 0.5, fontSize: '0.85rem' }}>
-                                {evt.title}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ display: 'block', fontSize: '0.75rem' }}>
-                                {evt.desc}
-                              </Typography>
-                            </Box>
-
-                            {/* Right details / action */}
-                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 }}>
-                              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ fontSize: '0.65rem', mb: 0.5 }}>
-                                {evt.age}
-                              </Typography>
-                              <IconButton 
-                                size="small" 
-                                sx={{ 
-                                  p: 0.5, 
-                                  border: '1px solid rgba(0,0,0,0.06)', 
-                                  borderRadius: 2,
-                                  bgcolor: 'rgba(0,0,0,0.02)',
-                                  color: 'text.secondary', 
-                                  '&:hover': { 
-                                    color: 'primary.main',
-                                    bgcolor: 'rgba(232, 57, 29, 0.04)',
-                                    borderColor: 'rgba(232, 57, 29, 0.15)'
-                                  } 
-                                }} 
-                                onClick={() => toast.info(`Viewing operational log: ${evt.title}`)}
-                              >
-                                <Launch sx={{ fontSize: '0.8rem' }} />
-                              </IconButton>
-                            </Box>
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  </Box>
-
-                </Stack>
-              </Grid>
-
-              {/* Right Column (40% equivalent) */}
-              <Grid item xs={12} sm={5} md={5}>
-                <Stack spacing={4}>
-                  
-                  {/* SECTION B — COURSE TRACK DISTRIBUTION */}
-                  <Box>
-                    <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, pl: 1 }}>
-                      <School color="primary" /> Course Track Distribution
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 3, borderRadius: '16px', bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)' }}>
-                      <Stack spacing={2.5}>
-                        {[
-                          { track: 'MERN Full Stack Development', count: 8, pct: 45, color: '#E8391D' },
-                          { track: 'Python Software Dev', count: 4, pct: 25, color: '#1976d2' },
-                          { track: 'Java Enterprise Systems', count: 2, pct: 15, color: '#9c27b0' },
-                          { track: 'UI/UX Design Strategy', count: 2, pct: 10, color: '#ed6c02' },
-                          { track: 'Data Science & Analytics', count: 1, pct: 5, color: '#2e7d32' }
-                        ].map((dist, idx) => (
-                          <Box key={idx}>
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between', mb: 0.75 }}>
-                              <Typography variant="caption" fontWeight={900} color="secondary.main">{dist.track}</Typography>
-                              <Typography variant="caption" fontWeight={900} color="text.secondary">{dist.count} Cohorts ({dist.pct}%)</Typography>
-                            </Box>
-                            <Box sx={{ width: '100%', height: 6, bgcolor: '#f0f0f0', borderRadius: 3 }}>
-                              <Box sx={{ width: `${dist.pct}%`, height: '100%', bgcolor: dist.color, borderRadius: 3 }} />
-                            </Box>
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  </Box>
-
-                  {/* SECTION D — COHORT PERFORMANCE SNAPSHOT */}
-                  <Box>
-                    <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, pl: 1 }}>
-                      <TrendingUp color="primary" /> Performance Snapshot
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 3, borderRadius: '16px', bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)' }}>
-                      <Stack spacing={2} divider={<Divider sx={{ opacity: 0.5 }} />}>
-                        {[
-                          { label: 'Highest attendance', value: 'MERN-B1 (96.4%)', color: 'success.main' },
-                          { label: 'Critical Attendance Drop', value: 'UIUX-B2 (81.2%)', color: 'error.main' },
-                          { label: 'Fastest progressing cohort', value: 'Python-B1 (Ahead by 2 weeks)', color: 'primary.main' },
-                          { label: 'Highest technical interview success', value: 'MERN-B2 (92% pass rate)', color: 'success.main' }
-                        ].map((snap, idx) => (
-                          <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="caption" fontWeight={800} color="text.secondary">{snap.label}</Typography>
-                            <Typography variant="subtitle2" fontWeight={900} color={snap.color} sx={{ fontSize: '0.8rem' }}>{snap.value}</Typography>
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  </Box>
-
-                </Stack>
-              </Grid>
-            </Grid>
-          </Box>
 
           {/* Dialogs */}
           <Dialog open={showBatchForm} onClose={() => { setShowBatchForm(false); setEditingBatch(null); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '12px' } }}>
