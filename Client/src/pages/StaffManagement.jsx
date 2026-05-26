@@ -16,10 +16,18 @@ import {
   Avatar,
   Divider,
   Paper,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   ThemeProvider,
   createTheme,
   TextField,
   MenuItem,
+  Menu,
   IconButton,
   InputAdornment,
   Pagination,
@@ -44,7 +52,19 @@ import {
   AccountCircle,
   NavigateNext,
   FilterList,
-  Tune
+  Tune,
+  AccessTime,
+  TrendingUp,
+  Assignment,
+  Groups,
+  Chat,
+  MoreVert,
+  Visibility,
+  History,
+  BarChart,
+  Lock,
+  Sync,
+  GroupWork
 } from '@mui/icons-material';
 
 import AppShell from '../components/layout/AppShell';
@@ -95,7 +115,20 @@ const StaffManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 5;
+
+  const [msgAnchorEl, setMsgAnchorEl] = useState(null);
+  const [selectedStaff, setSelectedStaff] = useState(null);
+
+  const handleMsgClick = (event, member) => {
+    setMsgAnchorEl(event.currentTarget);
+    setSelectedStaff(member);
+  };
+
+  const handleMsgClose = () => {
+    setMsgAnchorEl(null);
+    setSelectedStaff(null);
+  };
 
   const { data: usersRes, isLoading: usersLoading } = useQuery({
     queryKey: ['staff'],
@@ -145,17 +178,44 @@ const StaffManagement = () => {
 
   const { register, handleSubmit, reset } = useForm();
 
-  if (usersLoading || invitesLoading) {
-    return (
-      <AppShell>
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 20 }}>
-          <CircularProgress color="primary" thickness={6} />
-        </Box>
-      </AppShell>
-    );
-  }
+  // Skeletons are rendered contextually below to prevent blocking top sections
 
-  const staff = usersRes || [];
+  const baseStaff = usersRes || [];
+  
+  const dummyStaff = [
+    {
+      _id: 'dummy_staff_1',
+      name: 'Sarah Jenkins',
+      email: 's.jenkins@staxhaus.com',
+      role: ROLES.FACILITATOR
+    },
+    {
+      _id: 'dummy_staff_2',
+      name: 'Michael Chen',
+      email: 'm.chen@staxhaus.com',
+      role: ROLES.FACILITATOR
+    },
+    {
+      _id: 'dummy_staff_3',
+      name: 'Elena Rostova',
+      email: 'e.rostova@staxhaus.com',
+      role: ROLES.INTERVIEWER
+    },
+    {
+      _id: 'dummy_staff_4',
+      name: 'David Kalu',
+      email: 'd.kalu@staxhaus.com',
+      role: ROLES.FACILITATOR
+    },
+    {
+      _id: 'dummy_staff_5',
+      name: 'Aisha Rahman',
+      email: 'a.rahman@staxhaus.com',
+      role: ROLES.INTERVIEWER
+    }
+  ];
+
+  const staff = [...baseStaff, ...dummyStaff];
 
   const filteredStaff = staff.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -258,10 +318,10 @@ const StaffManagement = () => {
             mb: 2
           }}>
             {[
-              { label: 'Total Team', value: staff.length, icon: <SupervisorAccount />, color: '#1E2126' },
-              { label: 'Facilitators', value: staff.filter(u => u.role === 'facilitator').length, icon: <AccountCircle />, color: '#E8391D' },
-              { label: 'Interviewers', value: staff.filter(u => u.role === 'interviewer').length, icon: <Shield />, color: '#1976d2' },
-              { label: 'Open Invites', value: invitesRes?.data?.length || 0, icon: <Mail />, color: '#ed6c02' },
+              { label: 'Total Team', value: usersLoading ? <Skeleton width={40} height={28} /> : staff.length, icon: <SupervisorAccount />, color: '#1E2126' },
+              { label: 'Facilitators', value: usersLoading ? <Skeleton width={40} height={28} /> : staff.filter(u => u.role === 'facilitator').length, icon: <AccountCircle />, color: '#E8391D' },
+              { label: 'Interviewers', value: usersLoading ? <Skeleton width={40} height={28} /> : staff.filter(u => u.role === 'interviewer').length, icon: <Shield />, color: '#1976d2' },
+              { label: 'Open Invites', value: invitesLoading ? <Skeleton width={40} height={28} /> : (invitesRes?.data?.length || 0), icon: <Mail />, color: '#ed6c02' },
             ].map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -394,242 +454,516 @@ const StaffManagement = () => {
           </Dialog>
 
 
-          {/* Search & Filter Bar */}
+          {/* Operational Control Bar */}
           <Box sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
+            flexDirection: { xs: 'column', lg: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', lg: 'center' },
             gap: 2,
-            mb: 1
+            mb: 2,
+            p: 2,
+            bgcolor: 'white',
+            borderRadius: '20px',
+            border: '1px solid rgba(0,0,0,0.06)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
           }}>
-            <TextField
-              fullWidth
-              placeholder="Search staff by name or email..."
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              sx={{ flex: 1 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: 'text.secondary', ml: 1 }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  '& fieldset': { border: 'none' },
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                  py: 1
-                }
-              }}
-            />
-            <TextField
-              select
-              value={roleFilter}
-              onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-              sx={{
-                minWidth: { xs: '100%', sm: 240 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '16px',
-                  bgcolor: 'white',
-                  '& fieldset': { border: '1px solid rgba(0,0,0,0.05)' },
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
-                    transform: 'translateY(-2px)'
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
+              <TextField
+                placeholder="Search staff by name or email..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                size="small"
+                sx={{ minWidth: 280 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: 'text.secondary', fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: 3,
+                    bgcolor: 'background.default',
+                    '& fieldset': { border: 'none' },
+                    fontSize: '0.85rem',
+                    fontWeight: 500
                   }
-                }
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FilterList sx={{ color: 'primary.main', ml: 1, mr: 0.5 }} />
-                  </InputAdornment>
-                ),
-              }}
-              SelectProps={{
-                sx: {
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  fontSize: '0.75rem',
-                  py: 1.5
-                },
-                MenuProps: {
-                  PaperProps: {
-                    sx: {
-                      borderRadius: '16px',
-                      mt: 1,
-                      boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                      border: '1px solid rgba(0,0,0,0.05)',
-                      '& .MuiMenuItem-root': {
-                        py: 1.5,
-                        px: 2,
-                        mx: 1,
-                        borderRadius: '8px',
-                        fontWeight: 700,
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        '&:hover': { bgcolor: 'rgba(232, 57, 29, 0.05)', color: 'primary.main' },
-                        '&.Mui-selected': { bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }
-                      }
-                    }
-                  }
-                }
-              }}
-            >
-              <MenuItem value="all">
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Tune sx={{ fontSize: 16 }} />
-                  <span>All Staff Members</span>
-                </Stack>
-              </MenuItem>
-              <MenuItem value={ROLES.FACILITATOR}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <AccountCircle sx={{ fontSize: 16 }} />
-                  <span>Facilitators</span>
-                </Stack>
-              </MenuItem>
-              <MenuItem value={ROLES.INTERVIEWER}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Shield sx={{ fontSize: 16 }} />
-                  <span>Interviewers</span>
-                </Stack>
-              </MenuItem>
-            </TextField>
-          </Box>
-
-          <Stack spacing={4}>
-            <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <VerifiedUser color="success" /> Active Staff Network
-            </Typography>
-
-            <Stack spacing={2}>
-              {paginatedStaff.map(member => (
-                <Card key={member._id} sx={{
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    transform: 'translateX(8px)',
-                    borderColor: 'primary.main',
-                    '& .staff-actions': { opacity: 1 }
-                  }
-                }}>
-                  <CardContent sx={{
-                    p: 2.5,
-                    display: 'flex',
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'flex-start', sm: 'center' },
-                    gap: { xs: 2, sm: 0 }
-                  }}>
-                    <Stack direction="row" spacing={3} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                      <Avatar sx={{ bgcolor: 'secondary.main', borderRadius: 2, fontWeight: 900, width: 48, height: 48 }}>{member.name[0]}</Avatar>
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight={900}>{member.name}</Typography>
-                        <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Mail sx={{ fontSize: 12 }} /> {member.email}
-                        </Typography>
-                      </Box>
-                    </Stack>
-
-                    <Stack direction="row" spacing={{ xs: 2, sm: 6 }} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'space-between', sm: 'center' } }}>
-                      <Box sx={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 0.5, letterSpacing: '0.05em' }}>
-                          ROLE
-                        </Typography>
-                        <Chip
-                          label={member.role.toUpperCase()}
-                          size="small"
-                          color="primary"
-                          sx={{ fontWeight: 900, fontSize: '0.65rem', borderRadius: 1.5, height: 24 }}
-                        />
-                      </Box>
-
-                      <Box sx={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 0.5, letterSpacing: '0.05em' }}>
-                          STATUS
-                        </Typography>
-                        <Box sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: 2,
-                          bgcolor: 'rgba(46, 125, 50, 0.08)',
-                          width: 'fit-content'
-                        }}>
-                          <Box sx={{ width: 6, height: 6, bgcolor: 'success.main', borderRadius: '50%' }} />
-                          <Typography variant="caption" fontWeight={900} color="success.main" sx={{ letterSpacing: '0.05em' }}>ACTIVE</Typography>
-                        </Box>
-                      </Box>
-                    </Stack>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      className="staff-actions"
-                      sx={{
-                        opacity: { xs: 1, sm: 0 },
-                        transition: 'opacity 0.2s',
-                        ml: { xs: 0, sm: 4 },
-                        mt: { xs: 2, sm: 0 },
-                        justifyContent: { xs: 'flex-end', sm: 'center' },
-                        width: { xs: '100%', sm: 'auto' }
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        component={Link}
-                        to={`/staff/profile/${member._id}`}
-                        sx={{ bgcolor: { xs: 'primary.light', sm: 'transparent' }, color: { xs: 'primary.contrastText', sm: 'primary.main' } }}
-                      >
-                        <AccountCircle sx={{ fontSize: 18 }} />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => {
-                          if (confirm(`Remove ${member.name} from staff?`)) deleteStaffMutation.mutate(member._id);
-                        }}
-                        sx={{ bgcolor: { xs: 'error.light', sm: 'transparent' }, color: { xs: 'error.contrastText', sm: 'error.main' } }}
-                      >
-                        <Delete sx={{ fontSize: 18 }} />
-                      </IconButton>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {totalPages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    shape="rounded"
-                    size="large"
+                }}
+              />
+              <Divider orientation="vertical" flexItem sx={{ opacity: 0.6 }} />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {['all', ROLES.FACILITATOR, ROLES.INTERVIEWER].map((role) => (
+                  <Chip
+                    key={role}
+                    label={role === 'all' ? 'All Roles' : role}
+                    onClick={() => { setRoleFilter(role); setPage(1); }}
                     sx={{
-                      '& .MuiPaginationItem-root': {
-                        fontWeight: 900,
-                        borderRadius: 2,
-                        '&.Mui-selected': {
-                          boxShadow: '0 4px 12px rgba(232, 57, 29, 0.3)',
-                        }
+                      fontWeight: 800,
+                      fontSize: '0.7rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      borderRadius: 2,
+                      px: 1,
+                      bgcolor: roleFilter === role ? 'primary.main' : 'transparent',
+                      color: roleFilter === role ? 'white' : 'text.secondary',
+                      border: roleFilter === role ? 'none' : '1px solid rgba(0,0,0,0.1)',
+                      '&:hover': {
+                        bgcolor: roleFilter === role ? 'primary.dark' : 'rgba(0,0,0,0.04)'
                       }
                     }}
                   />
-                </Box>
-              )}
-              {staff.length === 0 && (
-                <Paper variant="outlined" sx={{ p: 8, textAlign: 'center', borderRadius: 8, borderStyle: 'dashed' }}>
-                  <Typography color="text.secondary">No active staff members found.</Typography>
-                </Paper>
-              )}
-            </Stack>
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, justifyContent: { xs: 'space-between', lg: 'flex-end' } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Sync sx={{ fontSize: 16, color: 'success.main' }} />
+                <Typography variant="caption" fontWeight={700} color="text.secondary">Live Sync</Typography>
+              </Box>
+              <Box sx={{ px: 2, py: 1, bgcolor: '#f8f9fa', borderRadius: 2, border: '1px solid #eee', display: 'flex', alignItems: 'center' }}>
+                <Typography variant="caption" fontWeight={800} color="text.primary">
+                  {usersLoading ? (
+                    <Skeleton width={100} height={16} />
+                  ) : (
+                    <>
+                      {filteredStaff.length} <span style={{ color: '#888', fontWeight: 600 }}>Staff Members</span>
+                    </>
+                  )}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          <Stack spacing={4}>
+            <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, pl: 1 }}>
+              <GroupWork color="primary" /> Operational Staff Directory
+            </Typography>
+
+            <TableContainer component={Paper} sx={{
+              borderRadius: '20px',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+              overflowX: 'auto',
+              bgcolor: 'white',
+              '&::-webkit-scrollbar': {
+                height: '6px'
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'rgba(0,0,0,0.1)',
+                borderRadius: '3px'
+              }
+            }}>
+              <Table sx={{ minWidth: 700 }}>
+                <TableHead sx={{ bgcolor: 'rgba(0, 0, 0, 0.02)' }}>
+                  <TableRow>
+                    <TableCell sx={{ pl: 3, py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Staff Member</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Operations</TableCell>
+                    <TableCell sx={{ py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</TableCell>
+                    <TableCell align="right" sx={{ pr: 3, py: 1.5, fontWeight: 900, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {usersLoading || invitesLoading ? (
+                    [...Array(5)].map((_, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell sx={{ borderLeft: '4px solid #e0e0e0', pl: 3, py: 1.5 }}>
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                            <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2.5 }} animation="wave" />
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Skeleton variant="text" width="120px" height={20} animation="wave" />
+                              <Skeleton variant="text" width="80px" height={14} animation="wave" />
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Skeleton variant="rounded" width={80} height={20} sx={{ borderRadius: 1.5 }} animation="wave" />
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Skeleton variant="text" width="80px" height={16} animation="wave" />
+                          <Skeleton variant="text" width="100px" height={14} sx={{ mt: 0.5 }} animation="wave" />
+                        </TableCell>
+                        <TableCell sx={{ py: 1.5 }}>
+                          <Skeleton variant="rounded" width={70} height={20} sx={{ borderRadius: 2 }} animation="wave" />
+                        </TableCell>
+                        <TableCell align="right" sx={{ pr: 3, py: 1.5 }}>
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                            <Skeleton variant="circular" width={32} height={32} animation="wave" />
+                            <Skeleton variant="circular" width={32} height={32} animation="wave" />
+                            <Skeleton variant="circular" width={32} height={32} animation="wave" />
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    paginatedStaff.map(member => {
+                      // Mock deterministic operational data based on ID
+                      const charCode = member._id.charCodeAt(member._id.length - 1);
+                      const isActive = charCode % 3 !== 0;
+                      const activeCohorts = (charCode % 4) + 1;
+                      const responseTime = `${((charCode % 5) + 1.2).toFixed(1)}h`;
+                      
+                      return (
+                        <TableRow 
+                          key={member._id} 
+                          sx={{ 
+                            transition: 'all 0.2s',
+                            '&:hover': { 
+                              bgcolor: 'rgba(232, 57, 29, 0.015)' 
+                            }
+                          }}
+                        >
+                          <TableCell sx={{ 
+                            borderLeft: `4px solid ${isActive ? '#2e7d32' : '#ed6c02'}`,
+                            pl: 3,
+                            py: 1.5
+                          }}>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                              <Avatar sx={{ width: 40, height: 40, bgcolor: 'secondary.main', fontWeight: 900, borderRadius: 2.5, boxShadow: '0 4px 10px rgba(0,0,0,0.06)' }}>
+                                {member.name[0]}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="subtitle2" fontWeight={900} sx={{ color: 'text.primary', lineHeight: 1.2, mb: 0.25 }}>{member.name}</Typography>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                                  <Mail sx={{ fontSize: 13 }} /> {member.email}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                  <Typography variant="caption" sx={{ px: 1, py: 0.1, bgcolor: '#f0f0f0', borderRadius: 0.75, fontWeight: 800, fontSize: '0.55rem', color: '#666' }}>
+                                    ID: {member._id.slice(-6).toUpperCase()}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ px: 1, py: 0.1, bgcolor: 'primary.50', color: 'primary.main', borderRadius: 0.75, fontWeight: 800, fontSize: '0.55rem' }}>
+                                    ACADEMIC OPS
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Chip label={member.role} size="small" sx={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.65rem', borderRadius: 1.5, bgcolor: 'secondary.main', color: 'white' }} />
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              <Typography variant="caption" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.primary' }}>
+                                <Groups sx={{ fontSize: 15, color: 'primary.main' }} /> {activeCohorts} Cohorts
+                              </Typography>
+                              <Typography variant="caption" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                                <AccessTime sx={{ fontSize: 15, color: 'warning.main' }} /> {responseTime}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 2, bgcolor: isActive ? 'rgba(46, 125, 50, 0.08)' : 'rgba(237, 108, 2, 0.08)' }}>
+                              <Box sx={{ width: 6, height: 6, bgcolor: isActive ? 'success.main' : 'warning.main', borderRadius: '50%' }} />
+                              <Typography variant="caption" fontWeight={800} color={isActive ? 'success.main' : 'warning.main'} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.65rem' }}>
+                                {isActive ? 'Active Now' : 'Away'}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right" sx={{ pr: 3, py: 1.5 }}>
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                              <IconButton size="small" component={Link} to={`/staff/profile/${member._id}`} sx={{ border: '1px solid rgba(232, 57, 29, 0.2)', borderRadius: '50%', color: 'primary.main', width: 32, height: 32 }} title="View Profile">
+                                <Visibility fontSize="small" />
+                              </IconButton>
+                              <IconButton 
+                                size="small" 
+                                sx={{ border: '1px solid rgba(232, 57, 29, 0.2)', borderRadius: '50%', color: 'primary.main', width: 32, height: 32 }} 
+                                title="Message"
+                                onClick={(e) => handleMsgClick(e, member)}
+                              >
+                                <Chat fontSize="small" />
+                              </IconButton>
+                              <IconButton size="small" color="error" onClick={() => { if (confirm(`Remove ${member.name} from staff?`)) deleteStaffMutation.mutate(member._id); }} sx={{ border: '1px solid rgba(211, 47, 47, 0.15)', borderRadius: '50%', width: 32, height: 32 }} title="Remove Staff">
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {!usersLoading && filteredStaff.length === 0 && (
+              <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderRadius: 6, borderStyle: 'dashed', borderColor: 'rgba(0,0,0,0.1)' }}>
+                <Typography color="text.secondary" fontWeight={600} variant="body2">No matching staff members found.</Typography>
+              </Paper>
+            )}
+
+            {/* Pagination footer */}
+            {!usersLoading && totalPages > 1 && (
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mt: 3, 
+                pt: 2,
+                gap: 2,
+                borderTop: '1px solid rgba(0, 0, 0, 0.05)'
+              }}>
+                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Showing {Math.min((page - 1) * itemsPerPage + 1, filteredStaff.length)}–{Math.min(page * itemsPerPage, filteredStaff.length)} of {filteredStaff.length} staff members
+                </Typography>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  shape="rounded"
+                  size="medium"
+                  showFirstButton={false}
+                  showLastButton={false}
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      fontWeight: 800,
+                      fontSize: '0.75rem',
+                      fontFamily: 'Outfit',
+                      textTransform: 'uppercase',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      bgcolor: 'white',
+                      px: 1.5,
+                      py: 0.5,
+                      height: '36px',
+                      minWidth: '36px',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        bgcolor: 'rgba(232, 57, 29, 0.05)',
+                        color: 'primary.main',
+                        borderColor: 'primary.main',
+                      },
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgba(232, 57, 29, 0.25)',
+                        '&:hover': {
+                          bgcolor: 'primary.dark',
+                        }
+                      }
+                    },
+                    '& .MuiPaginationItem-previousNext': {
+                      fontWeight: 900,
+                      color: 'primary.main',
+                      border: '1px solid rgba(232, 57, 29, 0.2)',
+                      '&:hover': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        borderColor: 'primary.main',
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            )}
+
+            {/* NEW OPERATIONAL SECTIONS */}
+            <Box sx={{ mt: 6 }}>
+              <Typography variant="h6" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, pl: 1 }}>
+                <BarChart color="primary" /> Institution Level Operations
+              </Typography>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'stretch' }}>
+                {/* SECTION A & B */}
+                <Stack spacing={3} sx={{ height: '100%' }}>
+                  {/* Team Distribution */}
+                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <CardContent sx={{ p: 3, flex: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Groups sx={{ color: 'action.active' }} /> Team Distribution
+                      </Typography>
+                      <Stack spacing={2.5}>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant="caption" fontWeight={700}>Facilitators</Typography>
+                            <Typography variant="caption" fontWeight={900}>45%</Typography>
+                          </Box>
+                          <Box sx={{ width: '100%', height: 6, bgcolor: '#f0f0f0', borderRadius: 3 }}>
+                            <Box sx={{ width: '45%', height: '100%', bgcolor: 'primary.main', borderRadius: 3 }} />
+                          </Box>
+                        </Box>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant="caption" fontWeight={700}>Interviewers</Typography>
+                            <Typography variant="caption" fontWeight={900}>35%</Typography>
+                          </Box>
+                          <Box sx={{ width: '100%', height: 6, bgcolor: '#f0f0f0', borderRadius: 3 }}>
+                            <Box sx={{ width: '35%', height: '100%', bgcolor: 'secondary.main', borderRadius: 3 }} />
+                          </Box>
+                        </Box>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant="caption" fontWeight={700}>Mentors / Support</Typography>
+                            <Typography variant="caption" fontWeight={900}>20%</Typography>
+                          </Box>
+                          <Box sx={{ width: '100%', height: 6, bgcolor: '#f0f0f0', borderRadius: 3 }}>
+                            <Box sx={{ width: '20%', height: '100%', bgcolor: '#9c27b0', borderRadius: 3 }} />
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+
+                  {/* Active Operations Board */}
+                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <CardContent sx={{ p: 3, flex: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Schedule sx={{ color: 'action.active' }} /> Active Operations Board
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 3, height: '100%' }}>
+                            <Typography variant="h4" fontWeight={900} color="primary.main">12</Typography>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary">Live Sessions</Typography>
+                          </Box>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 3, height: '100%' }}>
+                            <Typography variant="h4" fontWeight={900} color="warning.main">28</Typography>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary">Pending Evals</Typography>
+                          </Box>
+                        </Grid>
+                       
+                        <Grid item xs={6}>
+                          <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 3, height: '100%' }}>
+                            <Typography variant="h4" fontWeight={900} color="text.primary">5</Typography>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary">Inactive Today</Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Stack>
+
+                {/* SECTION C & D */}
+                <Stack spacing={3} sx={{ height: '100%' }}>
+                  {/* Performance Snapshot */}
+                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <CardContent sx={{ p: 3, flex: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TrendingUp sx={{ color: 'action.active' }} /> Performance Snapshot
+                      </Typography>
+                      <Stack spacing={2} divider={<Divider sx={{ opacity: 0.5 }} />} sx={{ height: '100%', justifyContent: 'center' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight={800}>Interview Completion</Typography>
+                            <Typography variant="caption" color="text.secondary">Within 48hr SLA</Typography>
+                          </Box>
+                          <Typography variant="subtitle1" fontWeight={900} color="success.main">94%</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight={800}>Attendance Marking</Typography>
+                            <Typography variant="caption" color="text.secondary">Consistency rate</Typography>
+                          </Box>
+                          <Typography variant="subtitle1" fontWeight={900} color="primary.main">88%</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight={800}>Student Satisfaction</Typography>
+                            <Typography variant="caption" color="text.secondary">Average rating</Typography>
+                          </Box>
+                          <Typography variant="subtitle1" fontWeight={900} color="text.primary">4.8/5</Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent Admin Actions */}
+                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <CardContent sx={{ p: 3, flex: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <History sx={{ color: 'action.active' }} /> Recent Admin Actions
+                      </Typography>
+                      <Stack spacing={2} sx={{ height: '100%', justifyContent: 'center' }}>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                          <Box sx={{ mt: 0.5, p: 0.5, bgcolor: '#e3f2fd', color: '#1976d2', borderRadius: 1 }}>
+                            <Lock sx={{ fontSize: 16 }} />
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Permissions Updated</Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">Granted Lead access to Sarah Jenkins.</Typography>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>2 hours ago</Typography>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                          <Box sx={{ mt: 0.5, p: 0.5, bgcolor: '#fbe9e7', color: '#d32f2f', borderRadius: 1 }}>
+                            <Assignment sx={{ fontSize: 16 }} />
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>Batch Reassigned</Typography>
+                            <Typography variant="caption" color="text.secondary" display="block">Batch B-02 transferred to Michael Chen.</Typography>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600}>5 hours ago</Typography>
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Stack>
+              </Box>
+            </Box>
           </Stack>
+
+          {/* Message Dropdown Menu */}
+          <Menu
+            anchorEl={msgAnchorEl}
+            open={Boolean(msgAnchorEl)}
+            onClose={handleMsgClose}
+            PaperProps={{
+              sx: {
+                borderRadius: '16px',
+                mt: 1,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(0,0,0,0.05)',
+                minWidth: 180,
+                '& .MuiMenuItem-root': {
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  py: 1.2,
+                  px: 2,
+                  display: 'flex',
+                  gap: 1.5,
+                  borderRadius: '8px',
+                  mx: 1,
+                  my: 0.5,
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    bgcolor: 'rgba(232, 57, 29, 0.08)',
+                    color: 'primary.main',
+                  }
+                }
+              }
+            }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem onClick={() => {
+              toast.info(`Opening In-App Chat with ${selectedStaff?.name}`);
+              handleMsgClose();
+            }}>
+              <Chat fontSize="small" sx={{ color: 'primary.main' }} />
+              In-App Chat
+            </MenuItem>
+            <MenuItem onClick={() => {
+              if (selectedStaff?.email) {
+                window.location.href = `mailto:${selectedStaff.email}`;
+              }
+              handleMsgClose();
+            }}>
+              <Email fontSize="small" sx={{ color: '#1976d2' }} />
+              Send Email
+            </MenuItem>
+            <MenuItem onClick={() => {
+              toast.info(`Sending Quick Ping to ${selectedStaff?.name}`);
+              handleMsgClose();
+            }}>
+              <Send fontSize="small" sx={{ color: '#2e7d32' }} />
+              Quick Slack Ping
+            </MenuItem>
+          </Menu>
 
         </Box>
       </AppShell>

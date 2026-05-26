@@ -29,6 +29,18 @@ import {
   NavigateNext
 } from '@mui/icons-material';
 import { PieChart } from '@mui/x-charts';
+import {
+  VideoCameraFront,
+  EventNote,
+  Warning,
+  CheckCircle,
+  Speed,
+  MoreVert,
+  Timeline,
+  Assessment,
+  Groups,
+  Engineering
+} from '@mui/icons-material';
 
 import * as reportApi from '../../api/reports.api';
 import { STUDENT_STATUS } from '../../utils/constants';
@@ -77,18 +89,78 @@ const AdminDashboardContent = () => {
 
   const { kpis, students, invitations } = response.data;
 
-  // Formatting data for MUI X Charts
-  const studentData = [
-    { label: 'Active', value: students[STUDENT_STATUS.ACTIVE], color: '#2e7d32' },
-    { label: 'Discontinued', value: students[STUDENT_STATUS.DISCONTINUED], color: '#ed6c02' },
-    { label: 'Terminated', value: students[STUDENT_STATUS.TERMINATED], color: '#d32f2f' },
-  ].filter(d => d.value > 0);
+  // Mock Data for New Operations UI
+  const commandCenterMetrics = [
+    { 
+      label: 'Ongoing Interviews', 
+      value: 12, 
+      trend: '+3 this week', 
+      status: 'optimal', 
+      icon: <VideoCameraFront />,
+      subMetrics: [
+        { label: "Today's", value: 4 },
+        { label: "Active Interviewers", value: 8 },
+        { label: "Delayed Eval", value: 1, alert: true }
+      ]
+    },
+    { 
+      label: 'Pending Leaves', 
+      value: 5, 
+      trend: '-2 since yesterday', 
+      status: 'warning', 
+      icon: <EventNote />,
+      subMetrics: [
+        { label: "Emergency", value: 2, alert: true },
+        { label: "Awaiting Review", value: 3 },
+        { label: "Escalated", value: 0 }
+      ]
+    },
+    { 
+      label: 'Students at Risk', 
+      value: 8, 
+      trend: 'Requires attention', 
+      status: 'critical', 
+      icon: <Warning />,
+      subMetrics: [
+        { label: "Attendance Risk", value: 4, alert: true },
+        { label: "Failed Interviews", value: 3 },
+        { label: "Scrum Inactivity", value: 1 }
+      ]
+    },
+    { 
+      label: 'Scrum Completion', 
+      value: '92%', 
+      trend: '+5% vs last week', 
+      status: 'optimal', 
+      icon: <CheckCircle />,
+      subMetrics: [
+        { label: "Daily Sync", value: "95%" },
+        { label: "Missing", value: 4, alert: true },
+        { label: "Pending Review", value: 12 }
+      ]
+    },
+    { 
+      label: 'Deployment Ready', 
+      value: 24, 
+      trend: 'Available', 
+      status: 'optimal', 
+      icon: <Speed />,
+      subMetrics: [
+        { label: "Placement Ready", value: 18 },
+        { label: "Mock Interviews", value: 24 },
+        { label: "Module Comp.", value: "100%" }
+      ]
+    }
+  ];
 
-  const inviteData = [
-    { label: 'Pending', value: invitations.pending, color: '#9e9e9e' },
-    { label: 'Accepted', value: invitations.accepted, color: '#2e7d32' },
-    { label: 'Expired', value: invitations.expired, color: '#E8391D' },
-  ].filter(d => d.value > 0);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'optimal': return '#2e7d32'; // green
+      case 'warning': return '#ed6c02'; // orange
+      case 'critical': return '#d32f2f'; // red
+      default: return '#1976d2'; // blue
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 4, md: 6 } }}>
@@ -238,84 +310,250 @@ const AdminDashboardContent = () => {
         ))}
       </Box>
 
-      {/* Charts Section */}
-      <Grid container spacing={{ xs: 0, md: 6 }}>
-        <Grid item xs={12} md={6}>
-          <Card sx={{
-            p: { xs: 3, md: 4 },
-            height: { xs: 'auto', md: 500 },
-            mx: { xs: -2, md: 0 },
-            borderRadius: { xs: 0, md: '24px' },
-            boxShadow: 'none',
-            border: '1px solid rgba(0,0,0,0.05)',
-            borderBottom: '1px solid #eee'
-          }}>
-            <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <Typography variant="h6" color="secondary" gutterBottom>Student Distribution</Typography>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ mb: 4, display: 'block' }}>
-                Status breakdown across all registered profiles.
-              </Typography>
-            </Box>
-            <Box sx={{ width: '100%', height: { xs: 300, md: 350 }, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-              {studentData.length > 0 ? (
-                <PieChart
-                  series={[{
-                    data: studentData,
-                    innerRadius: isMobile ? 60 : 80,
-                    outerRadius: isMobile ? 90 : 120,
-                    paddingAngle: 5,
-                    cornerRadius: 5,
-                  }]}
-                  width={350}
-                  height={300}
-                />
-              ) : (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'text.secondary' }}>
-                  No student data available
+      {/* 1. INSTITUTION COMMAND CENTER */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" color="secondary" gutterBottom sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Speed color="primary" /> Institution Command Center
+        </Typography>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' },
+          gap: 2.5
+        }}>
+          {commandCenterMetrics.map((metric, idx) => (
+            <Card key={idx} sx={{
+              borderRadius: '24px',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.03)',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.06)'
+              }
+            }}>
+              <Box sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '4px',
+                bgcolor: getStatusColor(metric.status),
+              }} />
+              <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', '&:last-child': { pb: 3 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2.5 }}>
+                  <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: `${getStatusColor(metric.status)}15`, color: getStatusColor(metric.status), display: 'flex' }}>
+                    {metric.icon}
+                  </Box>
+                  <Box sx={{
+                    px: 1.5, py: 0.5, borderRadius: 1.5,
+                    bgcolor: `${getStatusColor(metric.status)}10`,
+                    color: getStatusColor(metric.status),
+                    fontSize: '0.65rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em'
+                  }}>
+                    {metric.status}
+                  </Box>
                 </Box>
-              )}
-            </Box>
-          </Card>
-        </Grid>
+                
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h3" sx={{ fontFamily: 'Outfit', fontWeight: 900, mb: 0.5, color: 'text.primary', letterSpacing: '-0.02em' }}>
+                    {metric.value}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight={700} sx={{ letterSpacing: '0.01em' }}>
+                    {metric.label}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5, mt: 1, fontWeight: 600 }}>
+                    <TrendingUp fontSize="small" sx={{ color: metric.status === 'warning' || metric.status === 'critical' ? 'error.main' : 'success.main' }} />
+                    {metric.trend}
+                  </Typography>
+                </Box>
 
-        <Grid item xs={12} md={6}>
-          <Card sx={{
-            p: { xs: 3, md: 4 },
-            height: { xs: 'auto', md: 500 },
-            mx: { xs: -2, md: 0 },
-            borderRadius: { xs: 0, md: '24px' },
-            boxShadow: 'none',
-            border: '1px solid rgba(0,0,0,0.05)',
-            borderBottom: '1px solid #eee'
-          }}>
-            <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-              <Typography variant="h6" color="secondary" gutterBottom>Invitation Funnel</Typography>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ mb: 4, display: 'block' }}>
-                Onboarding efficiency and acceptance metrics.
-              </Typography>
-            </Box>
-            <Box sx={{ width: '100%', height: { xs: 300, md: 350 }, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-              {inviteData.length > 0 ? (
-                <PieChart
-                  series={[{
-                    data: inviteData,
-                    innerRadius: isMobile ? 60 : 80,
-                    outerRadius: isMobile ? 90 : 120,
-                    paddingAngle: 5,
-                    cornerRadius: 5,
-                  }]}
-                  width={350}
-                  height={300}
-                />
-              ) : (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'text.secondary' }}>
-                  No invitation data available
+                <Divider sx={{ my: 2, opacity: 0.6 }} />
+
+                <Stack spacing={1.5} sx={{ mt: 'auto' }}>
+                  {metric.subMetrics.map((sub, i) => (
+                    <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>{sub.label}</Typography>
+                      <Typography variant="caption" fontWeight={800} color={sub.alert ? 'error.main' : 'text.primary'}>
+                        {sub.value}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      </Box>
+
+      {/* 2. LIVE OPERATIONAL GRID */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h6" color="secondary" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
+          <Assessment color="primary" /> Institutional Monitor
+        </Typography>
+        
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1.2fr' }, 
+          gap: 3 
+        }}>
+          
+          {/* Cohort Health Monitor */}
+          <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ p: 3.5, flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Typography variant="subtitle1" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Layers sx={{ color: 'primary.main' }} /> Cohort Health Monitor
+                </Typography>
+                <MoreVert color="action" />
+              </Box>
+              <Stack spacing={3.5}>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'center' }}>
+                    <Typography variant="body2" fontWeight={700} color="text.secondary">Attendance Velocity</Typography>
+                    <Typography variant="body2" fontWeight={900} color="primary.main">88%</Typography>
+                  </Box>
+                  <Box sx={{ width: '100%', height: 8, bgcolor: '#f0f0f0', borderRadius: 4 }}>
+                    <Box sx={{ width: '88%', height: '100%', bgcolor: 'primary.main', borderRadius: 4 }} />
+                  </Box>
                 </Box>
-              )}
-            </Box>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'center' }}>
+                    <Typography variant="body2" fontWeight={700} color="text.secondary">Interview Readiness</Typography>
+                    <Typography variant="body2" fontWeight={900} color="success.main">High</Typography>
+                  </Box>
+                  <Box sx={{ width: '100%', height: 8, bgcolor: '#f0f0f0', borderRadius: 4, display: 'flex', gap: 0.5 }}>
+                    <Box sx={{ flex: 1, height: '100%', bgcolor: 'success.main', borderRadius: 4 }} />
+                    <Box sx={{ flex: 1, height: '100%', bgcolor: 'success.main', borderRadius: 4 }} />
+                    <Box sx={{ flex: 1, height: '100%', bgcolor: 'success.main', borderRadius: 4 }} />
+                    <Box sx={{ flex: 1, height: '100%', bgcolor: '#e0e0e0', borderRadius: 4 }} />
+                  </Box>
+                </Box>
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, alignItems: 'center' }}>
+                    <Typography variant="body2" fontWeight={700} color="text.secondary">Module Progression</Typography>
+                    <Typography variant="body2" fontWeight={900} color="warning.main">Lagging</Typography>
+                  </Box>
+                  <Box sx={{ width: '100%', height: 8, bgcolor: '#f0f0f0', borderRadius: 4 }}>
+                    <Box sx={{ width: '65%', height: '100%', bgcolor: 'warning.main', borderRadius: 4 }} />
+                  </Box>
+                </Box>
+                
+                <Box sx={{ mt: 'auto', pt: 2, display: 'flex', gap: 2 }}>
+                  <Box sx={{ flex: 1, p: 2, bgcolor: '#f8f9fa', borderRadius: 3, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" sx={{ mb: 0.5 }}>Risk Status</Typography>
+                    <Typography variant="subtitle2" fontWeight={800} color="success.main">Stable</Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 2, bgcolor: '#f8f9fa', borderRadius: 3, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" sx={{ mb: 0.5 }}>Health Score</Typography>
+                    <Typography variant="subtitle2" fontWeight={800} color="primary.main">A-</Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+
+          {/* Facilitator Efficiency Center */}
+          <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ p: 3.5, flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Typography variant="subtitle1" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Engineering sx={{ color: 'secondary.main' }} /> Facilitator Efficiency
+                </Typography>
+                <MoreVert color="action" />
+              </Box>
+              
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 4 }}>
+                <Box sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={700}>Active Sessions</Typography>
+                  <Typography variant="h4" fontWeight={900} sx={{ mt: 1, color: 'success.main' }}>8</Typography>
+                </Box>
+                <Box sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(0,0,0,0.05)' }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={700}>Pending Reviews</Typography>
+                  <Typography variant="h4" fontWeight={900} sx={{ mt: 1, color: 'warning.main' }}>24</Typography>
+                </Box>
+              </Box>
+
+              <Stack spacing={3} divider={<Divider sx={{ opacity: 0.6 }} />}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={800} color="text.primary">Avg Turnaround Time</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>Code evaluations (last 7 days)</Typography>
+                  </Box>
+                  <Typography variant="subtitle1" fontWeight={900} color="primary.main">2.4h</Typography>
+                </Box>
+                
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={800} color="text.primary">Evaluation Load</Typography>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>System capacity utilized</Typography>
+                    </Box>
+                    <Typography variant="subtitle2" fontWeight={900} color="error.main">High</Typography>
+                  </Box>
+                  <Box sx={{ width: '100%', height: 6, bgcolor: '#f0f0f0', borderRadius: 3, display: 'flex' }}>
+                    <Box sx={{ width: '85%', height: '100%', bgcolor: 'error.main', borderRadius: 3 }} />
+                  </Box>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Institutional Incident Monitor */}
+          <Card sx={{ borderRadius: '24px', border: '1px solid rgba(211, 47, 47, 0.15)', boxShadow: '0 8px 32px rgba(211, 47, 47, 0.04)', display: 'flex', flexDirection: 'column', bgcolor: '#fffcfc' }}>
+            <CardContent sx={{ p: 3.5, flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Typography variant="subtitle1" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'error.main' }}>
+                  <Warning /> Incident Monitor
+                </Typography>
+                <Button size="small" color="error" variant="outlined" sx={{ borderRadius: 8, fontWeight: 700, textTransform: 'none' }}>View All</Button>
+              </Box>
+              
+              <Stack spacing={2}>
+                {/* Critical Incident */}
+                <Box sx={{ p: 2.5, bgcolor: 'white', borderRadius: 3, borderLeft: '4px solid #d32f2f', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="caption" fontWeight={800} color="error.main" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Critical</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>10m ago</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={800} color="text.primary" sx={{ mb: 0.5 }}>Mass Attendance Drop: Batch B-02</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ display: 'block', mb: 1.5 }}>Attendance dropped below 60% threshold for today's session.</Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ px: 1, py: 0.5, bgcolor: '#f5f5f5', borderRadius: 1, fontSize: '0.65rem', fontWeight: 700, color: 'text.secondary' }}>Escalated to Lead</Box>
+                  </Box>
+                </Box>
+
+                {/* Warning Incident */}
+                <Box sx={{ p: 2.5, bgcolor: 'white', borderRadius: 3, borderLeft: '4px solid #ed6c02', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="caption" fontWeight={800} color="warning.main" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Warning</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>2h ago</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={800} color="text.primary" sx={{ mb: 0.5 }}>Overdue Interviews (5)</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ display: 'block' }}>Students waiting &gt; 48hrs for mock evaluations.</Typography>
+                </Box>
+                
+                {/* Monitoring Incident */}
+                <Box sx={{ p: 2.5, bgcolor: 'white', borderRadius: 3, borderLeft: '4px solid #1976d2', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="caption" fontWeight={800} color="primary.main" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Monitoring</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>4h ago</Typography>
+                  </Box>
+                  <Typography variant="body2" fontWeight={800} color="text.primary" sx={{ mb: 0.5 }}>System Resource Usage High</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ display: 'block' }}>Sandbox environments reaching 85% capacity.</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+          
+        </Box>
+      </Box>
 
     </Box>
   );
