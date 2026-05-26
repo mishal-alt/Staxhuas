@@ -33,6 +33,22 @@ const userSchema = new mongoose.Schema(
     currentModule: {
       name: { type: String, default: 'Module 1' }
     },
+    // Documents & Resume uploaded to Cloudinary
+    documents: [
+      {
+        type: { type: String, enum: ['resume', 'document'], required: true },
+        name: { type: String, required: true },
+        url: { type: String, required: true },
+        publicId: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+      }
+    ],
+    // Social profile links
+    socialLinks: {
+      github: { type: String, default: '' },
+      linkedin: { type: String, default: '' },
+      leetcode: { type: String, default: '' },
+    },
     // Track refresh token for logout
     refreshToken: { type: String, select: false },
     googleRefreshToken: { type: String, select: false },

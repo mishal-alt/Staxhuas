@@ -67,7 +67,13 @@ const ATTENDANCE_DATA = [
   { label: 'Half Day', value: 3, color: '#ff9800' },
   { label: 'Excused', value: 2, color: '#d32f2f' },
   { label: 'Unexcused', value: 1, color: '#f44336' },
-  { label: 'No Status', value: 4, color: '#9e9e9e' },
+];
+
+const RECENT_STUDENT_ACTIVITY = [
+  { actor: 'You', action: 'submitted a leave request for next Monday.', time: '2h ago', color: '#10B981' },
+  { actor: 'You', action: 'completed the React evaluation for B-1.', time: '5h ago', color: '#3B82F6' },
+  { actor: 'You', action: 'submitted your scrum sync check.', time: 'Yesterday', color: '#EF4444' },
+  { actor: 'You', action: 'marked your attendance for today.', time: '2 days ago', color: '#8B5CF6' }
 ];
 
 const StudentDashboard = ({ user }) => {
@@ -221,45 +227,80 @@ const StudentDashboard = ({ user }) => {
               </Stack>
            </Grid>
 
-           {/* Right Column: Attendance Pie Chart */}
+           {/* Right Column: Attendance Pie Chart & Recent Activity */}
            <Grid item xs={12} lg={4}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ p: 4, borderBottom: '1px solid', borderColor: 'divider' }}>
-                   <Typography variant="h6" fontWeight={900} color="secondary">Attendance Insight</Typography>
-                   <Typography variant="caption" fontWeight={700} color="text.secondary">7-DAY HISTORICAL SNAPSHOT</Typography>
-                </Box>
-                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                   <Box sx={{ width: '100%', height: 300, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-                      <PieChart
-                        series={[{
-                          data: ATTENDANCE_DATA,
-                          innerRadius: 60,
-                          outerRadius: 100,
-                          paddingAngle: 5,
-                          cornerRadius: 5,
-                        }]}
-                        width={300}
-                        height={250}
-                      />
-                      <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                         <Typography variant="caption" fontWeight={900} color="text.disabled" sx={{ display: 'block' }}>RECORDS</Typography>
-                         <Typography variant="h4" fontWeight={900} color="secondary">92</Typography>
-                      </Box>
-                   </Box>
-                   <Stack spacing={1.5} sx={{ width: '100%', mt: 4 }}>
-                      <Grid container spacing={1}>
-                        {ATTENDANCE_DATA.map(d => (
-                          <Grid item xs={6} key={d.label}>
-                             <Stack direction="row" spacing={1} alignItems="center">
-                                <Box sx={{ width: 8, height: 8, bgcolor: d.color, borderRadius: '50%' }} />
-                                <Typography variant="caption" fontWeight={900} color="text.secondary">{d.label.toUpperCase()}</Typography>
-                             </Stack>
-                          </Grid>
-                        ))}
-                      </Grid>
-                   </Stack>
-                </CardContent>
-              </Card>
+              <Stack spacing={4}>
+                <Card sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ p: 4, borderBottom: '1px solid', borderColor: 'divider' }}>
+                     <Typography variant="h6" fontWeight={900} color="secondary">Attendance Insight</Typography>
+                     <Typography variant="caption" fontWeight={700} color="text.secondary">7-DAY HISTORICAL SNAPSHOT</Typography>
+                  </Box>
+                  <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                     <Box sx={{ width: '100%', height: 300, display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                        <PieChart
+                          series={[{
+                            data: ATTENDANCE_DATA,
+                            innerRadius: 60,
+                            outerRadius: 100,
+                            paddingAngle: 5,
+                            cornerRadius: 5,
+                          }]}
+                          width={300}
+                          height={250}
+                        />
+                        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                           <Typography variant="caption" fontWeight={900} color="text.disabled" sx={{ display: 'block' }}>RECORDS</Typography>
+                           <Typography variant="h4" fontWeight={900} color="secondary">92</Typography>
+                        </Box>
+                     </Box>
+                     <Stack spacing={1.5} sx={{ width: '100%', mt: 4 }}>
+                        <Grid container spacing={1}>
+                          {ATTENDANCE_DATA.map(d => (
+                            <Grid item xs={6} key={d.label}>
+                               <Stack direction="row" spacing={1} alignItems="center">
+                                  <Box sx={{ width: 8, height: 8, bgcolor: d.color, borderRadius: '50%' }} />
+                                  <Typography variant="caption" fontWeight={900} color="text.secondary">{d.label.toUpperCase()}</Typography>
+                               </Stack>
+                            </Grid>
+                          ))}
+                        </Grid>
+                     </Stack>
+                  </CardContent>
+                </Card>
+
+                {/* Student Recent Activity Card */}
+                <Card>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: 'text.secondary', letterSpacing: '0.1em', mb: 3, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TrendingUp sx={{ fontSize: 16, color: 'primary.main' }} />
+                      Recent Activity
+                    </Typography>
+                    <Box sx={{ pl: 2, borderLeft: '2px solid #E5E7EB', display: 'flex', flexDirection: 'column', gap: 3.5, my: 1 }}>
+                      {RECENT_STUDENT_ACTIVITY.map((item, i) => (
+                        <Box key={i} sx={{ position: 'relative', pl: 1 }}>
+                          {/* dot */}
+                          <Box sx={{
+                            position: 'absolute', left: -24, top: 4,
+                            width: 10, height: 10, borderRadius: '2px', // Square dot shape matching "no rounded shape"
+                            bgcolor: item.color,
+                            border: '2px solid white',
+                            boxShadow: '0 0 0 2px #E5E7EB'
+                          }} />
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
+                            <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E2126', lineHeight: 1.4 }}>
+                              {item.actor}{' '}
+                              <span style={{ fontWeight: 500, color: '#4B5563' }}>{item.action}</span>
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.7rem', color: '#9CA3AF', fontWeight: 600 }}>
+                              {item.time}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Stack>
            </Grid>
         </Grid>
 

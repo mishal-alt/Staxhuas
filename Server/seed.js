@@ -53,11 +53,11 @@ const seedDatabase = async () => {
 
     await seedUser({
       name: 'Test Student',
-      email: 'student@staxhaus.com',
+      email: 'mishalkvmishal@gmail.com',
       password: 'password123',
       role: ROLES.STUDENT,
-      phone: '+91 974550001',
-      address: 'Flat 505, Oasis Park, HSR Layout, Bengaluru',
+      phone: '7907385046',
+      address: 'Kalamvalappil house, Kodakkallu, Thennala (Village), VTC: Tirurangadi, PO: Chullippara, Sub District: Tirurangadi, District: Malappuram, State: Kerala, 153014728 PIN Code: 676508,',
       emergencyContact: 'P. Kumar (Father) - +91 90011 22334'
     });
 

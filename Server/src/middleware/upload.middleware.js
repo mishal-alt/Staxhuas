@@ -14,15 +14,38 @@ cloudinary.config({
   secure: true
 });
 
-const storage = new CloudinaryStorage({
+// Image storage (profile pics)
+const imageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'staxhaus/profiles',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    resource_type: 'image',
+  },
+});
+
+// Document storage (resume / documents) - raw resource type for PDFs, DOCX
+const documentStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const docType = req.body?.docType || 'document'; // 'resume' or 'document'
+    return {
+      folder: `staxhaus/student-docs/${docType}s`,
+      allowed_formats: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
+      resource_type: 'raw',
+      public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`,
+    };
   },
 });
 
 export const upload = multer({ 
-  storage,
+  storage: imageStorage,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
+
+export const uploadDocument = multer({
+  storage: documentStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
+
+export { cloudinary };
