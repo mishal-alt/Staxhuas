@@ -11,7 +11,7 @@ const Dashboard = () => {
   const { user } = useAuth();
 
   return (
-    <AppShell>
+    <AppShell fullWidth={user?.role === ROLES.STUDENT}>
       {user?.role === ROLES.ADMIN && <AdminDashboard />}
       {user?.role === ROLES.FACILITATOR && <FacilitatorDashboard user={user} />}
       {user?.role === ROLES.STUDENT && <StudentDashboard user={user} />}

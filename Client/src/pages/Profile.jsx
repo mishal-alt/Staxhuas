@@ -74,6 +74,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 import AppShell from '../components/layout/AppShell';
+import StudentPageLayout from '../components/layout/StudentPageLayout';
+import { ROLES } from '../utils/constants';
 import * as userApi from '../api/users.api';
 
 // Custom theme to match Staxhaus brand
@@ -843,6 +845,7 @@ const Profile = () => {
 
   const isInterviewer = user?.role === 'interviewer';
   const isFacilitator = user?.role === 'facilitator';
+  const isStudent = user?.role === ROLES.STUDENT;
   const isStaff = isInterviewer || isFacilitator;
 
   const handleEditOpen = () => {
@@ -918,64 +921,49 @@ const Profile = () => {
 
   const staffId = user?._id ? `STX-${user._id.slice(-6).toUpperCase()}` : 'STX-XXXXXX';
 
-  return (
-    <ThemeProvider theme={theme}>
-      <AppShell fullWidth={true}>
-        <Box sx={{ width: '100%', py: 2.5, px: { xs: 3, md: 4.5 }, display: 'flex', flexDirection: 'column', gap: 3, pb: 8 }}>
+  const profileHeader = (
+    <>
+      <Breadcrumbs separator=">" sx={{ mb: 1.5 }}>
+        <MuiLink
+          component={RouterLink}
+          to="/dashboard"
+          underline="none"
+          color="text.secondary"
+          sx={{ fontSize: '0.75rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
+        >
+          DASHBOARD
+        </MuiLink>
+        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>MY PROFILE</Typography>
+      </Breadcrumbs>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            bgcolor: 'rgba(232, 57, 29, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'primary.main',
+          }}
+        >
+          <VerifiedUser />
+        </Box>
+        <Box>
+          <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2 }}>
+            MY IDENTITY
+          </Typography>
+          <Typography variant="body2" color="text.secondary" fontWeight={600}>
+            Manage your personal information and professional credentials.
+          </Typography>
+        </Box>
+      </Box>
+    </>
+  );
 
-          {/* ─────────────── PAGE HEADER ─────────────── */}
-          <Box sx={{
-            pt: 4,
-            pb: 3,
-            px: { xs: 3, md: 4.5 },
-            mx: { xs: -3, md: -4.5 },
-            mt: -2.5,
-            background: 'white',
-            borderBottom: '1px solid #E5E7EB',
-            mb: 3
-          }}>
-            <Breadcrumbs
-              separator=">"
-              sx={{ mb: 1.5 }}
-            >
-              <MuiLink
-                component={RouterLink}
-                to="/dashboard"
-                underline="none"
-                color="text.secondary"
-                sx={{ fontSize: '0.75rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
-              >
-                DASHBOARD
-              </MuiLink>
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>
-                MY PROFILE
-              </Typography>
-            </Breadcrumbs>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                bgcolor: 'rgba(232, 57, 29, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'primary.main'
-              }}>
-                <VerifiedUser />
-              </Box>
-              <Box>
-                <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2 }}>
-                  MY IDENTITY
-                </Typography>
-                <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                  Manage your personal information and professional credentials.
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          {/* ─────────────── END PAGE HEADER ─────────────── */}
+  const profileBody = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pb: isStudent ? 0 : 8 }}>
 
           {/* ═══════════════════════════════════════════════
               1. COMPACT HERO IDENTITY BANNER
@@ -1394,7 +1382,35 @@ const Profile = () => {
             </motion.div>
           )}
 
-        </Box>
+    </Box>
+  );
+
+  return (
+    <ThemeProvider theme={theme}>
+      <AppShell fullWidth={true}>
+        {isStudent ? (
+          <StudentPageLayout header={profileHeader}>{profileBody}</StudentPageLayout>
+        ) : (
+          <>
+            <Box sx={{ width: '100%', py: 2.5, px: { xs: 3, md: 4.5 }, display: 'flex', flexDirection: 'column', gap: 3, pb: 8 }}>
+              <Box
+                sx={{
+                  pt: 4,
+                  pb: 3,
+                  px: { xs: 3, md: 4.5 },
+                  mx: { xs: -3, md: -4.5 },
+                  mt: -2.5,
+                  background: 'white',
+                  borderBottom: '1px solid #E5E7EB',
+                  mb: 3,
+                }}
+              >
+                {profileHeader}
+              </Box>
+              {profileBody}
+            </Box>
+          </>
+        )}
       </AppShell>
 
       {/* ─────────────── EDIT PROFILE DIALOG (PRESERVED) ─────────────── */}

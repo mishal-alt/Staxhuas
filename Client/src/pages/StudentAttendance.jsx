@@ -7,12 +7,12 @@ import {
   Link as MuiLink,
   Box,
 } from '@mui/material';
-import { Assignment, NavigateNext } from '@mui/icons-material';
+import { CalendarToday, NavigateNext } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 
 import AppShell from '../components/layout/AppShell';
 import StudentPageLayout from '../components/layout/StudentPageLayout';
-import TasksContent from '../features/tasks/TasksContent';
+import AttendanceContent from '../features/attendance/AttendanceContent';
 
 const theme = createTheme({
   palette: {
@@ -26,7 +26,7 @@ const theme = createTheme({
   },
 });
 
-const StudentTasks = () => (
+const StudentAttendance = () => (
   <ThemeProvider theme={theme}>
     <AppShell fullWidth>
       <StudentPageLayout
@@ -42,7 +42,7 @@ const StudentTasks = () => (
               >
                 DASHBOARD
               </MuiLink>
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>TASKS</Typography>
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>ATTENDANCE</Typography>
             </Breadcrumbs>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
@@ -57,24 +57,24 @@ const StudentTasks = () => (
                   color: 'primary.main',
                 }}
               >
-                <Assignment />
+                <CalendarToday />
               </Box>
               <Box>
                 <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2 }}>
-                  Tasks & Resources
+                  Attendance
                 </Typography>
                 <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                  Everything you need to master this module.
+                  Academic presence intelligence and operational tracking.
                 </Typography>
               </Box>
             </Box>
           </>
         }
       >
-        <TasksContent isLoading={false} />
+        <AttendanceContent isLoading={false} />
       </StudentPageLayout>
     </AppShell>
   </ThemeProvider>
 );
 
-export default StudentTasks;
+export default StudentAttendance;

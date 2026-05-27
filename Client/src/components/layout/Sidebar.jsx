@@ -34,6 +34,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     // Role Specifics
     { name: 'My Interviews', path: '/my-interviews', icon: <BookOpenCheck size={20} />, roles: [ROLES.INTERVIEWER] },
     { name: 'Leaderboard', path: '/leaderboard', icon: <Trophy size={20} />, roles: [ROLES.STUDENT] },
+    { name: 'Courses', path: '/courses', icon: <BookOpen size={20} />, roles: [ROLES.STUDENT] },
+    { name: 'Attendance', path: '/attendance', icon: <Calendar size={20} />, roles: [ROLES.STUDENT] },
     { name: 'Tasks & Resources', path: '/tasks', icon: <ClipboardList size={20} />, roles: [ROLES.STUDENT] },
     { name: 'Academics', path: '/academics', icon: <BookOpenCheck size={20} />, roles: [ROLES.STUDENT] },
 

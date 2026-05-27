@@ -12,6 +12,8 @@ import StaffManagement from '../pages/StaffManagement';
 import StaffProfile from '../pages/StaffProfile';
 import StudentAcademics from '../pages/StudentAcademics';
 import StudentTasks from '../pages/StudentTasks';
+import StudentCourses from '../pages/StudentCourses';
+import StudentAttendance from '../pages/StudentAttendance';
 import Profile from '../pages/Profile';
 import Leaderboard from '../pages/Leaderboard';
 import MyInterviews from '../pages/MyInterviews';
@@ -61,6 +63,8 @@ const AppRoutes = () => {
       <Route path="/staff/profile/:id" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><StaffProfile /></ProtectedRoute>} />
       <Route path="/course-management" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><CourseManager /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]}><StudentTasks /></ProtectedRoute>} />
+      <Route path="/courses" element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]}><StudentCourses /></ProtectedRoute>} />
+      <Route path="/attendance" element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]}><StudentAttendance /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/student-profile/:id" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR, ROLES.STUDENT, ROLES.INTERVIEWER]}><StudentProfile /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />

@@ -7,12 +7,12 @@ import {
   Link as MuiLink,
   Box,
 } from '@mui/material';
-import { Assignment, NavigateNext } from '@mui/icons-material';
+import { MenuBook, NavigateNext } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 
 import AppShell from '../components/layout/AppShell';
 import StudentPageLayout from '../components/layout/StudentPageLayout';
-import TasksContent from '../features/tasks/TasksContent';
+import CoursesContent from '../features/courses/CoursesContent';
 
 const theme = createTheme({
   palette: {
@@ -26,7 +26,7 @@ const theme = createTheme({
   },
 });
 
-const StudentTasks = () => (
+const StudentCourses = () => (
   <ThemeProvider theme={theme}>
     <AppShell fullWidth>
       <StudentPageLayout
@@ -42,7 +42,7 @@ const StudentTasks = () => (
               >
                 DASHBOARD
               </MuiLink>
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>TASKS</Typography>
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>COURSES</Typography>
             </Breadcrumbs>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
@@ -57,24 +57,24 @@ const StudentTasks = () => (
                   color: 'primary.main',
                 }}
               >
-                <Assignment />
+                <MenuBook />
               </Box>
               <Box>
                 <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2 }}>
-                  Tasks & Resources
+                  Courses
                 </Typography>
                 <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                  Everything you need to master this module.
+                  Your institutional learning track and module workspace.
                 </Typography>
               </Box>
             </Box>
           </>
         }
       >
-        <TasksContent isLoading={false} />
+        <CoursesContent isLoading={false} />
       </StudentPageLayout>
     </AppShell>
   </ThemeProvider>
 );
 
-export default StudentTasks;
+export default StudentCourses;
