@@ -98,14 +98,14 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-          border: '1px solid rgba(0,0,0,0.04)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
         }
       }
     }
@@ -116,7 +116,7 @@ const theme = createTheme({
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <Paper sx={{ p: 1.5, border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+      <Paper sx={{ p: 1.5, border: '1px solid rgba(0,0,0,0.06)', borderRadius: '6px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
         <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
           {label}
         </Typography>
@@ -560,9 +560,9 @@ const AdminDashboardContent = () => {
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
               sx={{
                 bgcolor: 'white',
-                borderRadius: '20px',
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.05)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.02)'
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
               }}
             >
               <CardContent sx={{ p: { xs: 1.5, sm: 2.5 }, '&:last-child': { pb: { xs: 1.5, sm: 2.5 } } }}>
@@ -601,7 +601,7 @@ const AdminDashboardContent = () => {
           gap: 3.5
         }}>
           {/* Chart 1: Attendance Velocity */}
-          <Card sx={{ bgcolor: 'white', borderRadius: '24px', p: 3 }}>
+          <Card sx={{ bgcolor: 'white', borderRadius: '6px', p: 3 }}>
             <Stack spacing={3}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
@@ -633,7 +633,7 @@ const AdminDashboardContent = () => {
           </Card>
 
           {/* Chart 2: Success Rates */}
-          <Card sx={{ bgcolor: 'white', borderRadius: '24px', p: 3 }}>
+          <Card sx={{ bgcolor: 'white', borderRadius: '6px', p: 3 }}>
             <Stack spacing={3}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
@@ -660,7 +660,7 @@ const AdminDashboardContent = () => {
         </Box>
 
         {/* SECTION 5 — LIVE COHORT OPERATIONS (REGISTRY) */}
-        <Card sx={{ bgcolor: 'white', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)' }}>
+        <Card sx={{ bgcolor: 'white', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)' }}>
           <Box sx={{ p: 3, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <Typography variant="subtitle1" fontWeight={900}>Operational Cohort Registry</Typography>
@@ -895,7 +895,7 @@ const AdminDashboardContent = () => {
           gap: 3.5
         }}>
           {/* SECTION 7 — RECENT OPERATIONAL EVENTS */}
-          <Card sx={{ bgcolor: 'white', borderRadius: '24px' }}>
+          <Card sx={{ bgcolor: 'white', borderRadius: '6px' }}>
             <CardContent sx={{ p: 3 }}>
               <Stack spacing={3}>
                 <Typography variant="subtitle1" fontWeight={900} color="secondary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -937,7 +937,7 @@ const AdminDashboardContent = () => {
           </Card>
 
           {/* SECTION 8 — SYSTEM INTELLIGENCE PANEL */}
-          <Card sx={{ bgcolor: 'white', borderRadius: '24px' }}>
+          <Card sx={{ bgcolor: 'white', borderRadius: '6px' }}>
             <CardContent sx={{ p: 3 }}>
               <Stack spacing={3}>
                 <Typography variant="subtitle1" fontWeight={900} color="secondary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -984,7 +984,7 @@ const AdminDashboardContent = () => {
           </Card>
 
           {/* SECTION 9 — QUICK OPERATIONS CENTER */}
-          <Card sx={{ bgcolor: 'white', borderRadius: '24px' }}>
+          <Card sx={{ bgcolor: 'white', borderRadius: '6px' }}>
             <CardContent sx={{ p: 3 }}>
               <Stack spacing={3}>
                 <Typography variant="subtitle1" fontWeight={900} color="secondary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1046,7 +1046,7 @@ const AdminDashboardContent = () => {
         <Dialog
           open={showQuickDialog}
           onClose={() => setShowQuickDialog(false)}
-          PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
+          PaperProps={{ sx: { borderRadius: '6px', p: 1 } }}
           maxWidth="xs"
           fullWidth
         >

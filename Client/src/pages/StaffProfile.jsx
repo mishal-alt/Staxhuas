@@ -43,7 +43,7 @@ const theme = createTheme({
   typography: {
     fontFamily: '"Outfit", sans-serif',
   },
-  shape: { borderRadius: 12 }
+  shape: { borderRadius: 6 }
 });
 
 const StaffProfile = () => {
@@ -152,7 +152,7 @@ const StaffProfile = () => {
           <Grid container spacing={{ xs: 3, sm: 4 }} justifyContent="center">
             {/* Left Column: Profile Card */}
             <Grid item xs={12} lg={4}>
-              <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+              <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
                 <Box sx={{ height: 120, bgcolor: 'secondary.main' }} />
                 <CardContent sx={{ textAlign: 'center', mt: -7, px: 3 }}>
                   <Avatar 
@@ -164,7 +164,7 @@ const StaffProfile = () => {
                       fontSize: '2.5rem', 
                       fontWeight: 900,
                       border: '6px solid white',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
                     }}
                   >
                     {user?.name?.[0]}
@@ -229,7 +229,7 @@ const StaffProfile = () => {
                 </Grid>
 
                 {/* Performance Chart Placeholder */}
-                <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <Card sx={{ borderRadius: 3, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
                   <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
                       <Typography variant="h6" fontWeight={900}>Performance Overview</Typography>
@@ -242,7 +242,7 @@ const StaffProfile = () => {
                 </Card>
 
                 {/* Recent Activity */}
-                <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <Card sx={{ borderRadius: 3, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
                   <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
                     <Typography variant="h6" fontWeight={900} sx={{ mb: 4 }}>Recent Activity</Typography>
                     <Stack spacing={3}>

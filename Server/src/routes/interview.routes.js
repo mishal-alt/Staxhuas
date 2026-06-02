@@ -5,22 +5,21 @@ import * as interviewController from '../controllers/interview.controller.js';
 const router = express.Router();
 
 router.use(protect);
-// Assuming only admin/facilitator can access
-router.use(restrictTo('admin', 'facilitator'));
 
 router.route('/')
-  .post(interviewController.createInterview)
-  .get(interviewController.getInterviews);
+  .post(restrictTo('admin', 'facilitator'), interviewController.createInterview)
+  .get(restrictTo('admin', 'facilitator', 'interviewer'), interviewController.getInterviews);
 
 router.route('/stats/:batchId')
-  .get(interviewController.getInterviewStats);
+  .get(restrictTo('admin', 'facilitator'), interviewController.getInterviewStats);
 
 router.route('/:id')
-  .get(interviewController.getInterviewById)
-  .patch(interviewController.updateInterview)
-  .delete(interviewController.deleteInterview);
+  .get(restrictTo('admin', 'facilitator', 'interviewer'), interviewController.getInterviewById)
+  .patch(restrictTo('admin', 'facilitator'), interviewController.updateInterview)
+  .delete(restrictTo('admin', 'facilitator'), interviewController.deleteInterview);
 
-router.post('/:id/score', interviewController.recordScore);
-router.post('/:id/re-interview', interviewController.createReInterview);
+router.post('/:id/score', restrictTo('admin', 'facilitator', 'interviewer'), interviewController.recordScore);
+router.post('/:id/re-interview', restrictTo('admin', 'facilitator'), interviewController.createReInterview);
 
 export default router;
+

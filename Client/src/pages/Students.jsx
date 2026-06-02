@@ -52,25 +52,25 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          padding: '12px 24px',
+          letterSpacing: '0.15em',
+          padding: '10px 20px',
         }
       }
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.03)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
         }
       }
     },
@@ -78,7 +78,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 16,
+            borderRadius: 6,
           }
         }
       }
@@ -187,11 +187,11 @@ const Students = () => {
             ].map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
-                borderRadius: '24px',
+                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.05)',
                 height: { xs: 80, sm: 100 },
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 minWidth: 0,

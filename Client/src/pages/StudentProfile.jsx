@@ -57,7 +57,8 @@ import {
   Block,
   ChevronLeft,
   ChevronRight,
-  PhotoCamera
+  PhotoCamera,
+  Refresh
 } from '@mui/icons-material';
 import {
   AreaChart,
@@ -69,7 +70,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import AppShell from '../components/layout/AppShell';
-import { uploadFile, getUserById, updateUser } from '../api/users.api';
+import { uploadFile, getUserById, updateUser, syncSocialStats } from '../api/users.api';
 import { changeStudentStatus } from '../api/students.api';
 
 // Custom theme to match Staxhaus brand
@@ -84,12 +85,12 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 6 },
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
+          borderRadius: 6,
           boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04)',
           border: '1px solid rgba(0,0,0,0.06)',
           backgroundImage: 'none'
@@ -155,7 +156,10 @@ const StudentProfile = () => {
                   leaveStatus: 'None',
                   phone: user.phone || '',
                   address: user.address || '',
-                  emergencyContact: user.emergencyContact || ''
+                  emergencyContact: user.emergencyContact || '',
+                  socialLinks: user.socialLinks || {},
+                  leetcodeStats: user.leetcodeStats || null,
+                  githubStats: user.githubStats || null,
                 };
                 const updated = [...prevRoster, newStudent];
                 localStorage.setItem('staxhaus_students', JSON.stringify(updated));
@@ -168,7 +172,10 @@ const StudentProfile = () => {
                       phone: user.phone || s.phone || '',
                       address: user.address || s.address || '',
                       emergencyContact: user.emergencyContact || s.emergencyContact || '',
-                      profilePic: user.profilePic || s.profilePic
+                      profilePic: user.profilePic || s.profilePic,
+                      socialLinks: user.socialLinks || s.socialLinks || {},
+                      leetcodeStats: user.leetcodeStats || s.leetcodeStats || null,
+                      githubStats: user.githubStats || s.githubStats || null,
                     };
                   }
                   return s;
@@ -185,6 +192,49 @@ const StudentProfile = () => {
     };
     fetchStudent();
   }, [id]);
+
+  const [isSyncingStats, setIsSyncingStats] = useState(false);
+
+  const handleSyncStats = async () => {
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    if (!isObjectId) return;
+    setIsSyncingStats(true);
+    try {
+      const res = await syncSocialStats(id);
+      const user = res.data?.data || res.data;
+      if (user) {
+        setRoster(prevRoster => {
+          const updated = prevRoster.map(s => {
+            if (s._id === user._id || s.email === user.email) {
+              return {
+                ...s,
+                phone: user.phone || s.phone || '',
+                address: user.address || s.address || '',
+                emergencyContact: user.emergencyContact || s.emergencyContact || '',
+                profilePic: user.profilePic || s.profilePic,
+                socialLinks: user.socialLinks || {},
+                leetcodeStats: user.leetcodeStats || null,
+                githubStats: user.githubStats || null,
+              };
+            }
+            return s;
+          });
+          localStorage.setItem('staxhaus_students', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to sync student stats:', err);
+    } finally {
+      setIsSyncingStats(false);
+    }
+  };
+
+  useEffect(() => {
+    if (studentInfo?.socialLinks?.github && !studentInfo?.githubStats?.lastSynced) {
+      handleSyncStats();
+    }
+  }, [studentInfo?.socialLinks?.github, studentInfo?.githubStats?.lastSynced]);
 
   // Month selection state for heatmap
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 23)); // SAT, MAY 23, 2026
@@ -324,6 +374,9 @@ const StudentProfile = () => {
 
   // LeetCode Stats Generator
   const getLeetcodeStats = () => {
+    if (studentInfo?.leetcodeStats && studentInfo.leetcodeStats.lastSynced) {
+      return studentInfo.leetcodeStats;
+    }
     if (studentId === 2) {
       return { solved: 62, easy: 58, medium: 4, hard: 0 };
     }
@@ -341,13 +394,15 @@ const StudentProfile = () => {
   };
 
   const leetcode = getLeetcodeStats();
-  const githubContributionsCount = studentId === 2 
-    ? 159 
-    : studentInfo.academicHealth === 'Excellent' 
-      ? 312 
-      : studentInfo.academicHealth === 'Critical Risk' || parseInt(studentInfo.attendance) < 75
-        ? 18 
-        : 85;
+  const githubContributionsCount = studentInfo?.githubStats?.totalContributions !== undefined
+    ? studentInfo.githubStats.totalContributions
+    : studentId === 2 
+      ? 159 
+      : studentInfo.academicHealth === 'Excellent' 
+        ? 312 
+        : studentInfo.academicHealth === 'Critical Risk' || parseInt(studentInfo.attendance) < 75
+          ? 18 
+          : 85;
 
   // Dossier Edit state
   const [isEditDossierOpen, setIsEditDossierOpen] = useState(false);
@@ -537,39 +592,64 @@ const StudentProfile = () => {
     const cols = 45;
     const grid = [];
     
+    const contributionsMap = new Map();
+    if (studentInfo?.githubStats?.contributions) {
+      studentInfo.githubStats.contributions.forEach(c => {
+        contributionsMap.set(c.date, c);
+      });
+    }
+
+    const fmtDate = (isoStr) => {
+      const d = new Date(isoStr);
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
     const isCritical = studentInfo.academicHealth === 'Critical Risk' || parseInt(studentInfo.attendance) < 75;
     
     for (let r = 0; r < rows; r++) {
       const rowCells = [];
       for (let c = 0; c < cols; c++) {
         let level = 0;
+        let count = 0;
+        let dateStr = '';
         
-        if (!isCritical) {
-          // Create clusters matching Ananya's profile or general standing
-          if (c >= 10 && c <= 13) {
-            if ((r + c) % 3 === 0) level = 1;
-            else if ((r * c) % 5 === 0) level = 2;
-          }
-          if (c >= 17 && c <= 20) {
-            if ((r + c) % 4 === 0) level = 2;
-            else if ((r * c) % 3 === 0) level = 3;
-            else if (r === 2 || r === 5) level = 1;
-          }
-          if (c >= 30 && c <= 34) {
-            if ((r + c) % 2 === 0) level = 3;
-            else if ((r * c) % 3 === 0) level = 4;
-            else level = 2;
-          }
-          if (c % 8 === 0 && r % 3 === 0 && level === 0) level = 1;
-          if (c % 11 === 0 && r % 4 === 0 && level === 0) level = 2;
+        if (studentInfo?.githubStats?.contributions && studentInfo.githubStats.contributions.length > 0) {
+          const today = new Date();
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() - today.getDay() + r - (44 - c) * 7);
+          dateStr = targetDate.toISOString().split('T')[0];
+          const dayData = contributionsMap.get(dateStr) || { count: 0, level: 0 };
+          level = dayData.level;
+          count = dayData.count;
         } else {
-          // Critical risk has very few dots
-          if (c === 5 && r === 2) level = 1;
-          if (c === 15 && r === 4) level = 2;
-          if (c === 32 && r === 1) level = 1;
+          // fallback to mock grid
+          if (!isCritical) {
+            // Create clusters matching Ananya's profile or general standing
+            if (c >= 10 && c <= 13) {
+              if ((r + c) % 3 === 0) level = 1;
+              else if ((r * c) % 5 === 0) level = 2;
+            }
+            if (c >= 17 && c <= 20) {
+              if ((r + c) % 4 === 0) level = 2;
+              else if ((r * c) % 3 === 0) level = 3;
+              else if (r === 2 || r === 5) level = 1;
+            }
+            if (c >= 30 && c <= 34) {
+              if ((r + c) % 2 === 0) level = 3;
+              else if ((r * c) % 3 === 0) level = 4;
+              else level = 2;
+            }
+            if (c % 8 === 0 && r % 3 === 0 && level === 0) level = 1;
+            if (c % 11 === 0 && r % 4 === 0 && level === 0) level = 2;
+          } else {
+            // Critical risk has very few dots
+            if (c === 5 && r === 2) level = 1;
+            if (c === 15 && r === 4) level = 2;
+            if (c === 32 && r === 1) level = 1;
+          }
         }
         
-        rowCells.push(level);
+        rowCells.push({ level, count, dateStr });
       }
       grid.push(rowCells);
     }
@@ -579,8 +659,12 @@ const StudentProfile = () => {
         {Array.from({ length: rows }).map((_, rIdx) => (
           <div key={rIdx} className="flex gap-[4px] justify-between min-w-[550px]">
             {Array.from({ length: cols }).map((_, cIdx) => {
-              const lvl = grid[rIdx][cIdx];
-              return (
+              const cell = grid[rIdx][cIdx];
+              const tooltipTitle = cell.dateStr 
+                ? `${cell.count} contributions on ${fmtDate(cell.dateStr)}` 
+                : '';
+              
+              const box = (
                 <Box
                   key={cIdx}
                   sx={{
@@ -588,14 +672,22 @@ const StudentProfile = () => {
                     height: 9,
                     borderRadius: '50%',
                     bgcolor: 
-                      lvl === 1 ? '#9be9a8' :
-                      lvl === 2 ? '#40c463' :
-                      lvl === 3 ? '#30a14e' :
-                      lvl === 4 ? '#216e39' : '#ebedf0',
+                      cell.level === 1 ? '#9be9a8' :
+                      cell.level === 2 ? '#40c463' :
+                      cell.level === 3 ? '#30a14e' :
+                      cell.level === 4 ? '#216e39' : '#ebedf0',
                     transition: 'transform 0.1s',
-                    '&:hover': { transform: 'scale(1.25)', zIndex: 10 }
+                    '&:hover': { transform: 'scale(1.25)', zIndex: 10, cursor: 'pointer' }
                   }}
                 />
+              );
+
+              return tooltipTitle ? (
+                <Tooltip key={cIdx} title={tooltipTitle} arrow>
+                  {box}
+                </Tooltip>
+              ) : (
+                <React.Fragment key={cIdx}>{box}</React.Fragment>
               );
             })}
           </div>
@@ -680,7 +772,7 @@ const StudentProfile = () => {
           </Box>
 
           {/* 1. TOP PROFILE HERO SECTION */}
-          <Card sx={{ mb: 4, overflow: 'visible', position: 'relative', bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px' }}>
+          <Card sx={{ mb: 4, overflow: 'visible', position: 'relative', bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '6px' }}>
             <CardContent sx={{ p: 4 }}>
               <Grid container spacing={4} alignItems="stretch">
                 
@@ -696,7 +788,7 @@ const StudentProfile = () => {
                           bgcolor: studentInfo.status === 'Terminated' ? '#ef4444' : studentInfo.status === 'Suspended' ? '#f59e0b' : '#1E2126',
                           fontSize: '2.5rem',
                           fontWeight: 900,
-                          borderRadius: '16px',
+                          borderRadius: '6px',
                           fontFamily: 'Outfit',
                           boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
                         }}
@@ -712,7 +804,7 @@ const StudentProfile = () => {
                           sx={{
                             position: 'absolute',
                             inset: 0,
-                            borderRadius: '16px',
+                            borderRadius: '6px',
                             bgcolor: 'rgba(0,0,0,0.55)',
                             display: 'flex',
                             alignItems: 'center',
@@ -902,7 +994,7 @@ const StudentProfile = () => {
                 percent: Math.max(0, 100 - (details.leaveCount * 15)) 
               }
             ].map((card, i) => (
-              <Card key={i} sx={{ bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', boxShadow: 'none' }}>
+              <Card key={i} sx={{ bgcolor: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '6px', boxShadow: 'none' }}>
                 <CardContent sx={{
                   p: 3,
                   '&:last-child': { pb: 3 },
@@ -1243,9 +1335,19 @@ const StudentProfile = () => {
               <div className="lg:col-span-2">
                 <Card sx={{ bgcolor: 'white', height: '100%' }}>
                   <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <Typography variant="h6" align="center" sx={{ fontWeight: 800, color: '#1E2126', mb: 2, letterSpacing: 'normal', fontFamily: 'Outfit' }}>
-                      Github Contribution
-                    </Typography>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="w-8" />
+                      <Typography variant="h6" align="center" sx={{ fontWeight: 800, color: '#1E2126', letterSpacing: 'normal', fontFamily: 'Outfit' }}>
+                        Github Contribution
+                      </Typography>
+                      {studentInfo?.socialLinks?.github ? (
+                        <IconButton onClick={handleSyncStats} disabled={isSyncingStats} size="small">
+                          {isSyncingStats ? <CircularProgress size={18} sx={{ color: '#1E2126' }} /> : <Refresh sx={{ fontSize: 18, color: '#1E2126' }} />}
+                        </IconButton>
+                      ) : (
+                        <div className="w-8" />
+                      )}
+                    </div>
                     <Divider sx={{ mb: 3 }} />
                     <div className="w-full flex flex-col items-center">
                       <div className="w-full max-w-[650px]">
@@ -1304,6 +1406,16 @@ const StudentProfile = () => {
                           </Typography>
                         </div>
                       </div>
+                      {studentInfo?.socialLinks?.leetcode && (
+                        <IconButton 
+                          onClick={handleSyncStats} 
+                          disabled={isSyncingStats} 
+                          size="small" 
+                          sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' } }}
+                        >
+                          {isSyncingStats ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <Refresh sx={{ fontSize: 16, color: 'white' }} />}
+                        </IconButton>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-5 gap-2 items-center my-4">
@@ -1542,7 +1654,7 @@ const StudentProfile = () => {
           fullWidth
           PaperProps={{
             sx: {
-              borderRadius: '16px',
+              borderRadius: '6px',
               p: 1
             }
           }}

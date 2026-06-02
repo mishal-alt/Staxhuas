@@ -73,14 +73,14 @@ const theme = createTheme({
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
   shape: {
-    borderRadius: 16,
+    borderRadius: 6,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 12,
+          borderRadius: 6,
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           padding: '8px 16px',
@@ -90,7 +90,7 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 20,
+          borderRadius: 6,
           boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
         }
       }
@@ -319,8 +319,8 @@ const Reports = () => {
             {KPI_DATA.map((kpi, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.2s ease',
-                '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(0,0,0,0.06)' },
-                borderRadius: '16px',
+                '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.04)',
                 minHeight: { xs: 72, sm: 88 },
                 height: 'auto',
@@ -396,7 +396,7 @@ const Reports = () => {
           {/* Section 1: Performance Control Center */}
           {/* Section 1: Performance Control Center */}
           <Card sx={{ 
-            borderRadius: '12px', 
+            borderRadius: '6px', 
             border: '1px solid rgba(0,0,0,0.05)', 
             boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
             bgcolor: 'white'
@@ -587,9 +587,9 @@ const Reports = () => {
             }}>
               {ACADEMIC_HEALTH_OVERVIEW_DATA.map((metric, i) => (
                 <Card key={i} sx={{
-                  borderRadius: '16px',
+                  borderRadius: '6px',
                   border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.015)',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                   bgcolor: 'white',
                   transition: 'all 0.25s ease',
                   '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(0,0,0,0.04)' }
@@ -615,7 +615,7 @@ const Reports = () => {
                         gap: 0.5,
                         px: 1.2,
                         py: 0.4,
-                        borderRadius: '20px',
+                        borderRadius: '6px',
                         bgcolor: metric.up ? 'rgba(46, 125, 50, 0.08)' : 'rgba(211, 47, 47, 0.08)',
                         color: metric.up ? '#2e7d32' : '#d32f2f'
                       }}>
@@ -686,7 +686,7 @@ const Reports = () => {
           </Box>
 
           {/* Section 3: Cohort Performance Matrix */}
-          <Card sx={{ overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.01)', bgcolor: 'white' }}>
+          <Card sx={{ overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '6px', boxShadow: '0 4px 15px rgba(0,0,0,0.01)', bgcolor: 'white' }}>
             <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
@@ -854,7 +854,7 @@ const Reports = () => {
                   sx={{ 
                     p: 2, 
                     border: '1px solid rgba(0,0,0,0.06)', 
-                    borderRadius: '12px', 
+                    borderRadius: '6px', 
                     bgcolor: 'white',
                     display: 'flex',
                     flexDirection: 'column',
@@ -987,7 +987,7 @@ const Reports = () => {
             <Card sx={{ 
               p: 2.5, 
               border: '1px solid rgba(0,0,0,0.05)', 
-              borderRadius: '16px', 
+              borderRadius: '6px', 
               boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
               bgcolor: 'white', 
               height: { xs: 'auto', md: 400 }, 
@@ -1135,7 +1135,7 @@ const Reports = () => {
             <Card sx={{ 
               p: 2.5, 
               border: '1px solid rgba(0,0,0,0.05)', 
-              borderRadius: '16px', 
+              borderRadius: '6px', 
               boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
               bgcolor: 'white', 
               height: { xs: 'auto', md: 400 }, 
@@ -1261,7 +1261,7 @@ const Reports = () => {
             {/* Attendance trajectory Chart */}
             <Card sx={{ 
               p: 2, 
-              borderRadius: '16px', 
+              borderRadius: '6px', 
               border: '1px solid rgba(0,0,0,0.05)', 
               boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
               bgcolor: 'white', 
@@ -1299,7 +1299,7 @@ const Reports = () => {
             {/* Interview outcome analytics Chart */}
             <Card sx={{ 
               p: 2, 
-              borderRadius: '16px', 
+              borderRadius: '6px', 
               border: '1px solid rgba(0,0,0,0.05)', 
               boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
               bgcolor: 'white', 
@@ -1333,7 +1333,7 @@ const Reports = () => {
 
           {/* Section 8: Export & Report Actions (Footer Toolbar) */}
           <Card sx={{ 
-            borderRadius: '12px', 
+            borderRadius: '6px', 
             border: '1px solid rgba(0,0,0,0.05)', 
             boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
             bgcolor: 'white'

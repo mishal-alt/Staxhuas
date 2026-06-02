@@ -71,3 +71,8 @@ export const uploadStudentDocument = async (file, docType, fileName, onProgress)
 export const deleteMyDocument = async (docId) => {
   return await api.delete(`/users/me/documents/${docId}`);
 };
+
+/** Sync student's GitHub and LeetCode statistics */
+export const syncSocialStats = async (userId) => {
+  return await api.post(`/users/${userId}/sync-stats`);
+};

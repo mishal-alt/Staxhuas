@@ -138,7 +138,7 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 6 },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -154,9 +154,9 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.03)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
         }
       }
     }
@@ -886,7 +886,7 @@ const BatchDetail = () => {
               <Box sx={{
                 display: { xs: 'none', sm: 'flex' },
                 alignItems: 'center', gap: 2, px: 2.5, py: 1,
-                borderRadius: '12px', border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '6px', border: '1px solid rgba(0,0,0,0.08)',
                 bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
               }}>
                 <Stack direction="row" spacing={1.5} alignItems="center">
@@ -962,8 +962,8 @@ const BatchDetail = () => {
             })().map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.2s ease-in-out',
-                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' },
-                borderRadius: '12px',
+                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.08)',
                 height: 90,
                 display: 'flex',
@@ -2102,7 +2102,7 @@ const BatchDetail = () => {
                 gap: 3,
                 width: '100%'
               }}>
-                <Card sx={{ height: '100%', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+                <Card sx={{ height: '100%', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ p: 2.5, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="subtitle2" fontWeight={900}>ATTENDANCE PERFORMANCE TREND</Typography>
                     <Stack direction="row" spacing={1}>
@@ -2127,7 +2127,7 @@ const BatchDetail = () => {
                           <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#6B7280' }} />
                           <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#6B7280' }} domain={[0, 100]} />
                           <RechartsTooltip
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', fontWeight: 800, fontSize: '0.85rem' }}
+                            contentStyle={{ borderRadius: '6px', border: 'none', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', fontWeight: 800, fontSize: '0.85rem' }}
                           />
                           <Area type="monotone" dataKey="rate" stroke="#E8391D" strokeWidth={4} fillOpacity={1} fill="url(#colorRate)" />
                         </AreaChart>
@@ -2135,7 +2135,7 @@ const BatchDetail = () => {
                     </Box>
                   </CardContent>
                 </Card>
-                <Card sx={{ height: '100%', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+                <Card sx={{ height: '100%', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ p: 2.5, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                     <Typography variant="subtitle2" fontWeight={900}>INTERVIEW OUTCOMES</Typography>
                   </Box>

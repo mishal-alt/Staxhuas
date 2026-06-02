@@ -57,25 +57,34 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          padding: '12px 24px',
+          letterSpacing: '0.15em',
+          padding: '10px 20px',
         }
       }
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.03)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
+        }
+      }
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 6,
+          }
         }
       }
     }
@@ -153,16 +162,16 @@ const InterviewDetail = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <AppShell>
-        <Box sx={{ maxWidth: '1000px', mx: 'auto', display: 'flex', flexDirection: 'column', gap: 4, pb: 8 }}>
+      <AppShell fullWidth={true}>
+        <Box sx={{ width: '100%', py: 2.5, px: { xs: 3, md: 4.5 }, display: 'flex', flexDirection: 'column', gap: 3, pb: 8 }}>
           
           {/* Header */}
           <Box sx={{
             pt: 4,
             pb: 3,
-            px: 6,
-            mx: -6,
-            mt: -6,
+            px: { xs: 3, md: 4.5 },
+            mx: { xs: -3, md: -4.5 },
+            mt: -2.5,
             background: 'white',
             borderBottom: '1px solid #E5E7EB',
             mb: 3
@@ -197,14 +206,14 @@ const InterviewDetail = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconButton 
                 onClick={() => navigate(assessmentPath)}
-                sx={{ bgcolor: 'rgba(0,0,0,0.03)', borderRadius: 2 }}
+                sx={{ bgcolor: 'rgba(0,0,0,0.03)', borderRadius: '6px', p: 1 }}
               >
                 <ChevronLeft />
               </IconButton>
               <Box sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 3,
+                borderRadius: '50%',
                 bgcolor: 'rgba(232, 57, 29, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
@@ -224,57 +233,65 @@ const InterviewDetail = () => {
             </Box>
           </Box>
 
-          <Grid container spacing={4}>
+          <Grid container spacing={3}>
             {/* Sidebar info */}
             <Grid item xs={12} md={4}>
-              <Stack spacing={4}>
-                <Card sx={{ borderTop: '8px solid #E8391D' }}>
-                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+              <Stack spacing={3}>
+                <Card sx={{ borderTop: '4px solid #E8391D' }}>
+                  <CardContent sx={{ p: 3, textAlign: 'center' }}>
                     <Avatar 
                       sx={{ 
-                        width: 100, height: 100, 
+                        width: 80, height: 80, 
                         bgcolor: 'secondary.main', 
-                        mx: 'auto', mb: 3, 
-                        fontWeight: 900, fontSize: '2.5rem',
-                        borderRadius: 5,
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                        mx: 'auto', mb: 2, 
+                        fontWeight: 900, fontSize: '2rem',
+                        borderRadius: '6px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                       }}
                     >
                       {interview.student?.name?.[0]}
                     </Avatar>
-                    <Typography variant="h5" fontWeight={900} color="secondary" sx={{ fontFamily: 'Outfit' }}>
+                    <Typography variant="h6" fontWeight={900} color="secondary" sx={{ fontFamily: 'Outfit', mb: 0.5 }}>
                       {interview.student?.name}
                     </Typography>
-                    <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.1em' }}>
+                    <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.1em', display: 'block', mb: 2 }}>
                       {interview.student?.batch?.name || 'MERN-B1'}
                     </Typography>
                     
-                    <Box sx={{ mt: 3 }}>
-                       <Chip label={`ATTEMPT #${interview.attemptNumber}`} color="primary" sx={{ fontWeight: 900, borderRadius: 2 }} />
+                    <Box sx={{ mb: 2.5 }}>
+                       <Chip label={`ATTEMPT #${interview.attemptNumber}`} color="primary" sx={{ fontWeight: 900, borderRadius: 1.5 }} />
                     </Box>
 
-                    <Divider sx={{ my: 4, opacity: 0.1 }} />
+                    <Divider sx={{ my: 2.5, opacity: 0.1 }} />
 
                     <Stack spacing={2} sx={{ textAlign: 'left' }}>
                        <Stack direction="row" spacing={2} alignItems="center">
                           <School sx={{ color: 'primary.main', fontSize: 18 }} />
                           <Box>
-                             <Typography variant="caption" fontWeight={900} color="text.secondary">MODULE</Typography>
+                             <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ fontSize: '0.65rem' }}>MODULE</Typography>
                              <Typography variant="body2" fontWeight={800}>{interview.module?.name}</Typography>
                           </Box>
                        </Stack>
                        <Stack direction="row" spacing={2} alignItems="center">
                           <CalendarToday sx={{ color: 'primary.main', fontSize: 18 }} />
                           <Box>
-                             <Typography variant="caption" fontWeight={900} color="text.secondary">DATE</Typography>
-                             <Typography variant="body2" fontWeight={800}>05 MAY 2026</Typography>
+                             <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ fontSize: '0.65rem' }}>DATE</Typography>
+                             <Typography variant="body2" fontWeight={800}>
+                               {interview.scheduledDate 
+                                 ? new Date(interview.scheduledDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+                                 : '05 MAY 2026'}
+                             </Typography>
                           </Box>
                        </Stack>
                        <Stack direction="row" spacing={2} alignItems="center">
                           <Schedule sx={{ color: 'primary.main', fontSize: 18 }} />
                           <Box>
-                             <Typography variant="caption" fontWeight={900} color="text.secondary">TIME</Typography>
-                             <Typography variant="body2" fontWeight={800}>10:30 AM</Typography>
+                             <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ fontSize: '0.65rem' }}>TIME</Typography>
+                             <Typography variant="body2" fontWeight={800}>
+                               {interview.scheduledDate
+                                 ? new Date(interview.scheduledDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                                 : '10:30 AM'}
+                             </Typography>
                           </Box>
                        </Stack>
                     </Stack>
@@ -282,12 +299,12 @@ const InterviewDetail = () => {
                 </Card>
 
                 <Card sx={{ bgcolor: 'secondary.main', color: 'white' }}>
-                  <CardContent sx={{ p: 4 }}>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                       <Info sx={{ color: 'primary.main' }} />
-                       <Typography variant="subtitle2" fontWeight={900}>EVALUATOR NOTE</Typography>
+                  <CardContent sx={{ p: 3 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                       <Info sx={{ color: 'primary.main', fontSize: 20 }} />
+                       <Typography variant="subtitle2" fontWeight={900} sx={{ letterSpacing: '0.05em' }}>EVALUATOR NOTE</Typography>
                     </Stack>
-                    <Typography variant="body2" sx={{ opacity: 0.7, fontStyle: 'italic', fontSize: '0.8rem', lineHeight: 1.6 }}>
+                    <Typography variant="body2" sx={{ opacity: 0.7, fontStyle: 'italic', fontSize: '0.78rem', lineHeight: 1.6 }}>
                       "Detail the qualitative performance of the candidate. Your recommendation directly influences the academic progression of the student."
                     </Typography>
                   </CardContent>
@@ -298,18 +315,18 @@ const InterviewDetail = () => {
             {/* Evaluation Form */}
             <Grid item xs={12} md={8}>
               <Card>
-                <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'action.hover' }}>
-                   <Typography variant="h6" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Feedback color="primary" /> Evaluation Feedback
+                <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'rgba(0,0,0,0.01)' }}>
+                   <Typography variant="subtitle1" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, fontFamily: 'Outfit' }}>
+                      <Feedback color="primary" /> EVALUATION FEEDBACK
                    </Typography>
                 </Box>
-                <CardContent sx={{ p: 4 }}>
-                  <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     
                     {/* Ratings */}
-                    <Grid container spacing={4}>
+                    <Grid container spacing={3}>
                       <Grid item xs={12} sm={6}>
-                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 1, letterSpacing: '0.1em' }}>TECHNICAL SKILLS (1-10)</Typography>
+                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 1.5, letterSpacing: '0.08em' }}>TECHNICAL SKILLS (1-10)</Typography>
                         <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                           {[1,2,3,4,5,6,7,8,9,10].map(num => (
                             <Button
@@ -317,11 +334,11 @@ const InterviewDetail = () => {
                               onClick={() => setFormData({...formData, technicalRating: num})}
                               variant={formData.technicalRating === num ? 'contained' : 'outlined'}
                               sx={{ 
-                                minWidth: 40, width: 40, height: 40, p: 0, 
-                                borderRadius: 2, 
+                                minWidth: 36, width: 36, height: 36, p: 0, 
+                                borderRadius: 1.5, 
                                 fontWeight: 900,
-                                transition: 'all 0.2s',
-                                transform: formData.technicalRating === num ? 'scale(1.1)' : 'none'
+                                transition: 'all 0.15s ease',
+                                transform: formData.technicalRating === num ? 'scale(1.08)' : 'none'
                               }}
                             >
                               {num}
@@ -330,7 +347,7 @@ const InterviewDetail = () => {
                         </Stack>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 1, letterSpacing: '0.1em' }}>COMMUNICATION (1-10)</Typography>
+                        <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 1.5, letterSpacing: '0.08em' }}>COMMUNICATION (1-10)</Typography>
                         <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                           {[1,2,3,4,5,6,7,8,9,10].map(num => (
                             <Button
@@ -338,11 +355,11 @@ const InterviewDetail = () => {
                               onClick={() => setFormData({...formData, communicationRating: num})}
                               variant={formData.communicationRating === num ? 'contained' : 'outlined'}
                               sx={{ 
-                                minWidth: 40, width: 40, height: 40, p: 0, 
-                                borderRadius: 2, 
+                                minWidth: 36, width: 36, height: 36, p: 0, 
+                                borderRadius: 1.5, 
                                 fontWeight: 900,
-                                transition: 'all 0.2s',
-                                transform: formData.communicationRating === num ? 'scale(1.1)' : 'none'
+                                transition: 'all 0.15s ease',
+                                transform: formData.communicationRating === num ? 'scale(1.08)' : 'none'
                               }}
                             >
                               {num}
@@ -353,9 +370,9 @@ const InterviewDetail = () => {
                     </Grid>
 
                     {/* Textual Feedback */}
-                    <Stack spacing={4}>
+                    <Stack spacing={3}>
                       <Box>
-                         <Typography variant="caption" fontWeight={900} color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, letterSpacing: '0.1em' }}>
+                         <Typography variant="caption" fontWeight={900} color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, letterSpacing: '0.08em' }}>
                             <ThumbUp fontSize="small" /> KEY STRENGTHS
                          </Typography>
                          <TextField 
@@ -363,11 +380,10 @@ const InterviewDetail = () => {
                             placeholder="What did the student do well? Be specific about technical implementations."
                             value={formData.strengths}
                             onChange={(e) => setFormData({...formData, strengths: e.target.value})}
-                            InputProps={{ sx: { borderRadius: 4, bgcolor: 'action.hover' } }}
                          />
                       </Box>
                       <Box>
-                         <Typography variant="caption" fontWeight={900} color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, letterSpacing: '0.1em' }}>
+                         <Typography variant="caption" fontWeight={900} color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, letterSpacing: '0.08em' }}>
                             <ThumbDown fontSize="small" /> AREAS FOR IMPROVEMENT
                          </Typography>
                          <TextField 
@@ -375,15 +391,14 @@ const InterviewDetail = () => {
                             placeholder="Where did the student struggle? Provide constructive guidance."
                             value={formData.weaknesses}
                             onChange={(e) => setFormData({...formData, weaknesses: e.target.value})}
-                            InputProps={{ sx: { borderRadius: 4, bgcolor: 'action.hover' } }}
                          />
                       </Box>
                     </Stack>
 
                     {/* Final Recommendation */}
-                    <Box sx={{ pt: 4, borderTop: '1px solid', borderColor: 'divider' }}>
-                       <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 3, textAlign: 'center', letterSpacing: '0.2em' }}>FINAL RECOMMENDATION</Typography>
-                       <Grid container spacing={3}>
+                    <Box sx={{ pt: 3, borderTop: '1px solid #E5E7EB' }}>
+                       <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ display: 'block', mb: 2, textAlign: 'center', letterSpacing: '0.15em' }}>FINAL RECOMMENDATION</Typography>
+                       <Grid container spacing={2}>
                           {[
                             { id: 'pass', label: 'PASS', color: 'success', icon: <CheckCircle /> },
                             { id: 'improvement', label: 'NEEDS IMPROVEMENT', color: 'info', icon: <Info /> },
@@ -397,15 +412,15 @@ const InterviewDetail = () => {
                                   color={rec.color}
                                   sx={{ 
                                     flexDirection: 'column', 
-                                    py: 3, 
-                                    gap: 1, 
-                                    borderRadius: 5,
-                                    borderWidth: 2,
-                                    '&:hover': { borderWidth: 2 }
+                                    py: 2, 
+                                    gap: 0.75, 
+                                    borderRadius: 1.5,
+                                    borderWidth: '1.5px',
+                                    '&:hover': { borderWidth: '1.5px' }
                                   }}
                                >
                                   {rec.icon}
-                                  <Typography variant="caption" fontWeight={900}>{rec.label}</Typography>
+                                  <Typography variant="caption" fontWeight={900} sx={{ fontSize: '0.68rem' }}>{rec.label}</Typography>
                                </Button>
                             </Grid>
                           ))}
@@ -417,7 +432,7 @@ const InterviewDetail = () => {
                       variant="contained" 
                       color="secondary" 
                       fullWidth 
-                      sx={{ py: 2.5, fontSize: '1.1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
+                      sx={{ py: 1.5, fontSize: '0.9rem', boxShadow: 'none' }}
                       disabled={submitMutation.isPending}
                       startIcon={<Save />}
                     >
@@ -436,3 +451,4 @@ const InterviewDetail = () => {
 };
 
 export default InterviewDetail;
+

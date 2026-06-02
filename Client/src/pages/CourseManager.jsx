@@ -78,7 +78,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
           border: '1px solid rgba(0,0,0,0.03)',
         }
       }
@@ -615,7 +615,7 @@ const CourseManager = () => {
           </Box>
 
           {/* Dialogs */}
-          <Dialog open={showCourseForm} onClose={() => { setShowCourseForm(false); setEditingCourse(null); resetCourse(); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+          <Dialog open={showCourseForm} onClose={() => { setShowCourseForm(false); setEditingCourse(null); resetCourse(); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 6 } }}>
             <Box sx={{ p: 4 }}>
               <Typography variant="h6" fontWeight={900} sx={{ textTransform: 'uppercase', mb: 4 }}>{editingCourse ? 'Edit Course Track' : 'Add Course Track'}</Typography>
               <Box component="form" onSubmit={handleCourseSubmit((data) => createCourseMutation.mutate(data))} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -632,7 +632,7 @@ const CourseManager = () => {
             </Box>
           </Dialog>
 
-          <Dialog open={showModuleForm} onClose={() => { setShowModuleForm(false); setEditingModule(null); resetModule(); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+          <Dialog open={showModuleForm} onClose={() => { setShowModuleForm(false); setEditingModule(null); resetModule(); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 6 } }}>
             <Box sx={{ p: 4 }}>
               <Typography variant="h6" fontWeight={900} sx={{ textTransform: 'uppercase', mb: 4 }}>{editingModule ? 'Edit Module' : 'Add Module'}</Typography>
               <Box component="form" onSubmit={handleModuleSubmit((data) => createModuleMutation.mutate(data))} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -649,7 +649,7 @@ const CourseManager = () => {
             </Box>
           </Dialog>
 
-          <Dialog open={showTaskForm} onClose={() => { setShowTaskForm(false); setEditingTask(null); resetTask(); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+          <Dialog open={showTaskForm} onClose={() => { setShowTaskForm(false); setEditingTask(null); resetTask(); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 6 } }}>
             <Box sx={{ p: 4 }}>
               <Typography variant="h6" fontWeight={900} sx={{ textTransform: 'uppercase', mb: 4 }}>{editingTask ? 'Edit Task' : 'Add Task'}</Typography>
               <Box component="form" onSubmit={handleTaskSubmit((data) => createTaskMutation.mutate(data))} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

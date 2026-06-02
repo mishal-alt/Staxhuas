@@ -51,15 +51,15 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: '0.15em',
           padding: '10px 20px',
         }
       }
@@ -67,9 +67,18 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.03)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
+        }
+      }
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 6,
+          }
         }
       }
     }
@@ -87,25 +96,27 @@ const MyInterviews = () => {
 
   const getStatusChip = (status) => {
     switch (status) {
-      case 'scheduled': return <Chip label="Scheduled" color="info" size="small" sx={{ fontWeight: 900, borderRadius: 2 }} />;
-      case 'in-progress': return <Chip label="In Progress" color="primary" size="small" sx={{ fontWeight: 900, borderRadius: 2, animation: 'pulse 2s infinite' }} />;
-      case 'scored': return <Chip label="Completed" color="success" size="small" sx={{ fontWeight: 900, borderRadius: 2 }} />;
-      default: return <Chip label={status} size="small" sx={{ fontWeight: 900, borderRadius: 2 }} />;
+      case 'scheduled': return <Chip label="Scheduled" color="info" size="small" sx={{ fontWeight: 900, borderRadius: 1.5 }} />;
+      case 'in-progress':
+      case 'in_progress': return <Chip label="In Progress" color="primary" size="small" sx={{ fontWeight: 900, borderRadius: 1.5, animation: 'pulse 2s infinite' }} />;
+      case 'scored':
+      case 'completed': return <Chip label="Completed" color="success" size="small" sx={{ fontWeight: 900, borderRadius: 1.5 }} />;
+      default: return <Chip label={status} size="small" sx={{ fontWeight: 900, borderRadius: 1.5 }} />;
     }
   };
 
   return (
     <ThemeProvider theme={theme}>
-      <AppShell>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6, pb: 8 }}>
+      <AppShell fullWidth={true}>
+        <Box sx={{ width: '100%', py: 2.5, px: { xs: 3, md: 4.5 }, display: 'flex', flexDirection: 'column', gap: 3, pb: 8 }}>
 
           {/* Header */}
           <Box sx={{
             pt: 4,
             pb: 3,
-            px: 6,
-            mx: -6,
-            mt: -6,
+            px: { xs: 3, md: 4.5 },
+            mx: { xs: -3, md: -4.5 },
+            mt: -2.5,
             background: 'white',
             borderBottom: '1px solid #E5E7EB',
             mb: 3
@@ -133,7 +144,7 @@ const MyInterviews = () => {
                 <Box sx={{
                   width: 48,
                   height: 48,
-                  borderRadius: 3,
+                  borderRadius: '50%',
                   bgcolor: 'rgba(232, 57, 29, 0.1)',
                   display: 'flex',
                   alignItems: 'center',
@@ -158,23 +169,20 @@ const MyInterviews = () => {
                   size="small"
                   sx={{ bgcolor: 'white', width: { xs: '100%', md: 250 } }}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start"><Search /></InputAdornment>,
-                    sx: { borderRadius: 4 }
+                    startAdornment: <InputAdornment position="start"><Search sx={{ color: 'text.secondary', fontSize: 20 }} /></InputAdornment>
                   }}
                 />
-                <IconButton sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
-                  <FilterList />
+                <IconButton sx={{ bgcolor: 'white', border: '1px solid', borderColor: '#E5E7EB', borderRadius: '6px', p: 1 }}>
+                  <FilterList sx={{ fontSize: 20 }} />
                 </IconButton>
               </Stack>
             </Box>
           </Box>
 
-          <Divider sx={{ opacity: 0.1 }} />
-
           {/* Interview List */}
-          <Stack spacing={3}>
+          <Stack spacing={2}>
             {isLoading ? (
-              <Box sx={{ py: 10, textAlign: 'center' }}>
+              <Box sx={{ py: 10, display: 'flex', justifyContent: 'center' }}>
                 <CircularProgress color="primary" thickness={6} />
               </Box>
             ) : (
@@ -184,40 +192,42 @@ const MyInterviews = () => {
                   onClick={() => navigate(`/interviews/${interview._id}`)}
                   sx={{
                     cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    '&:hover': { transform: 'scale(1.01)', borderColor: 'primary.main', boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }
+                    transition: 'all 0.2s ease',
+                    border: '1px solid #E5E7EB',
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                    '&:hover': { transform: 'translateY(-2px)', borderColor: 'primary.main', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' }
                   }}
                 >
-                  <CardContent sx={{ p: 4 }}>
+                  <CardContent sx={{ p: 2.5 }}>
                     <Grid container spacing={3} alignItems="center">
                       <Grid item xs={12} md={7}>
-                        <Stack direction="row" spacing={3} alignItems="center">
-                          <Avatar sx={{ width: 64, height: 64, bgcolor: 'secondary.main', fontWeight: 900, borderRadius: 4, fontSize: '1.5rem' }}>
+                        <Stack direction="row" spacing={2.5} alignItems="center">
+                          <Avatar sx={{ width: 48, height: 48, bgcolor: 'secondary.main', fontWeight: 900, borderRadius: '6px', fontSize: '1.2rem', fontFamily: 'Outfit' }}>
                             {interview.student?.name?.[0]}
                           </Avatar>
                           <Box>
-                            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                              <Typography variant="h6" fontWeight={900} color="secondary" sx={{ fontFamily: 'Outfit' }}>
+                            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 0.5 }}>
+                              <Typography variant="subtitle1" fontWeight={900} color="secondary" sx={{ fontFamily: 'Outfit', lineHeight: 1.2 }}>
                                 {interview.student?.name}
                               </Typography>
                               {getStatusChip(interview.status)}
                             </Stack>
-                            <Stack direction="row" spacing={3} flexWrap="wrap">
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <Group sx={{ fontSize: 14, color: 'primary.main' }} />
-                                <Typography variant="caption" fontWeight={900} color="text.secondary">
+                            <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ gap: '8px' }}>
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <Group sx={{ fontSize: 13, color: '#929292' }} />
+                                <Typography variant="caption" fontWeight={700} color="text.secondary">
                                   {interview.student?.batch?.name || 'MERN-B1'}
                                 </Typography>
                               </Stack>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <CalendarToday sx={{ fontSize: 14, color: 'primary.main' }} />
-                                <Typography variant="caption" fontWeight={900} color="text.secondary">
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <CalendarToday sx={{ fontSize: 13, color: '#929292' }} />
+                                <Typography variant="caption" fontWeight={700} color="text.secondary">
                                   {format(new Date(interview.scheduledDate), 'dd MMM yyyy')}
                                 </Typography>
                               </Stack>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <Schedule sx={{ fontSize: 14, color: 'primary.main' }} />
-                                <Typography variant="caption" fontWeight={900} color="text.secondary">
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <Schedule sx={{ fontSize: 13, color: '#929292' }} />
+                                <Typography variant="caption" fontWeight={700} color="text.secondary">
                                   {format(new Date(interview.scheduledDate), 'hh:mm a')}
                                 </Typography>
                               </Stack>
@@ -227,14 +237,14 @@ const MyInterviews = () => {
                       </Grid>
 
                       <Grid item xs={12} md={5}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pl: { md: 4 }, borderLeft: { md: '1px solid' }, borderColor: 'divider' }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pl: { md: 3 }, borderLeft: { md: '1px solid #E5E7EB' } }}>
                           <Box>
-                            <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.1em', display: 'block' }}>MODULE ASSESSMENT</Typography>
-                            <Typography variant="body2" fontWeight={800} color="secondary">{interview.module?.name}</Typography>
+                            <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ letterSpacing: '0.08em', display: 'block', mb: 0.2, textTransform: 'uppercase' }}>MODULE ASSESSMENT</Typography>
+                            <Typography variant="body2" fontWeight={800} color="secondary" sx={{ fontFamily: 'Outfit' }}>{interview.module?.name}</Typography>
                           </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
-                            <Typography variant="button" sx={{ fontWeight: 900 }}>Details</Typography>
-                            <ChevronRight />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'primary.main' }}>
+                            <Typography variant="caption" sx={{ fontWeight: 900, letterSpacing: '0.05em' }}>DETAILS</Typography>
+                            <ChevronRight sx={{ fontSize: 16 }} />
                           </Box>
                         </Stack>
                       </Grid>
@@ -245,10 +255,10 @@ const MyInterviews = () => {
             )}
 
             {interviews.length === 0 && !isLoading && (
-              <Paper variant="outlined" sx={{ p: 10, textAlign: 'center', borderRadius: 8, borderStyle: 'dashed', borderWeight: 2 }}>
-                <EventBusy sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
-                <Typography variant="h5" fontWeight={900} color="text.secondary" sx={{ textTransform: 'uppercase' }}>No Interviews Assigned</Typography>
-                <Typography variant="body2" color="text.secondary">Your assessment queue is currently empty. Assigned interviews will appear here.</Typography>
+              <Paper variant="outlined" sx={{ p: 8, textAlign: 'center', borderRadius: '6px', borderStyle: 'dashed', borderColor: '#D1D5DB' }}>
+                <EventBusy sx={{ fontSize: 48, color: 'text.secondary', mb: 1.5 }} />
+                <Typography variant="subtitle1" fontWeight={900} color="text.primary" sx={{ textTransform: 'uppercase', mb: 0.5 }}>No Interviews Assigned</Typography>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>Your assessment queue is currently empty. Assigned interviews will appear here.</Typography>
               </Paper>
             )}
           </Stack>
@@ -260,3 +270,4 @@ const MyInterviews = () => {
 };
 
 export default MyInterviews;
+

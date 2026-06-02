@@ -29,17 +29,29 @@ export const deleteUser = asyncHandler(async (req, res) => {
 export const updateMe = asyncHandler(async (req, res) => {
   const { name, email, phone, location, headline, socialLinks } = req.body;
 
-  const updateData = { name, email, phone, location, headline };
-  if (socialLinks) updateData.socialLinks = socialLinks;
+  const updateData = {};
+  if (name !== undefined) updateData.name = name;
+  if (email !== undefined) updateData.email = email;
+  if (phone !== undefined) updateData.phone = phone;
+  if (location !== undefined) updateData.location = location;
+  if (headline !== undefined) updateData.headline = headline;
+  if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
 
-  const user = await User.findByIdAndUpdate(
-    req.user.id,
-    updateData,
-    { new: true, runValidators: true }
-  ).select('-password');
-
+  let user = await User.findById(req.user.id);
   if (!user) return apiResponse(res, 404, 'User not found');
-  return apiResponse(res, 200, 'Profile updated successfully', user);
+
+  // Apply updates
+  Object.assign(user, updateData);
+
+  // If socialLinks are changing, run sync synchronously
+  if (socialLinks) {
+    await performSync(user);
+  }
+
+  await user.save();
+
+  const responseUser = await User.findById(user._id).select('-password');
+  return apiResponse(res, 200, 'Profile updated successfully', responseUser);
 });
 
 export const uploadProfilePic = asyncHandler(async (req, res) => {
@@ -104,3 +116,113 @@ export const deleteStudentDocument = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(req.user.id, { $pull: { documents: { _id: docId } } });
   return apiResponse(res, 200, 'Document deleted successfully');
 });
+
+const extractUsername = (val) => {
+  if (!val) return '';
+  let clean = val.trim().replace(/\/+$/, '');
+  if (clean.includes('/')) {
+    const parts = clean.split('/');
+    return parts[parts.length - 1] || '';
+  }
+  return clean;
+};
+
+// ── Helper to sync social statistics from GitHub & LeetCode APIs ──
+export const performSync = async (user) => {
+  const githubUsername = extractUsername(user.socialLinks?.github);
+  const leetcodeUsername = extractUsername(user.socialLinks?.leetcode);
+  const linkedinUsername = extractUsername(user.socialLinks?.linkedin);
+
+  // Write back sanitized clean usernames to document
+  if (user.socialLinks) {
+    if (user.socialLinks.github) user.socialLinks.github = githubUsername;
+    if (user.socialLinks.leetcode) user.socialLinks.leetcode = leetcodeUsername;
+    if (user.socialLinks.linkedin) user.socialLinks.linkedin = linkedinUsername;
+  }
+
+  let githubUpdated = false;
+  let leetcodeUpdated = false;
+
+  // 1. Fetch GitHub contributions if username is set
+  if (githubUsername) {
+    try {
+      const response = await fetch(`https://github-contributions-api.jogruber.de/v4/${githubUsername}`);
+      if (response.ok) {
+        const data = await response.json();
+        user.githubStats = {
+          totalContributions: Object.values(data.total || {}).reduce((a, b) => a + b, 0),
+          contributions: (data.contributions || []).map(c => ({
+            date: c.date,
+            count: c.count,
+            level: c.level
+          })),
+          lastSynced: new Date()
+        };
+        githubUpdated = true;
+      } else {
+        console.warn(`GitHub API returned status ${response.status} for user ${githubUsername}`);
+      }
+    } catch (err) {
+      console.error('Error in performSync GitHub:', err.message);
+    }
+  }
+
+  // 2. Fetch LeetCode stats if username is set
+  if (leetcodeUsername) {
+    try {
+      const query = `
+        query getUserProfile($username: String!) {
+          matchedUser(username: $username) {
+            submitStatsGlobal {
+              acSubmissionNum {
+                difficulty
+                count
+              }
+            }
+          }
+        }
+      `;
+      const response = await fetch('https://leetcode.com/graphql/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        body: JSON.stringify({ query, variables: { username: leetcodeUsername } })
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data?.matchedUser) {
+          const stats = result.data.matchedUser.submitStatsGlobal.acSubmissionNum;
+          user.leetcodeStats = {
+            solved: stats.find(s => s.difficulty === 'All')?.count || 0,
+            easy: stats.find(s => s.difficulty === 'Easy')?.count || 0,
+            medium: stats.find(s => s.difficulty === 'Medium')?.count || 0,
+            hard: stats.find(s => s.difficulty === 'Hard')?.count || 0,
+            lastSynced: new Date()
+          };
+          leetcodeUpdated = true;
+        } else if (result.errors) {
+          console.warn(`LeetCode GraphQL errors for user ${leetcodeUsername}:`, JSON.stringify(result.errors));
+        }
+      } else {
+        console.warn(`LeetCode GraphQL returned status ${response.status} for user ${leetcodeUsername}`);
+      }
+    } catch (err) {
+      console.error('Error in performSync LeetCode:', err.message);
+    }
+  }
+
+  return githubUpdated || leetcodeUpdated;
+};
+
+// ── Sync statistics endpoint handler ──
+export const syncSocialStats = asyncHandler(async (req, res) => {
+  const userId = req.params.id === 'me' ? req.user.id : req.params.id;
+  const user = await User.findById(userId);
+  if (!user) return apiResponse(res, 404, 'User not found');
+
+  await performSync(user);
+  await user.save();
+
+  const responseUser = await User.findById(user._id).select('-password');
+  return apiResponse(res, 200, 'Social stats synced successfully', responseUser);
+});
+

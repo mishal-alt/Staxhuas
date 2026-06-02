@@ -61,7 +61,7 @@ const StudentTasks = () => (
               </Box>
               <Box>
                 <Typography variant="h4" fontWeight={900} sx={{ fontSize: '1.5rem', color: '#1E2126', lineHeight: 1.2 }}>
-                  Tasks & Resources
+                  Tasks
                 </Typography>
                 <Typography variant="body2" color="text.secondary" fontWeight={600}>
                   Everything you need to master this module.

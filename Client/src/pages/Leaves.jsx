@@ -154,7 +154,7 @@ const Leaves = () => {
           {/* KPI Cards */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: 2 }}>
             {kpis.map((k, i) => (
-              <Card key={i} sx={{ border: '1px solid rgba(0,0,0,0.05)', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 24px rgba(0,0,0,0.08)' } }}>
+              <Card key={i} sx={{ border: '1px solid rgba(0,0,0,0.05)', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' } }}>
                 <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 }, display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box sx={{ p: 1.5, bgcolor: `${k.color}15`, color: k.color, borderRadius: 2, display: 'flex', flexShrink: 0 }}>
                     {React.cloneElement(k.icon, { sx: { fontSize: 22 } })}

@@ -79,25 +79,25 @@ const theme = createTheme({
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
   shape: {
-    borderRadius: 24,
+    borderRadius: 6,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          padding: '12px 24px',
+          letterSpacing: '0.15em',
+          padding: '10px 20px',
         }
       }
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         }
       }
     }
@@ -493,11 +493,11 @@ const Invitations = () => {
             ].map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
-                borderRadius: '24px',
+                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.05)',
                 height: { xs: 80, sm: 100 },
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 minWidth: 0,
@@ -562,10 +562,10 @@ const Invitations = () => {
           {/* Onboarding Pipeline / Funnel Tracker */}
           <Box sx={{
             bgcolor: 'background.paper',
-            borderRadius: '20px',
+            borderRadius: '6px',
             border: '1px solid rgba(0,0,0,0.06)',
             p: 2.5,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
@@ -699,7 +699,7 @@ const Invitations = () => {
           </Box>
 
           {/* Main Table Operations Section */}
-          <Card sx={{ overflow: 'visible', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
+          <Card sx={{ overflow: 'visible', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
             
             {/* Operational Filter Toolbar */}
             <Box sx={{
@@ -731,7 +731,7 @@ const Invitations = () => {
                     }}
                     InputProps={{
                       startAdornment: <Search fontSize="small" sx={{ color: 'text.secondary', mr: 1, opacity: 0.6 }} />,
-                      sx: { borderRadius: '12px', fontSize: '0.8rem', width: { xs: '100%', sm: 260 }, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }
+                      sx: { borderRadius: '6px', fontSize: '0.8rem', width: { xs: '100%', sm: 260 }, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } }
                     }}
                   />
 
@@ -744,7 +744,7 @@ const Invitations = () => {
                       setSelectedBatch(e.target.value);
                       setPage(1);
                     }}
-                    InputProps={{ sx: { borderRadius: '12px', fontSize: '0.8rem', minWidth: 150, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
+                    InputProps={{ sx: { borderRadius: '6px', fontSize: '0.8rem', minWidth: 150, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
                     SelectProps={{ displayEmpty: true }}
                   >
                     <MenuItem value="all">All Batches</MenuItem>
@@ -764,7 +764,7 @@ const Invitations = () => {
                       setSelectedStatus(e.target.value);
                       setPage(1);
                     }}
-                    InputProps={{ sx: { borderRadius: '12px', fontSize: '0.8rem', minWidth: 140, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
+                    InputProps={{ sx: { borderRadius: '6px', fontSize: '0.8rem', minWidth: 140, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
                   >
                     <MenuItem value="all">All Statuses</MenuItem>
                     <MenuItem value="pending">Pending</MenuItem>
@@ -782,7 +782,7 @@ const Invitations = () => {
                       setDateFilter(e.target.value);
                       setPage(1);
                     }}
-                    InputProps={{ sx: { borderRadius: '12px', fontSize: '0.8rem', minWidth: 140, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
+                    InputProps={{ sx: { borderRadius: '6px', fontSize: '0.8rem', minWidth: 140, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
                   >
                     <MenuItem value="all">All Time</MenuItem>
                     <MenuItem value="today">Sent Today</MenuItem>
@@ -799,7 +799,7 @@ const Invitations = () => {
                       setSortBy(e.target.value);
                       setPage(1);
                     }}
-                    InputProps={{ sx: { borderRadius: '12px', fontSize: '0.8rem', minWidth: 130, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
+                    InputProps={{ sx: { borderRadius: '6px', fontSize: '0.8rem', minWidth: 130, bgcolor: '#f9f9f9', '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' } } }}
                   >
                     <MenuItem value="newest">Newest First</MenuItem>
                     <MenuItem value="oldest">Oldest First</MenuItem>
@@ -1194,7 +1194,7 @@ const Invitations = () => {
             onClose={handleMenuClose}
             PaperProps={{
               sx: {
-                borderRadius: '12px',
+                borderRadius: '6px',
                 boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
                 border: '1px solid rgba(0,0,0,0.05)',
                 minWidth: 190,

@@ -6,6 +6,16 @@ import { PRIORITY_STYLES, STATUS_STYLES } from '../tasksData';
 const TaskDetailPanel = ({ task, onClose }) => {
   if (!task) return null;
 
+  const [githubLink, setGithubLink] = React.useState(task.githubLink || '');
+  const [isSubmitted, setIsSubmitted] = React.useState(task.status === 'submitted');
+
+  React.useEffect(() => {
+    if (task) {
+      setGithubLink(task.githubLink || '');
+      setIsSubmitted(task.status === 'submitted');
+    }
+  }, [task]);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -120,25 +130,44 @@ const TaskDetailPanel = ({ task, onClose }) => {
             {task.github !== 'n/a' && (
               <div className="flex items-center gap-2 p-2 border border-gray-200 rounded-md">
                 <GitBranch size={14} className="text-brand-charcoal" />
-                <span className="text-xs font-semibold">GitHub: {task.github}</span>
+                <span className="text-xs font-semibold">GitHub status: {task.github}</span>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-white bg-brand-orange rounded-md hover:opacity-90 transition-opacity"
-              >
-                <Upload size={13} />
-                Upload Submission
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-1.5 py-2 text-xs font-bold border border-gray-200 rounded-md hover:bg-brand-light transition-colors"
-              >
-                <GitBranch size={13} />
-                Link Repository
-              </button>
+            {/* Submission Link Input Box */}
+            <div className="border border-gray-200 rounded-md p-3 bg-brand-light/40 flex flex-col gap-2 shadow-sm">
+              <label className="text-[10px] font-bold text-brand-gray uppercase tracking-wider flex items-center gap-1">
+                <GitBranch size={12} className="text-brand-orange shrink-0" />
+                Submit GitHub Repository Link
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={githubLink}
+                  onChange={(e) => setGithubLink(e.target.value)}
+                  placeholder="https://github.com/username/project-repo"
+                  className="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white font-medium text-brand-charcoal placeholder:text-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (githubLink.trim()) {
+                      setIsSubmitted(true);
+                      task.status = 'submitted';
+                      task.github = 'linked';
+                      task.githubLink = githubLink;
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-bold text-white bg-brand-orange hover:bg-brand-orange/90 rounded transition-colors shrink-0 cursor-pointer"
+                >
+                  {isSubmitted ? 'Update' : 'Submit'}
+                </button>
+              </div>
+              {isSubmitted && (
+                <p className="text-[9px] font-bold text-emerald-600">
+                  ✓ Link attached and task status set to Submitted
+                </p>
+              )}
             </div>
 
             {task.submissions.length > 0 && (

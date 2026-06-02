@@ -84,14 +84,14 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.03)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
         }
       }
     },
@@ -99,9 +99,10 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: '0.15em',
+          padding: '10px 20px',
         }
       }
     }
@@ -325,11 +326,11 @@ const StaffManagement = () => {
             ].map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
-                borderRadius: '24px',
+                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.05)',
                 height: { xs: 80, sm: 100 },
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 minWidth: 0,
@@ -397,7 +398,7 @@ const StaffManagement = () => {
             onClose={() => { setShowInviteForm(false); reset(); }}
             maxWidth="sm"
             fullWidth
-            PaperProps={{ sx: { borderRadius: 4 } }}
+            PaperProps={{ sx: { borderRadius: 6 } }}
           >
             <Box sx={{ p: 4 }}>
               <Typography variant="h6" fontWeight={900} sx={{ textTransform: 'uppercase', mb: 4 }}>
@@ -464,9 +465,9 @@ const StaffManagement = () => {
             mb: 2,
             p: 2,
             bgcolor: 'white',
-            borderRadius: '20px',
+            borderRadius: '6px',
             border: '1px solid rgba(0,0,0,0.06)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
           }}>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
               <TextField
@@ -541,9 +542,9 @@ const StaffManagement = () => {
             </Typography>
 
             <TableContainer component={Paper} sx={{
-              borderRadius: '20px',
+              borderRadius: '6px',
               border: '1px solid rgba(0,0,0,0.06)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
               overflowX: 'auto',
               bgcolor: 'white',
               '&::-webkit-scrollbar': {
@@ -722,7 +723,7 @@ const StaffManagement = () => {
                       fontSize: '0.75rem',
                       fontFamily: 'Outfit',
                       textTransform: 'uppercase',
-                      borderRadius: '12px',
+                      borderRadius: '6px',
                       border: '1px solid rgba(0,0,0,0.06)',
                       bgcolor: 'white',
                       px: 1.5,
@@ -770,7 +771,7 @@ const StaffManagement = () => {
                 {/* SECTION A & B */}
                 <Stack spacing={3} sx={{ height: '100%' }}>
                   {/* Team Distribution */}
-                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Card sx={{ borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <CardContent sx={{ p: 3, flex: 1 }}>
                       <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Groups sx={{ color: 'action.active' }} /> Team Distribution
@@ -808,7 +809,7 @@ const StaffManagement = () => {
                   </Card>
 
                   {/* Active Operations Board */}
-                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Card sx={{ borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <CardContent sx={{ p: 3, flex: 1 }}>
                       <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Schedule sx={{ color: 'action.active' }} /> Active Operations Board
@@ -841,7 +842,7 @@ const StaffManagement = () => {
                 {/* SECTION C & D */}
                 <Stack spacing={3} sx={{ height: '100%' }}>
                   {/* Performance Snapshot */}
-                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Card sx={{ borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <CardContent sx={{ p: 3, flex: 1 }}>
                       <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <TrendingUp sx={{ color: 'action.active' }} /> Performance Snapshot
@@ -873,7 +874,7 @@ const StaffManagement = () => {
                   </Card>
 
                   {/* Recent Admin Actions */}
-                  <Card sx={{ borderRadius: '24px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Card sx={{ borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <CardContent sx={{ p: 3, flex: 1 }}>
                       <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <History sx={{ color: 'action.active' }} /> Recent Admin Actions
@@ -914,9 +915,9 @@ const StaffManagement = () => {
             onClose={handleMsgClose}
             PaperProps={{
               sx: {
-                borderRadius: '16px',
+                borderRadius: '6px',
                 mt: 1,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                 border: '1px solid rgba(0,0,0,0.05)',
                 minWidth: 180,
                 '& .MuiMenuItem-root': {

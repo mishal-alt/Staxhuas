@@ -90,15 +90,15 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: '0.15em',
           padding: '10px 20px',
         }
       }
@@ -106,9 +106,9 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          border: '1px solid rgba(0,0,0,0.03)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
         }
       }
     }
@@ -486,11 +486,11 @@ const EvaluationManagement = () => {
             ].map((stat, i) => (
               <Card key={i} sx={{
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' },
-                borderRadius: '24px',
+                '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
+                borderRadius: '6px',
                 border: '1px solid rgba(0,0,0,0.05)',
                 height: { xs: 80, sm: 100 },
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 minWidth: 0,
@@ -560,7 +560,7 @@ const EvaluationManagement = () => {
             gap: 1.5,
             p: 2,
             bgcolor: 'white',
-            borderRadius: '16px',
+            borderRadius: '6px',
             border: '1px solid rgba(0,0,0,0.06)',
             alignItems: 'center',
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
@@ -721,7 +721,7 @@ const EvaluationManagement = () => {
           </Box>
 
           {/* Evaluations Workspace Grid */}
-          <Card sx={{ border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', overflow: 'hidden' }}>
+          <Card sx={{ border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
             <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 0 }}>
               <Table size="small">
                 <TableHead sx={{ bgcolor: '#F9FAFB', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
@@ -1045,7 +1045,7 @@ const EvaluationManagement = () => {
         onClose={handleCloseMenu}
         PaperProps={{
           sx: {
-            borderRadius: '12px',
+            borderRadius: '6px',
             boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
             border: '1px solid rgba(0,0,0,0.05)',
             py: 0.5,
@@ -1096,7 +1096,7 @@ const EvaluationManagement = () => {
         onClose={() => setOpenScoreDialog(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
+        PaperProps={{ sx: { borderRadius: '6px', p: 1 } }}
       >
         <DialogTitle sx={{ pb: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1223,7 +1223,7 @@ const EvaluationManagement = () => {
             variant="outlined" 
             sx={{ 
               p: 2, 
-              borderRadius: '12px', 
+              borderRadius: '6px', 
               bgcolor: liveTotalScore >= 24 ? 'rgba(46, 125, 50, 0.03)' : 'rgba(211, 47, 47, 0.03)', 
               borderColor: liveTotalScore >= 24 ? 'rgba(46, 125, 50, 0.2)' : 'rgba(211, 47, 47, 0.2)',
               display: 'flex', 
@@ -1304,7 +1304,7 @@ const EvaluationManagement = () => {
             onChange={(e) => setScoreForm({ ...scoreForm, facilitatorEvaluation: e.target.value })}
             placeholder="Document technical feedback, weaknesses to address, and final recommendation notes..."
             InputProps={{
-              sx: { borderRadius: '12px', fontSize: '0.85rem' }
+              sx: { borderRadius: '6px', fontSize: '0.85rem' }
             }}
           />
         </DialogContent>
@@ -1340,7 +1340,7 @@ const EvaluationManagement = () => {
         onClose={() => setOpenRescheduleDialog(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
+        PaperProps={{ sx: { borderRadius: '6px', p: 1 } }}
       >
         <DialogTitle sx={{ pb: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1473,7 +1473,7 @@ const EvaluationManagement = () => {
         onClose={() => setOpenReInterviewDialog(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
+        PaperProps={{ sx: { borderRadius: '6px', p: 1 } }}
       >
         <DialogTitle sx={{ pb: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1575,7 +1575,7 @@ const EvaluationManagement = () => {
       <Dialog 
         open={openDeleteDialog} 
         onClose={() => setOpenDeleteDialog(false)}
-        PaperProps={{ sx: { borderRadius: '16px', p: 1 } }}
+        PaperProps={{ sx: { borderRadius: '6px', p: 1 } }}
       >
         <DialogTitle sx={{ pb: 1 }}>
           <Typography variant="h6" fontWeight={900} sx={{ fontSize: '1.1rem', color: 'error.main' }}>

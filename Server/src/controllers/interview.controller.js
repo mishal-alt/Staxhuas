@@ -21,6 +21,11 @@ export const getInterviews = asyncHandler(async (req, res) => {
     search: req.query.search
   };
 
+  // If user is an interviewer, restrict to their assigned interviews
+  if (req.user.role === 'interviewer') {
+    filters.interviewer = req.user._id;
+  }
+
   const interviews = await interviewService.getInterviews(filters);
   res.status(200).json({ success: true, data: interviews });
 });
@@ -36,6 +41,16 @@ export const updateInterview = asyncHandler(async (req, res) => {
 });
 
 export const recordScore = asyncHandler(async (req, res) => {
+  if (req.user.role === 'interviewer') {
+    const { interviewerFeedback } = req.body;
+    // Find interview and update interviewer feedback
+    const interview = await interviewService.getInterviewById(req.params.id);
+    interview.interviewerFeedback = interviewerFeedback;
+    interview.status = 'completed'; // match the database enum value 'completed'
+    await interview.save();
+    return res.status(200).json({ success: true, data: interview });
+  }
+
   const { reviewScore, taskScore, attendanceScore, disciplineScore, facilitatorEvaluation, isPass, reInterviewAttempt, maxReInterviewLimit } = req.body;
   const interview = await interviewService.recordScore(req.params.id, {
     reviewScore, taskScore, attendanceScore, disciplineScore, facilitatorEvaluation, isPass, reInterviewAttempt, maxReInterviewLimit

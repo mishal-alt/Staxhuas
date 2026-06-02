@@ -69,7 +69,8 @@ import {
   Delete,
   OpenInNew,
   InsertDriveFile,
-  ArrowDropDown
+  ArrowDropDown,
+  Refresh
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -90,15 +91,15 @@ const theme = createTheme({
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: { borderRadius: 24 },
+  shape: { borderRadius: 6 },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
-          borderRadius: 16,
+          borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: '0.15em',
           padding: '10px 20px',
         }
       }
@@ -106,9 +107,18 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          border: '1px solid rgba(0,0,0,0.06)',
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
+        }
+      }
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 6,
+          }
         }
       }
     }
@@ -135,11 +145,27 @@ const PERFORMANCE_METRICS = [
   { label: 'Leave Done', value: '42', icon: <CheckBox sx={{ fontSize: 18 }} />, color: '#00838f', bg: 'rgba(0,131,143,0.08)' },
 ];
 
-const RECENT_ACTIVITY = [
+const INTERVIEWER_METRICS = [
+  { label: 'Interviews Done', value: '48', icon: <Layers sx={{ fontSize: 18 }} />, color: '#E8391D', bg: 'rgba(232,57,29,0.08)' },
+  { label: 'Pending Reviews', value: '02', icon: <Timelapse sx={{ fontSize: 18 }} />, color: '#1565c0', bg: 'rgba(21,101,192,0.08)' },
+  { label: 'Avg Evaluation Score', value: '7.8/10', icon: <TrendingUp sx={{ fontSize: 18 }} />, color: '#2e7d32', bg: 'rgba(46,125,50,0.08)' },
+  { label: 'Feedback SLA', value: '99%', icon: <CheckCircle sx={{ fontSize: 18 }} />, color: '#6a1b9a', bg: 'rgba(106,27,154,0.08)' },
+  { label: 'Batches Assigned', value: '03', icon: <Groups sx={{ fontSize: 18 }} />, color: '#ed6c02', bg: 'rgba(237,108,2,0.08)' },
+  { label: 'Hours Evaluated', value: '36h', icon: <Schedule sx={{ fontSize: 18 }} />, color: '#00838f', bg: 'rgba(0,131,143,0.08)' },
+];
+
+const RECENT_ACTIVITY_FACILITATOR = [
   { actor: 'You', action: 'approved leave request for Ahmed Khan.', time: '2h ago', dot: 'bg-emerald-500' },
   { actor: 'You', action: 'scheduled React evaluation for B-1.', time: '5h ago', dot: 'bg-blue-500' },
   { actor: 'You', action: 'completed scrum sync review.', time: 'Yesterday', dot: 'bg-brand-orange' },
   { actor: 'You', action: 'marked B-2 attendance for the week.', time: '2 days ago', dot: 'bg-violet-500' },
+];
+
+const RECENT_ACTIVITY_INTERVIEWER = [
+  { actor: 'You', action: "submitted feedback for Ahmed Khan's React evaluation.", time: '2h ago', dot: 'bg-emerald-500' },
+  { actor: 'You', action: 'completed Javascript assessment for B-1.', time: '5h ago', dot: 'bg-blue-500' },
+  { actor: 'You', action: 'joined FSD-COHORT-2026 interview panel.', time: 'Yesterday', dot: 'bg-brand-orange' },
+  { actor: 'You', action: 'graded HTML/CSS Lab for student Sara Ali.', time: '3 days ago', dot: 'bg-violet-500' },
 ];
 
 const TODAY_TASKS = [
@@ -151,149 +177,173 @@ const TODAY_TASKS = [
 
 // ─────────────── GITHUB CONTRIBUTION HEATMAP ───────────────
 const GithubContribution = () => {
-  const weeks = 53;
-  const daysPerWeek = 7;
-  
-  // Deterministic generator to match the visual pattern in the screenshot
-  const getContributionLevel = (wIdx, dIdx) => {
-    // September activity
-    if (wIdx === 10 && dIdx === 3) return 1;
-    if (wIdx === 10 && dIdx === 4) return 1;
-    if (wIdx === 10 && dIdx === 5) return 1;
-    if (wIdx === 10 && dIdx === 6) return 1;
-    if (wIdx === 10 && dIdx === 0) return 0;
-    
-    // October activity
-    if (wIdx === 14 && dIdx === 1) return 1;
-    if (wIdx === 14 && dIdx === 2) return 2;
-    if (wIdx === 15 && dIdx === 4) return 1;
-    
-    // November/December activity
-    if (wIdx === 18 && dIdx === 1) return 2;
-    if (wIdx === 19 && dIdx === 1) return 1;
-    if (wIdx === 22 && dIdx === 1) return 3;
-    if (wIdx === 24 && dIdx === 1) return 3;
-    
-    // February dense activity
-    if (wIdx >= 32 && wIdx <= 34) {
-      const pattern = [
-        [0, 1, 2, 1, 0, 2, 3],
-        [3, 1, 2, 2, 0, 3, 3],
-        [1, 1, 1, 1, 0, 0, 0]
-      ];
-      return pattern[wIdx - 32][dIdx] || 0;
+  const { user, setUser } = useAuth();
+  const [syncing, setSyncing] = React.useState(false);
+
+  const handleSync = async () => {
+    if (!user?.socialLinks?.github) return;
+    setSyncing(true);
+    try {
+      const res = await userApi.syncSocialStats('me');
+      const updatedUser = res.data?.data || res.data;
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
+    } catch (err) {
+      console.error('GitHub sync failed', err);
+    } finally {
+      setSyncing(false);
     }
-    
-    // March activity
-    if (wIdx === 37 && dIdx === 2) return 1;
-
-    // April/May activity
-    if (wIdx === 45 && dIdx === 1) return 1;
-    if (wIdx === 46 && dIdx === 2) return 1;
-    if (wIdx === 49 && dIdx === 6) return 1;
-    if (wIdx === 50 && dIdx === 4) return 2;
-    if (wIdx === 52 && dIdx === 0) return 2;
-    if (wIdx === 52 && dIdx === 1) return 1;
-    if (wIdx === 52 && dIdx === 2) return 0;
-    if (wIdx === 52 && dIdx === 3) return 0;
-    if (wIdx === 52 && dIdx === 4) return 0;
-    if (wIdx === 52 && dIdx === 5) return 1;
-    if (wIdx === 52 && dIdx === 6) return 1;
-
-    // A few sparse random dots elsewhere
-    if (wIdx === 4 && dIdx === 4) return 1;
-    if (wIdx === 9 && dIdx === 5) return 1;
-    
-    return 0;
   };
 
+  React.useEffect(() => {
+    if (user?.socialLinks?.github && !user?.githubStats?.lastSynced) {
+      handleSync();
+    }
+  }, [user?.socialLinks?.github, user?.githubStats?.lastSynced]);
+
+  const weeks = 53;
+  const daysPerWeek = 7;
   const colors = ['#EBEDF0', '#9BE9A8', '#40C463', '#30A14E', '#216E39'];
 
-  const monthWeeks = [
-    { name: 'Jul', week: 3 },
-    { name: 'Aug', week: 7 },
-    { name: 'Sep', week: 12 },
-    { name: 'Oct', week: 16 },
-    { name: 'Nov', week: 21 },
-    { name: 'Dec', week: 25 },
-    { name: 'Jan', week: 30 },
-    { name: 'Feb', week: 34 },
-    { name: 'Mar', week: 39 },
-    { name: 'Apr', week: 43 },
-    { name: 'May', week: 48 }
-  ];
+  const contributionsMap = React.useMemo(() => {
+    const map = new Map();
+    if (user?.githubStats?.contributions) {
+      user.githubStats.contributions.forEach(c => {
+        map.set(c.date, c);
+      });
+    }
+    return map;
+  }, [user?.githubStats?.contributions]);
+
+  const monthLabels = React.useMemo(() => {
+    const labels = [];
+    let lastMonth = -1;
+    let lastWeek = -1;
+    const today = new Date();
+    
+    for (let w = 0; w < 53; w++) {
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() - today.getDay() - (52 - w) * 7);
+      const month = targetDate.getMonth();
+      if (month !== lastMonth) {
+        if (lastWeek === -1 || w - lastWeek >= 3) {
+          labels.push({
+            name: targetDate.toLocaleDateString('en-US', { month: 'short' }),
+            week: w
+          });
+          lastWeek = w;
+        }
+        lastMonth = month;
+      }
+    }
+    return labels;
+  }, []);
+
+  const totalContributions = user?.githubStats?.totalContributions || 0;
+
+  const fmtDate = (isoStr) => {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
 
   return (
     <Card sx={{ bgcolor: 'white', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', p: 4, width: '100%' }}>
-      <Typography variant="h5" align="center" sx={{ fontFamily: 'Outfit', fontWeight: 500, color: '#1E2126', mb: 2, textTransform: 'none', letterSpacing: 'normal', fontSize: '1.4rem' }}>
-        Github Contribution
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', mb: 2 }}>
+        <Typography variant="h5" align="center" sx={{ fontFamily: 'Outfit', fontWeight: 500, color: '#1E2126', textTransform: 'none', letterSpacing: 'normal', fontSize: '1.4rem' }}>
+          Github Contribution
+        </Typography>
+        {user?.socialLinks?.github && (
+          <IconButton 
+            onClick={handleSync} 
+            disabled={syncing}
+            size="small" 
+            sx={{ position: 'absolute', right: 0 }}
+          >
+            {syncing ? <CircularProgress size={18} sx={{ color: '#1E2126' }} /> : <Refresh sx={{ fontSize: 18, color: '#1E2126' }} />}
+          </IconButton>
+        )}
+      </Box>
       <Divider sx={{ mb: 4, borderColor: '#F3F4F6' }} />
       
       <Box sx={{ overflowX: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-        <Box sx={{ minWidth: 780, width: '100%', px: 2 }}>
-          {/* Month Labels aligned to grid columns */}
-          <Box sx={{ position: 'relative', height: 20, mb: 1, display: 'flex', pl: '12px' }}>
-            {monthWeeks.map((mw) => (
-              <Typography 
-                key={mw.name} 
-                variant="caption" 
-                sx={{ 
-                  position: 'absolute', 
-                  left: `${(mw.week / 53) * 100}%`,
-                  transform: 'translateX(-50%)',
-                  color: '#1E2126', 
-                  fontWeight: 500, 
-                  fontSize: '0.8rem',
-                  fontFamily: 'Outfit'
-                }}
-              >
-                {mw.name}
-              </Typography>
-            ))}
-          </Box>
-
-          {/* Grid Container */}
-          <Box sx={{ display: 'flex', gap: '4px' }}>
-            {/* Weeks Columns */}
-            <Box sx={{ display: 'flex', gap: '5.5px', flexGrow: 1, justifyContent: 'space-between' }}>
-              {Array.from({ length: weeks }).map((_, wIdx) => (
-                <Box key={wIdx} sx={{ display: 'flex', flexDirection: 'column', gap: '5.5px' }}>
-                  {Array.from({ length: daysPerWeek }).map((_, dIdx) => {
-                    const level = getContributionLevel(wIdx, dIdx);
-                    return (
-                      <Box
-                        key={dIdx}
-                        sx={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: '2px',
-                          bgcolor: colors[level],
-                          transition: 'transform 0.1s',
-                          '&:hover': { transform: 'scale(1.25)', cursor: 'pointer' }
-                        }}
-                      />
-                    );
-                  })}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Bottom Info and Legend */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, px: 0.5 }}>
-            <Typography variant="body2" sx={{ color: '#1E2126', fontWeight: 500, fontSize: '0.82rem', fontFamily: 'Outfit' }}>
-              166 contributions in the last year
+        {!user?.socialLinks?.github ? (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ color: 'gray', fontFamily: 'Outfit' }}>
+              Please add your GitHub Username in the Edit Social Links section to display your contributions.
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="caption" sx={{ color: '#1E2126', fontWeight: 500, fontSize: '0.8rem', fontFamily: 'Outfit' }}>Less</Typography>
-              {colors.map((color, idx) => (
-                <Box key={idx} sx={{ width: 10, height: 10, borderRadius: '2px', bgcolor: color }} />
+          </Box>
+        ) : (
+          <Box sx={{ minWidth: 780, width: '100%', px: 2 }}>
+            {/* Month Labels aligned to grid columns */}
+            <Box sx={{ position: 'relative', height: 20, mb: 1, display: 'flex', pl: '12px' }}>
+              {monthLabels.map((mw) => (
+                <Typography 
+                  key={mw.week} 
+                  variant="caption" 
+                  sx={{ 
+                    position: 'absolute', 
+                    left: `${(mw.week / 53) * 100}%`,
+                    transform: 'translateX(-50%)',
+                    color: '#1E2126', 
+                    fontWeight: 500, 
+                    fontSize: '0.8rem',
+                    fontFamily: 'Outfit'
+                  }}
+                >
+                  {mw.name}
+                </Typography>
               ))}
-              <Typography variant="caption" sx={{ color: '#1E2126', fontWeight: 500, fontSize: '0.8rem', fontFamily: 'Outfit' }}>More</Typography>
+            </Box>
+
+            {/* Grid Container */}
+            <Box sx={{ display: 'flex', gap: '4px' }}>
+              {/* Weeks Columns */}
+              <Box sx={{ display: 'flex', gap: '5.5px', flexGrow: 1, justifyContent: 'space-between' }}>
+                {Array.from({ length: weeks }).map((_, wIdx) => (
+                  <Box key={wIdx} sx={{ display: 'flex', flexDirection: 'column', gap: '5.5px' }}>
+                    {Array.from({ length: daysPerWeek }).map((_, dIdx) => {
+                      const today = new Date();
+                      const targetDate = new Date(today);
+                      targetDate.setDate(today.getDate() - today.getDay() + dIdx - (52 - wIdx) * 7);
+                      const dateStr = targetDate.toISOString().split('T')[0];
+                      const dayData = contributionsMap.get(dateStr) || { count: 0, level: 0 };
+                      
+                      return (
+                        <Tooltip key={dIdx} title={`${dayData.count} contributions on ${fmtDate(dateStr)}`} arrow>
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '2px',
+                              bgcolor: colors[dayData.level],
+                              transition: 'transform 0.1s',
+                              '&:hover': { transform: 'scale(1.25)', cursor: 'pointer' }
+                            }}
+                          />
+                        </Tooltip>
+                      );
+                    })}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Bottom Info and Legend */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, px: 0.5 }}>
+              <Typography variant="body2" sx={{ color: '#1E2126', fontWeight: 500, fontSize: '0.82rem', fontFamily: 'Outfit' }}>
+                {totalContributions} contributions in the last year
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="caption" sx={{ color: '#1E2126', fontWeight: 500, fontSize: '0.8rem', fontFamily: 'Outfit' }}>Less</Typography>
+                {colors.map((color, idx) => (
+                  <Box key={idx} sx={{ width: 10, height: 10, borderRadius: '2px', bgcolor: color }} />
+                ))}
+                <Typography variant="caption" sx={{ color: '#1E2126', fontWeight: 500, fontSize: '0.8rem', fontFamily: 'Outfit' }}>More</Typography>
+              </Box>
             </Box>
           </Box>
-        </Box>
+        )}
       </Box>
     </Card>
   );
@@ -301,6 +351,33 @@ const GithubContribution = () => {
 
 // ─────────────── LEETCODE STATS CARD ───────────────
 const LeetcodeStats = () => {
+  const { user, setUser } = useAuth();
+  const [syncing, setSyncing] = React.useState(false);
+
+  const handleSync = async () => {
+    if (!user?.socialLinks?.leetcode) return;
+    setSyncing(true);
+    try {
+      const res = await userApi.syncSocialStats('me');
+      const updatedUser = res.data?.data || res.data;
+      if (updatedUser) {
+        setUser(updatedUser);
+      }
+    } catch (err) {
+      console.error('LeetCode sync failed', err);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (user?.socialLinks?.leetcode && !user?.leetcodeStats?.lastSynced) {
+      handleSync();
+    }
+  }, [user?.socialLinks?.leetcode, user?.leetcodeStats?.lastSynced]);
+
+  const stats = user?.leetcodeStats || { solved: 0, easy: 0, medium: 0, hard: 0 };
+
   return (
     <Card sx={{
       bgcolor: '#262626', // Dark gray card background matching the screenshot
@@ -314,61 +391,81 @@ const LeetcodeStats = () => {
       border: 'none',
       boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
     }}>
-      {/* Top logo & title */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16.102 17.93l-2.697 2.607c-.466.45-1.211.45-1.677 0l-8.479-8.192a3.86 3.86 0 010-5.614L7.382 2.6c.466-.45 1.211-.45 1.677 0l8.479 8.192c.92.89.92 2.333 0 3.223l-3.392 3.277c-.466.45-1.211.45-1.677 0l-5.652-5.462a.772.772 0 010-1.123c.31-.3.814-.3 1.125 0l4.527 4.373 2.825-2.73" stroke="#FFA116" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 800, color: 'rgba(255, 255, 255, 0.9)', letterSpacing: '0.02em', lineHeight: 1.1 }}>
-            Leetcode
-          </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 700, color: 'rgba(255, 255, 255, 0.6)', display: 'block', mt: -0.2 }}>
-            statics
-          </Typography>
+      {/* Top logo & title with Sync Button */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.102 17.93l-2.697 2.607c-.466.45-1.211.45-1.677 0l-8.479-8.192a3.86 3.86 0 010-5.614L7.382 2.6c.466-.45 1.211-.45 1.677 0l8.479 8.192c.92.89.92 2.333 0 3.223l-3.392 3.277c-.466.45-1.211.45-1.677 0l-5.652-5.462a.772.772 0 010-1.123c.31-.3.814-.3 1.125 0l4.527 4.373 2.825-2.73" stroke="#FFA116" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 800, color: 'rgba(255, 255, 255, 0.9)', letterSpacing: '0.02em', lineHeight: 1.1 }}>
+              Leetcode
+            </Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: 'rgba(255, 255, 255, 0.6)', display: 'block', mt: -0.2 }}>
+              statics
+            </Typography>
+          </Box>
         </Box>
+        {user?.socialLinks?.leetcode && (
+          <IconButton 
+            onClick={handleSync} 
+            disabled={syncing}
+            size="small" 
+            sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' } }}
+          >
+            {syncing ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <Refresh sx={{ fontSize: 16, color: 'white' }} />}
+          </IconButton>
+        )}
       </Box>
 
       {/* Main Content Layout */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}>
-        {/* Left Side: Big Count */}
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography sx={{ fontFamily: 'Outfit, Roboto, sans-serif', fontWeight: 900, fontSize: '3.6rem', color: 'white', lineHeight: 1 }}>
-            62
-          </Typography>
-          <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.6)', mt: 1, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.2 }}>
-            Solved<br />Problems
+      {!user?.socialLinks?.leetcode ? (
+        <Box sx={{ py: 3, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'Outfit' }}>
+            Please add your LeetCode Username in the Edit Social Links section to display your stats.
           </Typography>
         </Box>
+      ) : (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}>
+          {/* Left Side: Big Count */}
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Typography sx={{ fontFamily: 'Outfit, Roboto, sans-serif', fontWeight: 900, fontSize: '3.6rem', color: 'white', lineHeight: 1 }}>
+              {stats.solved}
+            </Typography>
+            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.6)', mt: 1, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.2 }}>
+              Solved<br />Problems
+            </Typography>
+          </Box>
 
-        {/* Right Side: Difficulties */}
-        <Stack spacing={1.5} sx={{ minWidth: 100 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-            <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
-              Easy
-            </Typography>
-            <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#4ECA73' }}>
-              58
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-            <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
-              Medium
-            </Typography>
-            <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#D4B13B' }}>
-              4
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-            <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
-              Hard
-            </Typography>
-            <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#EF4444' }}>
-              0
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
+          {/* Right Side: Difficulties */}
+          <Stack spacing={1.5} sx={{ minWidth: 100 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
+                Easy
+              </Typography>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#4ECA73' }}>
+                {stats.easy}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
+                Medium
+              </Typography>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#D4B13B' }}>
+                {stats.medium}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)' }}>
+                Hard
+              </Typography>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 900, color: '#EF4444' }}>
+                {stats.hard}
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+      )}
     </Card>
   );
 };
@@ -393,15 +490,24 @@ const AcademicInfo = () => {
   const resumeInputRef = React.useRef(null);
   const docInputRef    = React.useRef(null);
 
-  // ── Social links (localStorage) ──
-  const storedLinks = (() => {
-    try { return JSON.parse(localStorage.getItem('staxhaus_student_social_links') || '{}'); } catch { return {}; }
-  })();
+  // ── Social links (fetched from user database with useAuth) ──
+  const { user, setUser } = useAuth();
   const [socialLinks, setSocialLinks] = React.useState({
-    linkedin: storedLinks.linkedin || '',
-    github:   storedLinks.github   || '',
-    leetcode: storedLinks.leetcode || '',
+    linkedin: user?.socialLinks?.linkedin || '',
+    github:   user?.socialLinks?.github   || '',
+    leetcode: user?.socialLinks?.leetcode || '',
   });
+
+  React.useEffect(() => {
+    if (user?.socialLinks) {
+      setSocialLinks({
+        linkedin: user.socialLinks.linkedin || '',
+        github:   user.socialLinks.github   || '',
+        leetcode: user.socialLinks.leetcode || '',
+      });
+    }
+  }, [user?.socialLinks]);
+
   const [editOpen, setEditOpen]   = React.useState(false);
   const [editDraft, setEditDraft] = React.useState({ ...socialLinks });
 
@@ -473,10 +579,20 @@ const AcademicInfo = () => {
   // ── Social links helpers ──
   const handleOpenEdit    = () => { setEditDraft({ ...socialLinks }); setEditOpen(true); };
   const handleCloseEdit   = () => setEditOpen(false);
-  const handleSaveEdit    = () => {
-    setSocialLinks({ ...editDraft });
-    localStorage.setItem('staxhaus_student_social_links', JSON.stringify(editDraft));
-    setEditOpen(false);
+  const handleSaveEdit    = async () => {
+    try {
+      const res = await userApi.updateMe({ socialLinks: editDraft });
+      const updatedUser = res.data?.data || res.data;
+      if (updatedUser) {
+        setUser(updatedUser);
+        setSocialLinks(updatedUser.socialLinks || {});
+      }
+      setSnack({ open: true, msg: 'Links updated and statistics synced successfully.', sev: 'success' });
+      setEditOpen(false);
+    } catch (err) {
+      console.error('Failed to update social links', err);
+      setSnack({ open: true, msg: 'Failed to update links.', sev: 'error' });
+    }
   };
   const openLink = (type) => {
     const map = {
@@ -600,7 +716,7 @@ const AcademicInfo = () => {
               anchorEl={resumeAnchor}
               open={Boolean(resumeAnchor)}
               onClose={handleResumeMenuClose}
-              PaperProps={{ sx: { minWidth: 280, borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', mt: 0.5 } }}
+              PaperProps={{ sx: { minWidth: 280, borderRadius: '6px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', mt: 0.5 } }}
               transformOrigin={{ horizontal: 'left', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
             >
@@ -671,7 +787,7 @@ const AcademicInfo = () => {
               anchorEl={docAnchor}
               open={Boolean(docAnchor)}
               onClose={handleDocMenuClose}
-              PaperProps={{ sx: { minWidth: 280, borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', mt: 0.5 } }}
+              PaperProps={{ sx: { minWidth: 280, borderRadius: '6px', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', mt: 0.5 } }}
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
@@ -778,7 +894,7 @@ const AcademicInfo = () => {
       </Snackbar>
 
       {/* ── Edit Social Links Dialog ── */}
-      <Dialog open={editOpen} onClose={handleCloseEdit} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '12px', p: 0.5 } }}>
+      <Dialog open={editOpen} onClose={handleCloseEdit} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '6px', p: 0.5 } }}>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Edit sx={{ fontSize: 18, color: '#E8391D' }} />
@@ -1328,6 +1444,83 @@ const Profile = () => {
                   </motion.div>
                 )}
 
+                {/* Assigned Evaluation Batches (interviewer only) */}
+                {isInterviewer && (
+                  <motion.div variants={fadeIn} initial="hidden" animate="visible" custom={4}>
+                    <Card>
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Typography sx={{ fontSize: '0.68rem', fontWeight: 800, color: '#929292', letterSpacing: '0.1em', mb: 2.5, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <School sx={{ fontSize: 13, color: '#E8391D' }} />
+                          Assigned Evaluation Batches
+                        </Typography>
+                        <Grid container spacing={2.5}>
+                          {[
+                            { name: 'MERN-B1', students: 12, pendingInterviews: 2, fill: 83, color: '#E8391D' },
+                            { name: 'FS-JAVA-02', students: 8, pendingInterviews: 0, fill: 100, color: '#1565c0' },
+                          ].map((batch, i) => (
+                            <Grid item xs={12} sm={6} key={batch.name}>
+                              <Box sx={{
+                                p: 2.5, borderRadius: '12px',
+                                border: '1px solid #E5E7EB',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2,
+                                transition: 'all 0.2s ease',
+                                '&:hover': { borderColor: '#E8391D', bgcolor: 'rgba(232,57,29,0.01)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }
+                              }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                  <Box>
+                                    <Typography sx={{ fontWeight: 900, fontSize: '1rem', color: '#1E2126', fontFamily: 'Outfit', letterSpacing: '-0.01em' }}>{batch.name}</Typography>
+                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                                      <Typography sx={{ fontSize: '0.72rem', color: '#4B5563', fontWeight: 600 }}>
+                                        {batch.students} students
+                                      </Typography>
+                                      <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#D1D5DB' }} />
+                                      <Typography sx={{ fontSize: '0.72rem', color: '#4B5563', fontWeight: 600 }}>
+                                        {batch.pendingInterviews} pending
+                                      </Typography>
+                                    </Stack>
+                                  </Box>
+                                  <Chip
+                                    label={batch.pendingInterviews > 0 ? "PENDING" : "COMPLETED"}
+                                    size="small"
+                                    sx={{ 
+                                      bgcolor: batch.pendingInterviews > 0 ? 'rgba(237,108,2,0.15)' : 'rgba(46,125,50,0.15)', 
+                                      color: batch.pendingInterviews > 0 ? '#ed6c02' : '#2e7d32', 
+                                      fontWeight: 900, 
+                                      fontSize: '0.62rem', 
+                                      borderRadius: 1.5,
+                                      border: `1px solid ${batch.pendingInterviews > 0 ? 'rgba(237,108,2,0.3)' : 'rgba(46,125,50,0.3)'}`
+                                    }}
+                                  />
+                                </Box>
+                                <Box>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={batch.fill}
+                                    sx={{
+                                      height: 6, borderRadius: 3, bgcolor: '#E5E7EB',
+                                      '& .MuiLinearProgress-bar': { bgcolor: batch.color, borderRadius: 3 }
+                                    }}
+                                  />
+                                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                                    <Typography sx={{ fontSize: '0.62rem', color: '#6B7280', fontWeight: 750, letterSpacing: '0.04em' }}>
+                                      EVALUATION COMPLETION
+                                    </Typography>
+                                    <Typography sx={{ fontSize: '0.72rem', color: batch.color, fontWeight: 900 }}>
+                                      {batch.fill}%
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
                 {/* Recent Operational Activity (staff only) */}
                 {isStaff && (
                   <motion.div variants={fadeIn} initial="hidden" animate="visible" custom={5}>
@@ -1338,7 +1531,7 @@ const Profile = () => {
                           Recent Operational Activity
                         </Typography>
                         <Box sx={{ pl: 2, borderLeft: '2px solid #E5E7EB', display: 'flex', flexDirection: 'column', gap: 3.5, my: 1 }}>
-                          {RECENT_ACTIVITY.map((item, i) => (
+                          {(isInterviewer ? RECENT_ACTIVITY_INTERVIEWER : RECENT_ACTIVITY_FACILITATOR).map((item, i) => (
                             <Box key={i} sx={{ position: 'relative', pl: 1 }}>
                               {/* dot */}
                               <Box sx={{
@@ -1419,7 +1612,7 @@ const Profile = () => {
         onClose={handleEditClose}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+        PaperProps={{ sx: { borderRadius: 6, p: 1 } }}
       >
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
           <Typography variant="h5" fontWeight={900} sx={{ fontFamily: 'Outfit' }}>

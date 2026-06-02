@@ -12,6 +12,7 @@ router.use(protect);
 router.get('/me', (req, res) => userController.getUserById({ params: { id: req.user.id } }, res));
 router.patch('/me', userController.updateMe);
 router.post('/me/profile-pic', upload.single('profilePic'), userController.uploadProfilePic);
+router.post('/:id/sync-stats', userController.syncSocialStats);
 
 // ── Student Documents (Resume & Documents) ──
 router.get('/me/documents', userController.getMyDocuments);

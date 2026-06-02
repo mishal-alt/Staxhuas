@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 import {
   ResponsiveContainer,
   BarChart,
@@ -25,11 +26,13 @@ import {
   Rocket,
   Search,
   TrendingUp,
+  TrendingDown,
+  Minus,
+  GitBranch,
   Users,
   Zap,
 } from 'lucide-react';
 
-import PodiumCard from './components/PodiumCard';
 import RankingsTable from './components/RankingsTable';
 import {
   STUDENTS,
@@ -76,7 +79,324 @@ const SectionHeader = ({ icon: Icon, title, badge, action }) => (
   </div>
 );
 
+const ThreeDPodium = ({ topThree }) => {
+  if (!topThree || topThree.length < 3) return null;
+
+  const pillars = [
+    { student: topThree[1], place: 2, heightClass: 'h-[440px] sm:h-[490px] md:h-[530px]', delay: 0.2, theme: 'silver' },
+    { student: topThree[0], place: 1, heightClass: 'h-[500px] sm:h-[560px] md:h-[600px]', delay: 0, theme: 'gold' },
+    { student: topThree[2], place: 3, heightClass: 'h-[390px] sm:h-[430px] md:h-[470px]', delay: 0.4, theme: 'bronze' }
+  ];
+
+  return (
+    <div className="relative w-full max-w-5xl mx-auto mb-6">
+      <div className="flex items-end justify-center gap-3 sm:gap-6 md:gap-8 pt-16 pb-6 w-full relative z-10">
+        {pillars.map((p) => {
+          const { student, place, heightClass, delay, theme } = p;
+          
+          const themeConfigs = {
+            gold: {
+              border: 'border-amber-400/50 shadow-amber-400/10',
+              avatarRing: 'border-4 border-amber-400 shadow-lg shadow-amber-400/20',
+              avatarBg: 'bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950',
+              scoreText: 'text-amber-400',
+              badgeBg: 'bg-amber-400 border-amber-300 text-slate-950',
+              pillarBg: 'bg-slate-950/95',
+              topRadius: 'rounded-t-2xl',
+              zClass: 'z-30'
+            },
+            silver: {
+              border: 'border-sky-400/30 shadow-sky-400/5',
+              avatarRing: 'border-4 border-sky-400 shadow-lg shadow-sky-400/20',
+              avatarBg: 'bg-gradient-to-br from-sky-400 to-sky-600 text-slate-950',
+              scoreText: 'text-sky-400',
+              badgeBg: 'bg-sky-400 border-sky-300 text-slate-950',
+              pillarBg: 'bg-slate-950/80',
+              topRadius: 'rounded-tl-2xl rounded-tr-sm',
+              zClass: 'z-20'
+            },
+            bronze: {
+              border: 'border-emerald-400/30 shadow-emerald-400/5',
+              avatarRing: 'border-4 border-emerald-400 shadow-lg shadow-emerald-400/20',
+              avatarBg: 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950',
+              scoreText: 'text-emerald-400',
+              badgeBg: 'bg-emerald-400 border-emerald-300 text-slate-950',
+              pillarBg: 'bg-slate-950/80',
+              topRadius: 'rounded-tl-sm rounded-tr-2xl',
+              zClass: 'z-20'
+            }
+          }[theme];
+
+          const TrendIcon = student.trend > 0 ? TrendingUp : student.trend < 0 ? TrendingDown : Minus;
+          const trendColor = student.trend > 0 ? 'text-emerald-400' : student.trend < 0 ? 'text-rose-400' : 'text-slate-400';
+
+          return (
+            <div key={student.id} className={`flex flex-col items-center w-full max-w-[280px] relative ${themeConfigs.zClass}`}>
+              {/* Floating Avatar ring overlapping top of pillar */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: delay + 0.6 }}
+                className={`w-14 h-14 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-full flex items-center justify-center font-black ${themeConfigs.avatarRing} z-10 -mb-7 sm:-mb-9`}
+              >
+                <div className={`w-full h-full rounded-full flex items-center justify-center text-sm sm:text-base md:text-lg font-black ${themeConfigs.avatarBg}`}>
+                  {student.avatar}
+                </div>
+              </motion.div>
+
+              {/* The Pillar body with grow animation */}
+              <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1], delay }}
+                className={`w-full ${heightClass} ${themeConfigs.pillarBg} border ${themeConfigs.border} ${themeConfigs.topRadius} shadow-xl flex flex-col justify-between pt-10 sm:pt-12 pb-6 px-1.5 sm:px-3 text-white overflow-hidden`}
+              >
+                {/* Upper section of pillar */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: delay + 0.8 }}
+                  className="flex flex-col items-center w-full min-w-0"
+                >
+                  <p className="text-xs sm:text-sm md:text-base font-black truncate text-center w-full px-1">
+                    {student.name}
+                  </p>
+                  <p className="text-[9px] sm:text-[10px] font-semibold text-slate-400 text-center uppercase tracking-wide">
+                    {student.cohort}
+                  </p>
+                  <span
+                    className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded mt-1.5 ${
+                      student.badge === 'Elite' ? 'bg-brand-orange text-white' : 'bg-blue-500 text-white'
+                    }`}
+                  >
+                    {student.badge}
+                  </span>
+
+                  <div className="w-4/5 border-t border-white/5 my-2.5 sm:my-3" />
+
+                  <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">
+                    Overall Score
+                  </p>
+                  <p className={`text-xl sm:text-2xl md:text-3xl font-black text-center tracking-tight ${themeConfigs.scoreText}`}>
+                    {student.overall}
+                  </p>
+                  <div className={`flex items-center gap-1 mt-0.5 ${trendColor}`}>
+                    <TrendIcon size={10} className="shrink-0" />
+                    <span className="text-[9px] sm:text-[10px] font-bold">
+                      {student.trend > 0 ? `+${student.trend}` : student.trend} positions
+                    </span>
+                  </div>
+                </motion.div>
+
+                {/* Grid of 6 detailed metrics */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: delay + 1.0 }}
+                  className="grid grid-cols-2 gap-1.5 text-[9px] sm:text-[10px] w-full mt-3 px-0.5 sm:px-1"
+                >
+                  {[
+                    ['Attendance', `${student.attendance}%`],
+                    ['Interview', student.interview],
+                    ['Scrum', `${student.scrum}%`],
+                    ['Tasks', `${student.tasks}%`],
+                    ['GitHub', `${student.github}%`],
+                    ['Velocity', `${student.velocity}x`],
+                  ].map(([label, val]) => (
+                    <div
+                      key={label}
+                      className="px-1.5 py-1 rounded bg-white/5 border border-white/5 flex flex-col justify-center min-w-0"
+                    >
+                      <span className="text-white/40 text-[7.5px] sm:text-[8.5px] font-semibold truncate leading-none mb-0.5">{label}</span>
+                      <span className="font-black text-white leading-none truncate">{val}</span>
+                    </div>
+                  ))}
+                </motion.div>
+
+                {/* Footer metrics (streak and active status) */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: delay + 1.2 }}
+                  className="flex items-center justify-between mt-3 pt-2 border-t border-white/5 w-full text-[9px] sm:text-[10px] px-1"
+                >
+                  <div className="flex items-center gap-1 min-w-0">
+                    <Flame size={10} className="text-brand-orange shrink-0" />
+                    <span className="font-bold text-slate-300 truncate">
+                      {student.streak}d streak
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <GitBranch size={10} className="text-slate-400" />
+                    <span className="font-semibold text-slate-400">
+                      Active
+                    </span>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+              {/* Diamond Rank Badge overlapping bottom edge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, y: -5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: delay + 1.4 }}
+                className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rotate-45 border-2 flex items-center justify-center shadow-lg ${themeConfigs.badgeBg} z-20`}
+              >
+                <span className="rotate-[-45deg] text-xs font-black select-none">
+                  {place}
+                </span>
+              </motion.div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const PersonalizedAnalytics = ({ activeUser }) => {
+  const student = STUDENTS.find(
+    (s) => s.name.toLowerCase() === activeUser?.name?.toLowerCase()
+  ) || STUDENTS[5]; // Default to Mohammad Mishal if not matched (e.g. administrator/facilitator)
+
+  const TrendIcon = student.trend > 0 ? TrendingUp : student.trend < 0 ? TrendingDown : Minus;
+  const trendColor = student.trend > 0 ? 'text-emerald-500' : student.trend < 0 ? 'text-rose-500' : 'text-slate-400';
+
+  const cohortAvgs = {
+    attendance: 91.5,
+    interview: 8.1,
+    scrum: 89.2,
+    tasks: 84.6,
+    github: 81.0,
+    velocity: 0.95
+  };
+
+  return (
+    <section className="bg-white border border-gray-200 rounded-md p-4 shadow-sm">
+      <SectionHeader icon={Activity} title="Your Standing & Performance Insights" badge="PERSONAL ANALYTICS" />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-3">
+        {/* Profile Card */}
+        <div className="bg-brand-charcoal text-white rounded-md p-4 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/10 rounded-full blur-xl pointer-events-none" />
+          
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-md bg-brand-orange text-white flex items-center justify-center text-sm font-black shrink-0">
+                {student.avatar}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-black truncate">{student.name}</p>
+                <p className="text-[10px] font-semibold text-white/60 uppercase">{student.cohort}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-[8px] font-bold text-white/50 uppercase tracking-wider">Current Standing</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl font-black">Rank #{student.rank}</p>
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                    student.badge === 'Elite' ? 'bg-brand-orange text-white' : 'bg-blue-500 text-white'
+                  }`}>
+                    {student.badge} Tier
+                  </span>
+                </div>
+                <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${trendColor}`}>
+                  <TrendIcon size={11} className="shrink-0" />
+                  <span className="font-bold">
+                    {student.trend > 0 ? `+${student.trend}` : student.trend} positions this week
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[8px] font-bold text-white/50 uppercase tracking-wider">Overall Score</p>
+                <p className="text-3xl font-black text-brand-orange leading-none">{student.overall}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[10px]">
+            <div className="flex items-center gap-1">
+              <Flame size={12} className="text-brand-orange shrink-0" />
+              <span className="font-bold">{student.streak}d streak</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <GitBranch size={12} className="text-white/60 shrink-0" />
+              <span className="font-semibold text-white/60">Active Status</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Comparative Analysis */}
+        <div className="lg:col-span-2 border border-gray-200 rounded-md p-4 bg-brand-light/30 flex flex-col justify-between">
+          <div>
+            <p className="text-[9px] font-bold text-brand-charcoal uppercase tracking-wider mb-3">Your Metrics vs. Cohort Average</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { label: 'Attendance', val: student.attendance, symbol: '%', key: 'attendance' },
+                { label: 'Interview Score', val: student.interview, symbol: '/10', key: 'interview' },
+                { label: 'Scrum Consistency', val: student.scrum, symbol: '%', key: 'scrum' },
+                { label: 'Tasks Completed', val: student.tasks, symbol: '%', key: 'tasks' },
+                { label: 'GitHub Contributions', val: student.github, symbol: '%', key: 'github' },
+                { label: 'Velocity Multiplier', val: student.velocity, symbol: 'x', key: 'velocity' },
+              ].map((m) => {
+                const avg = cohortAvgs[m.key];
+                const diff = m.val - avg;
+                const isPositive = diff >= 0;
+                const formattedDiff = m.key === 'interview' || m.key === 'velocity' ? diff.toFixed(1) : Math.round(diff);
+                
+                const percentMax = m.key === 'interview' ? 10 : m.key === 'velocity' ? 2 : 100;
+                const barPercent = Math.min((m.val / percentMax) * 100, 100);
+                const avgPercent = Math.min((avg / percentMax) * 100, 100);
+
+                return (
+                  <div key={m.label} className="p-2 bg-white border border-gray-200/80 rounded flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-brand-charcoal truncate pr-1">{m.label}</span>
+                      <div className="flex items-center gap-1 font-black shrink-0">
+                        <span className="text-brand-charcoal">{m.val}{m.symbol}</span>
+                        <span className={`text-[8px] font-bold px-1 rounded ${isPositive ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
+                          {isPositive ? '+' : ''}{formattedDiff}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="relative h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className={`absolute top-0 left-0 h-full rounded-full ${isPositive ? 'bg-brand-orange' : 'bg-slate-700'}`}
+                        style={{ width: `${barPercent}%` }}
+                      />
+                      <div 
+                        className="absolute top-0 h-full w-0.5 bg-brand-charcoal z-10" 
+                        style={{ left: `${avgPercent}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[8px] text-brand-gray font-semibold leading-none mt-0.5">
+                      <span>Cohort Avg: {avg}{m.symbol}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-3 pt-2.5 border-t border-gray-200/60 flex items-center justify-between text-[8px] font-bold text-brand-gray">
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2 bg-brand-orange rounded" /> Your Score
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-0.5 h-2 bg-brand-charcoal" /> Cohort Average
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const LeaderboardContent = ({ isLoading }) => {
+  const { user } = useAuth();
   const [timeframe, setTimeframe] = useState(TIMEFRAMES[1]);
   const [cohort, setCohort] = useState(COHORTS[0]);
   const [rankFilter, setRankFilter] = useState(RANK_FILTERS[0]);
@@ -100,111 +420,16 @@ const LeaderboardContent = ({ isLoading }) => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      {/* §1 — Command Header */}
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
-          <div className="lg:col-span-2 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-gray mb-1">Institutional Rankings</p>
-            <h1 className="text-lg font-black text-brand-charcoal">Hall of Fame — Performance Index</h1>
-            <p className="text-xs text-brand-gray mt-1 font-medium">
-              {OVERVIEW_STATS.totalStudents} students · {OVERVIEW_STATS.activeCohorts} active cohorts · Avg score{' '}
-              {OVERVIEW_STATS.avgScore}
-            </p>
-            <div className="flex flex-wrap gap-3 mt-3">
-              <div className="text-xs">
-                <span className="text-brand-gray font-semibold">Network rank coverage</span>
-                <p className="font-black text-brand-charcoal">100%</p>
-              </div>
-              <div className="text-xs">
-                <span className="text-brand-gray font-semibold">Elite tier</span>
-                <p className="font-black text-brand-orange">Top {OVERVIEW_STATS.topPercentile}%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-3 p-4 bg-brand-light/50 flex flex-col justify-center gap-3">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <label className="flex flex-col gap-1">
-                <span className="text-[9px] font-bold text-brand-gray uppercase">Timeframe</span>
-                <select
-                  value={timeframe}
-                  onChange={(e) => setTimeframe(e.target.value)}
-                  className="text-xs font-semibold border border-gray-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                >
-                  {TIMEFRAMES.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[9px] font-bold text-brand-gray uppercase">Cohort</span>
-                <select
-                  value={cohort}
-                  onChange={(e) => setCohort(e.target.value)}
-                  className="text-xs font-semibold border border-gray-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                >
-                  {COHORTS.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[9px] font-bold text-brand-gray uppercase">Ranking</span>
-                <select
-                  value={rankFilter}
-                  onChange={(e) => setRankFilter(e.target.value)}
-                  className="text-xs font-semibold border border-gray-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                >
-                  {RANK_FILTERS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </label>
-              <div className="flex flex-col gap-1 justify-end">
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-brand-charcoal hover:bg-brand-charcoal/90 rounded-md px-3 py-1.5 transition-colors"
-                >
-                  <Download size={13} />
-                  Export
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="text-[10px] font-semibold text-brand-gray">Live rankings · Last synced 2 min ago</span>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
       {/* §2 — Top Performers Podium */}
       <section>
         <SectionHeader icon={Award} title="Top Performers — Institutional Podium" badge="TOP 3" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end max-w-5xl mx-auto lg:max-w-none">
-          <div className="md:order-1">
-            <PodiumCard student={topThree[1]} place={2} />
-          </div>
-          <div className="md:order-2">
-            <PodiumCard student={topThree[0]} place={1} emphasized />
-          </div>
-          <div className="md:order-3">
-            <PodiumCard student={topThree[2]} place={3} />
-          </div>
-        </div>
+        <ThreeDPodium topThree={topThree} />
       </section>
 
       {/* §3 — Global Performance Rankings */}
       <section className="bg-white border border-gray-200 rounded-md p-4 shadow-sm">
         <SectionHeader icon={BarChart3} title="Global Performance Rankings" badge={STUDENTS.length} />
-        <div className="flex flex-col sm:flex-row gap-2 mb-3">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between mb-4">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-brand-gray" />
             <input
@@ -216,193 +441,48 @@ const LeaderboardContent = ({ isLoading }) => {
               aria-label="Search students"
             />
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-bold text-brand-gray">
-            <Filter size={12} />
-            <span>{rankFilter} · {timeframe}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={timeframe}
+              onChange={(e) => setTimeframe(e.target.value)}
+              className="text-xs font-semibold border border-gray-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange cursor-pointer"
+            >
+              {TIMEFRAMES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+            <select
+              value={cohort}
+              onChange={(e) => setCohort(e.target.value)}
+              className="text-xs font-semibold border border-gray-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange cursor-pointer"
+            >
+              {COHORTS.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={rankFilter}
+              onChange={(e) => setRankFilter(e.target.value)}
+              className="text-xs font-semibold border border-gray-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange cursor-pointer"
+            >
+              {RANK_FILTERS.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-brand-charcoal hover:bg-brand-charcoal/90 rounded-md px-3 py-1.5 transition-colors cursor-pointer"
+            >
+              <Download size={13} />
+              Export
+            </button>
           </div>
         </div>
         <RankingsTable students={STUDENTS} search={search} cohortFilter={cohort} rankFilter={rankFilter} />
       </section>
 
-      {/* §4 — Performance Analytics */}
-      <section className="bg-white border border-gray-200 rounded-md p-4 shadow-sm">
-        <SectionHeader icon={TrendingUp} title="Performance Analytics" />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <div className="border border-gray-200 rounded-md p-3">
-            <p className="text-[10px] font-bold text-brand-gray uppercase mb-2">Cohort Comparison</p>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={COHORT_COMPARISON}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="cohort" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[75, 95]} tick={{ fontSize: 9 }} width={24} axisLine={false} tickLine={false} />
-                <Tooltip {...chartTooltip} />
-                <Bar dataKey="score" radius={[2, 2, 0, 0]} barSize={16}>
-                  {COHORT_COMPARISON.map((_, i) => (
-                    <Cell key={i} fill={i === 0 ? '#E8391D' : '#1E2126'} opacity={i === 0 ? 1 : 0.5 + i * 0.1} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="border border-gray-200 rounded-md p-3">
-            <p className="text-[10px] font-bold text-brand-gray uppercase mb-2">Weekly Growth Trend</p>
-            <ResponsiveContainer width="100%" height={130}>
-              <LineChart data={WEEKLY_GROWTH}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="week" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[70, 95]} tick={{ fontSize: 9 }} width={24} axisLine={false} tickLine={false} />
-                <Tooltip {...chartTooltip} />
-                <Line type="monotone" dataKey="avg" stroke="#E8391D" strokeWidth={2} dot={{ r: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="border border-gray-200 rounded-md p-3">
-            <p className="text-[10px] font-bold text-brand-gray uppercase mb-2">Attendance Leaders</p>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={ATTENDANCE_LEADERS} layout="vertical" margin={{ left: 4 }}>
-                <XAxis type="number" domain={[85, 100]} hide />
-                <YAxis type="category" dataKey="name" width={48} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <Tooltip {...chartTooltip} />
-                <Bar dataKey="rate" fill="#1E2126" radius={[0, 2, 2, 0]} barSize={8} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="border border-gray-200 rounded-md p-3">
-            <p className="text-[10px] font-bold text-brand-gray uppercase mb-2">Interview Excellence</p>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={INTERVIEW_EXCELLENCE}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[7, 10]} tick={{ fontSize: 9 }} width={20} axisLine={false} tickLine={false} />
-                <Tooltip {...chartTooltip} />
-                <Bar dataKey="score" fill="#E8391D" radius={[2, 2, 0, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="border border-gray-200 rounded-md p-3">
-            <p className="text-[10px] font-bold text-brand-gray uppercase mb-2">Scrum Consistency</p>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={SCRUM_RANKING}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[80, 100]} tick={{ fontSize: 9 }} width={24} axisLine={false} tickLine={false} />
-                <Tooltip {...chartTooltip} />
-                <Bar dataKey="score" fill="#1E2126" radius={[2, 2, 0, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="border border-gray-200 rounded-md p-3">
-            <p className="text-[10px] font-bold text-brand-gray uppercase mb-2">Coding Productivity</p>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={CODING_PRODUCTIVITY} layout="vertical" margin={{ left: 4 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" width={48} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <Tooltip {...chartTooltip} />
-                <Bar dataKey="commits" fill="#E8391D" radius={[0, 2, 2, 0]} barSize={8} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </section>
-
-      {/* §5 + §7: Achievements + Live Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <section className="lg:col-span-2 bg-white border border-gray-200 rounded-md p-4 shadow-sm">
-          <SectionHeader icon={Award} title="Academic Achievement Recognition" badge={ACHIEVEMENTS.length} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {ACHIEVEMENTS.map((a) => {
-              const Icon = ACHIEVEMENT_ICONS[a.icon] || Award;
-              return (
-                <div
-                  key={a.title}
-                  className="flex items-start gap-2.5 p-2.5 border border-gray-200 rounded-md hover:border-brand-orange/30 transition-colors"
-                >
-                  <div className="p-1.5 rounded-md bg-brand-light border border-gray-200 shrink-0">
-                    <Icon size={14} className="text-brand-orange" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-brand-gray uppercase">{a.title}</p>
-                    <p className="text-xs font-black text-brand-charcoal truncate">{a.recipient}</p>
-                    <p className="text-[10px] text-brand-gray font-medium">{a.metric}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="bg-brand-charcoal text-white border border-brand-charcoal rounded-md p-4 shadow-sm">
-          <SectionHeader icon={Radio} title="Live Competition Feed" badge="LIVE" />
-          <ul className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-            {LIVE_FEED.map((item, i) => (
-              <motion.li
-                key={i}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.06 }}
-                className="p-2.5 rounded-md bg-white/5 border border-white/10"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[11px] font-medium leading-snug">{item.text}</p>
-                  <span className="text-[9px] text-white/40 font-semibold shrink-0">{item.time}</span>
-                </div>
-              </motion.li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      {/* §6 — Student Growth Tracker */}
-      <section className="bg-white border border-gray-200 rounded-md p-4 shadow-sm">
-        <SectionHeader icon={Activity} title="Student Growth Tracker" />
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left">
-            <thead>
-              <tr className="border-b border-gray-200">
-                {['Student', 'Rank Δ', 'Score Δ', 'Weekly', 'Module', 'Stability'].map((h) => (
-                  <th key={h} className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-brand-gray">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {GROWTH_TRACKER.map((row, i) => (
-                <tr key={row.student} className={`border-b border-gray-100 ${i % 2 ? 'bg-brand-light/30' : ''}`}>
-                  <td className="px-3 py-2.5 text-xs font-bold text-brand-charcoal">{row.student}</td>
-                  <td className="px-3 py-2.5">
-                    <span
-                      className={`text-[10px] font-bold ${
-                        row.rankDelta.startsWith('+') ? 'text-emerald-600' : 'text-red-600'
-                      }`}
-                    >
-                      {row.rankDelta}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-semibold text-brand-charcoal">{row.scoreDelta}</td>
-                  <td className="px-3 py-2.5 text-xs text-brand-gray">{row.weekly}</td>
-                  <td className="px-3 py-2.5 text-xs text-brand-gray">{row.module}</td>
-                  <td className="px-3 py-2.5">
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                        row.stability === 'Elite'
-                          ? 'bg-brand-orange/10 text-brand-orange border-brand-orange/20'
-                          : row.stability === 'Improving'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                            : row.stability === 'Declining'
-                              ? 'bg-red-50 text-red-600 border-red-100'
-                              : 'bg-gray-50 text-brand-gray border-gray-200'
-                      }`}
-                    >
-                      {row.stability}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* §5 — Personalized Standing & Performance Insights */}
+      <PersonalizedAnalytics activeUser={user} />
     </div>
   );
 };

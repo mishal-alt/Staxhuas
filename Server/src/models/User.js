@@ -49,6 +49,24 @@ const userSchema = new mongoose.Schema(
       linkedin: { type: String, default: '' },
       leetcode: { type: String, default: '' },
     },
+    leetcodeStats: {
+      solved: { type: Number, default: 0 },
+      easy: { type: Number, default: 0 },
+      medium: { type: Number, default: 0 },
+      hard: { type: Number, default: 0 },
+      lastSynced: { type: Date, default: null }
+    },
+    githubStats: {
+      totalContributions: { type: Number, default: 0 },
+      contributions: [
+        {
+          date: { type: String },
+          count: { type: Number },
+          level: { type: Number }
+        }
+      ],
+      lastSynced: { type: Date, default: null }
+    },
     // Track refresh token for logout
     refreshToken: { type: String, select: false },
     googleRefreshToken: { type: String, select: false },

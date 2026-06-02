@@ -20,7 +20,12 @@ export const protect = asyncHandler(async (req, res, next) => {
   try {
     const decoded = verifyAccessToken(token);
     console.log('Decoded Token ID:', decoded.id);
-    req.user = await User.findById(decoded.id).select('-password');
+    req.user = await User.findById(decoded.id)
+      .select('-password')
+      .populate({
+        path: 'batch',
+        populate: { path: 'course' }
+      });
     if (!req.user) {
       console.log('AUTH_ERROR: User not found for ID', decoded.id);
       throw new ApiError(401, 'Not authorized, user not found', 'AUTH_ERROR');
