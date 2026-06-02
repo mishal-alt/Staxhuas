@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true, default: '' },
     location: { type: String, trim: true, default: '' },
     headline: { type: String, trim: true, default: '' },
+    developerType: { type: String, trim: true, default: '' },
+    skills: { type: [String], default: [] },
     address: { type: String, trim: true, default: '' },
     emergencyContact: { type: String, trim: true, default: '' },
     attendancePercentage: { type: Number, default: 0 },

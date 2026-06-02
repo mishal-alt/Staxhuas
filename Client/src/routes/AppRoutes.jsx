@@ -53,7 +53,7 @@ const AppRoutes = () => {
       <Route path="/scrum" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR]}><ScrumManagement /></ProtectedRoute>} />
       <Route path="/interviews" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR]}><EvaluationManagement /></ProtectedRoute>} />
       <Route path="/invitations" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR]}><Invitations /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR]}><Reports /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR, ROLES.INTERVIEWER]}><Reports /></ProtectedRoute>} />
       <Route path="/academics" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACILITATOR, ROLES.STUDENT, ROLES.INTERVIEWER]}><StudentAcademicsWrapper /></ProtectedRoute>} />
 
       <Route path="/my-interviews" element={<ProtectedRoute allowedRoles={[ROLES.INTERVIEWER]}><MyInterviews /></ProtectedRoute>} />

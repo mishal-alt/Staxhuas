@@ -117,7 +117,7 @@ export const updateInterview = async (id, updateData) => {
 /**
  * Record interview score and evaluation, automatically calculating percentage and status.
  */
-export const recordScore = async (id, { reviewScore, taskScore, attendanceScore, disciplineScore, facilitatorEvaluation, isPass, reInterviewAttempt, maxReInterviewLimit }) => {
+export const recordScore = async (id, { reviewScore, taskScore, attendanceScore, disciplineScore, facilitatorEvaluation, interviewerFeedback, remarks, isPass, reInterviewAttempt, maxReInterviewLimit }) => {
   const interview = await Interview.findById(id);
   if (!interview) throw new Error('Interview not found.');
 
@@ -144,7 +144,9 @@ export const recordScore = async (id, { reviewScore, taskScore, attendanceScore,
   interview.score = totalScore;
   interview.maxScore = actualMaxScore;
   interview.percentage = percentage;
-  interview.facilitatorEvaluation = facilitatorEvaluation;
+  if (facilitatorEvaluation !== undefined) interview.facilitatorEvaluation = facilitatorEvaluation;
+  if (interviewerFeedback !== undefined) interview.interviewerFeedback = interviewerFeedback;
+  if (remarks !== undefined) interview.remarks = remarks;
   interview.completedAt = new Date();
 
   if (reInterviewAttempt !== undefined) interview.reInterviewAttempt = Number(reInterviewAttempt);

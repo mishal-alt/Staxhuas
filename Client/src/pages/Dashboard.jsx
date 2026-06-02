@@ -10,8 +10,10 @@ import InterviewerDashboard from '../features/reports/InterviewerDashboard';
 const Dashboard = () => {
   const { user } = useAuth();
 
+  const useFullWidthDashboard = [ROLES.STUDENT, ROLES.INTERVIEWER].includes(user?.role);
+
   return (
-    <AppShell fullWidth={user?.role === ROLES.STUDENT}>
+    <AppShell fullWidth={useFullWidthDashboard}>
       {user?.role === ROLES.ADMIN && <AdminDashboard />}
       {user?.role === ROLES.FACILITATOR && <FacilitatorDashboard user={user} />}
       {user?.role === ROLES.STUDENT && <StudentDashboard user={user} />}

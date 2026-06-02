@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Users, BookOpen, Calendar, BookOpenCheck, Settings, LogOut, ClipboardList, Trophy, User, Mail, Layers } from 'lucide-react';
-
-
+import { X, LayoutDashboard, Users, BookOpen, Calendar, BookOpenCheck, LogOut, ClipboardList, Trophy, User, Mail, Layers } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import { Logo } from "@/components/ui/logo";
@@ -33,6 +30,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
     // Role Specifics
     { name: 'My Interviews', path: '/my-interviews', icon: <BookOpenCheck size={20} />, roles: [ROLES.INTERVIEWER] },
+    { name: 'Reports', path: '/reports', icon: <Trophy size={20} />, roles: [ROLES.INTERVIEWER] },
     { name: 'Leaderboard', path: '/leaderboard', icon: <Trophy size={20} />, roles: [ROLES.STUDENT] },
     { name: 'Courses', path: '/courses', icon: <BookOpen size={20} />, roles: [ROLES.STUDENT] },
     { name: 'Attendance', path: '/attendance', icon: <Calendar size={20} />, roles: [ROLES.STUDENT] },

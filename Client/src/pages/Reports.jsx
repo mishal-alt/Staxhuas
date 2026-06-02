@@ -1,1470 +1,1117 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
+  CircularProgress,
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
-  Button,
-  IconButton,
   Stack,
-  LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Chip,
-  Divider,
+  Avatar,
+  Button,
+  Paper,
   ThemeProvider,
   createTheme,
   Breadcrumbs,
   Link as MuiLink,
-  Tooltip,
-  Avatar
+  LinearProgress
 } from '@mui/material';
-import { Link } from 'react-router-dom';
 import {
-  TrendingUp,
-  TrendingDown,
   People,
-  EmojiEvents,
-  Assessment,
-  Download,
-  DateRange,
-  MoreVert,
+  CheckCircle,
+  Schedule,
+  CalendarToday,
   NavigateNext,
-  Print,
-  Share,
-  Sync,
+  TrendingUp,
   Warning,
-  Timer,
-  FilterList,
-  Send,
-  InsertDriveFile,
-  PictureAsPdf,
-  PieChart,
-  Info
+  Star,
+  Download,
+  Assessment,
+  Timeline,
+  School,
+  Error as ErrorIcon
 } from '@mui/icons-material';
-import { LineChart, BarChart } from '@mui/x-charts';
-import { toast } from 'sonner';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 
 import AppShell from '../components/layout/AppShell';
+import * as interviewApi from '../api/interviews.api';
 
 // Custom theme to match Staxhaus brand
 const theme = createTheme({
   palette: {
-    primary: {
-      main: '#E8391D', // Brand Orange
-    },
-    secondary: {
-      main: '#1E2126', // Brand Charcoal
-    },
-    background: {
-      default: '#F7F7F5',
-    }
+    primary: { main: '#E8391D' },
+    secondary: { main: '#1E2126' },
+    background: { default: '#F7F7F5' }
   },
   typography: {
     fontFamily: '"Outfit", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.05em' },
     h4: { fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' },
     h6: { fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' },
   },
-  shape: {
-    borderRadius: 6,
-  },
+  shape: { borderRadius: 6 },
   components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E5E7EB',
+        }
+      }
+    },
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 900,
           borderRadius: 6,
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          padding: '8px 16px',
-        }
-      }
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 6,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+          letterSpacing: '0.15em',
+          padding: '10px 20px',
         }
       }
     }
   }
 });
 
-const KPI_DATA = [
-  { label: 'Avg Attendance', value: '94%', icon: <People />, trend: '+2.4%', up: true, color: '#1976d2' },
-  { label: 'Pass Rate', value: '88%', icon: <EmojiEvents />, trend: '+1.2%', up: true, color: '#2e7d32' },
-  { label: 'Scrum Blocker', value: '1.2', icon: <Assessment />, trend: '-0.5%', up: false, color: '#E8391D' },
-  { label: 'Active Students', value: '124', icon: <TrendingUp />, trend: '+12', up: true, color: '#9c27b0' },
-];
-
-const ACADEMIC_HEALTH_OVERVIEW_DATA = [
-  { label: 'Attendance Stability', value: '94.2%', trend: '+0.4%', up: true, status: 'High Stability', threshold: 'Target: 95.0%', progress: 94.2, color: '#2e7d32' },
-  { label: 'Interview Pass Ratio', value: '88.5%', trend: '+1.2%', up: true, status: 'Optimal Rate', threshold: 'Target: 80.0%', progress: 88.5, color: '#1976d2' },
-  { label: 'Leave Impact Score', value: '4.2%', trend: '-0.8%', up: false, status: 'Low Impact', threshold: 'Target: < 5.0%', progress: 42.0, color: '#ed6c02' },
-  { label: 'Scrum Consistency', value: '91.8%', trend: '+2.1%', up: true, status: 'Healthy participation', threshold: 'Target: 90.0%', progress: 91.8, color: '#9c27b0' },
-];
-
-const COHORT_MATRIX_DATA = [
-  { name: 'MERN-STACK-2026-B1', students: 48, attendance: '96.2%', scrum: 92.4, interview: '88.5%', leave: '2.1%', risk: 'Low', progress: 92, statusColor: '#2e7d32' },
-  { name: 'MERN-STACK-2026-B2', students: 52, attendance: '88.4%', scrum: 84.1, interview: '78.2%', leave: '5.6%', risk: 'Medium', progress: 78, statusColor: '#ed6c02' },
-  { name: 'JAVA-LEGACY-02', students: 24, attendance: '82.5%', scrum: 75.8, interview: '68.0%', leave: '9.8%', risk: 'High', progress: 45, statusColor: '#d32f2f' },
-  { name: 'UX-UI-DESIGN-B1', students: 30, attendance: '95.0%', scrum: 90.2, interview: '92.1%', leave: '1.2%', risk: 'Low', progress: 85, statusColor: '#2e7d32' },
-  { name: 'DATA-SCIENCE-B3', students: 35, attendance: '91.3%', scrum: 88.7, interview: '81.4%', leave: '3.4%', risk: 'Medium', progress: 60, statusColor: '#ed6c02' },
-];
-
-const STUDENT_RISK_DATA = [
-  { name: 'Aarav Sharma', batch: 'JAVA-LEGACY-02', category: 'Attendance + Leaves', details: 'Attendance dropped to 72% over last 10 days. 8 days of leave taken.', severity: 'Critical', avatar: 'AS' },
-  { name: 'Priya Patel', batch: 'MERN-STACK-2026-B2', category: 'Evaluation Failures', details: 'Failed consecutive React Redux and Node.js evaluations.', severity: 'Critical', avatar: 'PP' },
-  { name: 'Rohan Das', batch: 'JAVA-LEGACY-02', category: 'Scrum Inactivity', details: 'No scrum updates logged for 4 consecutive sessions. Flagged silent.', severity: 'Warning', avatar: 'RD' },
-  { name: 'Neha Gupta', batch: 'MERN-STACK-2026-B2', category: 'Interview Performance', details: 'Scored 55/100 in Javascript Mock Interview. Technical review required.', severity: 'Warning', avatar: 'NG' },
-];
-
-const SCRUM_INSIGHT_DATA = {
-  blocked: [
-    { name: 'Aarav Sharma', detail: 'Stuck on Spring Boot JPA mapping', duration: '3d' },
-    { name: 'Devendra Patel', detail: 'React Context rerender loop', duration: '2d' },
-    { name: 'Sarah Connor', detail: 'Database connection pool timeout', duration: '1d' }
-  ],
-  silent: [
-    { name: 'Rohan Das', duration: '4d inactive' },
-    { name: 'Aditya Sen', duration: '3d inactive' },
-    { name: 'Emily Watson', duration: '2d inactive' }
-  ],
-  contributors: [
-    { name: 'Vikram Seth', score: '14 PRs merged', help: '4 blocker solves' },
-    { name: 'Simran Kaur', score: '12 PRs merged', help: '6 code reviews' },
-    { name: 'Aniket Rao', score: '9 PRs merged', help: '5 peer sessions' }
-  ]
-};
-
 const Reports = () => {
-  const [timeframe, setTimeframe] = useState('This Month');
-  const [batchFilter, setBatchFilter] = useState('All Batches');
-  const [moduleFilter, setModuleFilter] = useState('All Modules');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState('10 mins ago');
+  const navigate = useNavigate();
 
-  const handleSync = () => {
-    setIsSyncing(true);
-    toast.loading('Syncing operations intelligence data...', { id: 'sync-op' });
-    setTimeout(() => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setLastUpdated(`Just now (${timeStr})`);
-      setIsSyncing(false);
-      toast.success('Operations data synchronized successfully.', { id: 'sync-op' });
-    }, 1200);
+  const { data: interviewsRes, isLoading } = useQuery({
+    queryKey: ['reports-interviews-list'],
+    queryFn: () => interviewApi.getInterviews()
+  });
+
+  const interviews = interviewsRes?.data || [];
+  const completedInterviews = interviews.filter(i => ['passed', 'failed', 're_interview_required', 'completed'].includes(i.status));
+  const pendingInterviews = interviews.filter(i => !['passed', 'failed', 're_interview_required', 'completed'].includes(i.status));
+  const recentEvaluations = interviews.slice(0, 10);
+
+  const getStatusConfig = (status) => {
+    switch (status) {
+      case 'scheduled':
+        return {
+          label: 'Scheduled',
+          bg: 'rgba(2, 136, 209, 0.06)',
+          color: '#0288d1',
+          border: 'rgba(2, 136, 209, 0.15)'
+        };
+      case 'in-progress':
+      case 'in_progress':
+        return {
+          label: 'In Progress',
+          bg: 'rgba(232, 57, 29, 0.06)',
+          color: '#E8391D',
+          border: 'rgba(232, 57, 29, 0.15)'
+        };
+      case 'passed':
+      case 'completed':
+        return {
+          label: 'Passed',
+          bg: 'rgba(46, 125, 50, 0.06)',
+          color: '#2e7d32',
+          border: 'rgba(46, 125, 50, 0.15)'
+        };
+      case 'failed':
+        return {
+          label: 'Failed',
+          bg: 'rgba(198, 40, 40, 0.06)',
+          color: '#c62828',
+          border: 'rgba(198, 40, 40, 0.15)'
+        };
+      case 're_interview_required':
+        return {
+          label: 'Re-interview',
+          bg: 'rgba(239, 108, 0, 0.06)',
+          color: '#ef6c00',
+          border: 'rgba(239, 108, 0, 0.15)'
+        };
+      default:
+        return {
+          label: status?.toUpperCase() || 'UNKNOWN',
+          bg: 'rgba(146, 146, 146, 0.06)',
+          color: '#929292',
+          border: 'rgba(146, 146, 146, 0.15)'
+        };
+    }
   };
 
-  const triggerExport = (type) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
-      {
-        loading: `Preparing ${type} export...`,
-        success: `${type} report exported successfully!`,
-        error: `Could not export ${type} report.`,
-      }
+  const getStatusChip = (status) => {
+    const config = getStatusConfig(status);
+    return (
+      <Chip
+        label={config.label}
+        size="small"
+        sx={{
+          fontWeight: 850,
+          fontSize: '0.65rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          bgcolor: config.bg,
+          color: config.color,
+          border: `1px solid ${config.border}`,
+          borderRadius: '4px',
+          height: 20
+        }}
+      />
     );
   };
 
-  const handleIntervention = (studentName, actionType) => {
-    toast.success(`Intervention initiated: Resending ${actionType} invite/alert to ${studentName}.`);
-  };
+  // 1. HEADER SUMMARY METRICS
+  const totalCompleted = completedInterviews.length;
+  
+  // Calculate average scores (Technical score is reviewScore, Communication score is taskScore)
+  const avgTechScore = totalCompleted > 0
+    ? (completedInterviews.reduce((acc, i) => acc + (i.reviewScore || 0), 0) / totalCompleted).toFixed(1)
+    : '0.0';
+  const avgCommScore = totalCompleted > 0
+    ? (completedInterviews.reduce((acc, i) => acc + (i.taskScore || 0), 0) / totalCompleted).toFixed(1)
+    : '0.0';
+  
+  const avgScoreVal = totalCompleted > 0
+    ? (completedInterviews.reduce((acc, i) => acc + (i.score || 0), 0) / totalCompleted)
+    : 0;
+  const avgScore = avgScoreVal.toFixed(1);
 
-  const handleInspectBatch = (batchName) => {
-    toast.info(`Opening details for batch ${batchName}...`);
-  };
+  const passCount = completedInterviews.filter(i => i.status === 'passed').length;
+  const passRate = totalCompleted > 0 
+    ? Math.round((passCount / totalCompleted) * 100) 
+    : 0;
 
-  const pulseAnimation = {
-    '@keyframes pulse': {
-      '0%': { opacity: 0.4 },
-      '50%': { opacity: 1 },
-      '100%': { opacity: 0.4 },
+  const pendingCount = pendingInterviews.length;
+  const activeCount = interviews.filter(i => i.status === 'in_progress' || i.status === 'in-progress').length;
+  
+  // Risk Alert count (students with score < 24 out of 40)
+  const riskCount = completedInterviews.filter(i => (i.score || 0) < 24).length;
+
+  const metrics = [
+    { 
+      label: 'Total Completed', 
+      value: totalCompleted || 0, 
+      subtext: 'Evaluated sessions', 
+      supporting: 'All Batches',
+      insight: 'Target pace met', 
+      status: 'Healthy',
+      icon: <CheckCircle />, 
+      color: '#2e7d32',
+      trendText: '+12%',
+      trendType: 'up',
+      trendColor: '#2e7d32',
+      trendBg: 'rgba(46, 125, 50, 0.06)'
     },
-    animation: 'pulse 1.5s infinite ease-in-out',
-  };
-
-  const spinAnimation = {
-    '@keyframes spin': {
-      '0%': { transform: 'rotate(0deg)' },
-      '100%': { transform: 'rotate(360deg)' },
+    { 
+      label: 'Average Score', 
+      value: `${avgScore} / 40`, 
+      subtext: `Tech: ${avgTechScore} | Comm: ${avgCommScore}`, 
+      supporting: 'Out of 40',
+      insight: 'Technical avg: B+', 
+      status: 'Stable',
+      icon: <Assessment />, 
+      color: '#1976d2',
+      trendText: 'Stable',
+      trendType: 'flat',
+      trendColor: '#1976d2',
+      trendBg: 'rgba(25, 118, 210, 0.06)'
     },
-    animation: 'spin 1s infinite linear',
-  };
-
-  const growProgressAnimation = {
-    '@keyframes growProgress': {
-      '0%': { width: '0%' },
-      '100%': { width: '100%' },
+    { 
+      label: 'Pass Rate', 
+      value: `${passRate}%`, 
+      subtext: `${passCount} of ${totalCompleted} passed`, 
+      supporting: 'Pass target >60%',
+      insight: '+2.5% vs last week', 
+      status: 'Positive',
+      icon: <TrendingUp />, 
+      color: '#2e7d32',
+      trendText: '+2.5%',
+      trendType: 'up',
+      trendColor: '#2e7d32',
+      trendBg: 'rgba(46, 125, 50, 0.06)'
     },
-    animation: 'growProgress 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-  };
+    { 
+      label: 'Pending Evaluations', 
+      value: pendingCount || 0, 
+      subtext: 'Scheduled sessions queued', 
+      supporting: 'Scheduled list',
+      insight: 'Queue SLA in limit', 
+      status: 'Normal',
+      icon: <Schedule />, 
+      color: '#ef6c00',
+      trendText: '-8%',
+      trendType: 'down',
+      trendColor: '#2e7d32',
+      trendBg: 'rgba(46, 125, 50, 0.06)'
+    },
+    { 
+      label: 'Active Sessions', 
+      value: activeCount || 0, 
+      subtext: 'Live evaluations in progress', 
+      supporting: 'Realtime load',
+      insight: 'Evaluators online: 100%', 
+      status: 'Live',
+      icon: <People />, 
+      color: '#0288d1',
+      trendText: 'Live',
+      trendType: 'live',
+      trendColor: '#0288d1',
+      trendBg: 'rgba(2, 136, 209, 0.06)'
+    },
+    { 
+      label: 'Risk Alerts', 
+      value: riskCount || 0, 
+      subtext: 'Score below threshold (<24)', 
+      supporting: 'Urgent attention',
+      insight: `${riskCount} students need retry`, 
+      status: 'Attention',
+      icon: <Warning />, 
+      color: '#c62828',
+      trendText: riskCount > 0 ? `+${riskCount}` : '0',
+      trendType: riskCount > 0 ? 'up-alert' : 'flat',
+      trendColor: riskCount > 0 ? '#c62828' : '#2e7d32',
+      trendBg: riskCount > 0 ? 'rgba(198, 40, 40, 0.06)' : 'rgba(46, 125, 50, 0.06)'
+    }
+  ];
+
+  // 2. CHART DATA GENERATION
+  const weeklyData = [
+    { name: 'Week 1', evaluations: 4, pass: 3, fail: 1 },
+    { name: 'Week 2', evaluations: 6, pass: 4, fail: 2 },
+    { name: 'Week 3', evaluations: 8, pass: 6, fail: 2 },
+    { name: 'Week 4', evaluations: 5, pass: 4, fail: 1 },
+    { name: 'Week 5', evaluations: 10, pass: 8, fail: 2 },
+    { name: 'Week 6', evaluations: totalCompleted || 7, pass: passCount || 5, fail: (totalCompleted - passCount) || 2 },
+  ];
+
+  const distData = [
+    { range: '0-15 (Critical)', count: completedInterviews.filter(i => (i.score || 0) <= 15).length || 1 },
+    { range: '16-24 (Warning)', count: completedInterviews.filter(i => (i.score || 0) > 15 && (i.score || 0) < 24).length || 2 },
+    { range: '25-32 (Competent)', count: completedInterviews.filter(i => (i.score || 0) >= 24 && (i.score || 0) <= 32).length || 6 },
+    { range: '33-40 (Excellent)', count: completedInterviews.filter(i => (i.score || 0) > 32).length || 3 },
+  ];
+
+  const ratioData = [
+    { name: 'Passed', value: passCount || 10, color: '#2e7d32' },
+    { name: 'Failed', value: completedInterviews.filter(i => i.status === 'failed').length || 2, color: '#c62828' },
+    { name: 'Re-interview', value: completedInterviews.filter(i => i.status === 're_interview_required').length || 3, color: '#ef6c00' },
+  ];
+
+  // 3. RIGHT WIDGET INSIGHTS
+  // Find top batch
+  const batchMap = {};
+  completedInterviews.forEach(i => {
+    const bName = i.student?.batch?.name || 'MERN-B1';
+    if (!batchMap[bName]) batchMap[bName] = [];
+    batchMap[bName].push(i.score || 0);
+  });
+  let topBatchName = 'MERN-B1';
+  let topBatchAvg = 0;
+  Object.keys(batchMap).forEach(bName => {
+    const scores = batchMap[bName];
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    if (avg > topBatchAvg) {
+      topBatchName = bName;
+      topBatchAvg = avg;
+    }
+  });
+
+  // Find weakest module
+  const moduleMap = {};
+  completedInterviews.forEach(i => {
+    const mName = i.module?.name || 'React Basics';
+    if (!moduleMap[mName]) moduleMap[mName] = [];
+    moduleMap[mName].push(i.score || 0);
+  });
+  let weakestModuleName = 'React Basics';
+  let weakestModuleAvg = 40;
+  Object.keys(moduleMap).forEach(mName => {
+    const scores = moduleMap[mName];
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    if (avg < weakestModuleAvg) {
+      weakestModuleName = mName;
+      weakestModuleAvg = avg;
+    }
+  });
+
+  const retryStudentsCount = completedInterviews.filter(i => (i.reInterviewAttempt || 0) > 0).length;
+
+  // 4. WEAK STUDENTS ALERTS LIST (score < 24)
+  const weakStudents = completedInterviews
+    .filter(i => (i.score || 0) < 24)
+    .slice(0, 3);
+
+
+
+  if (isLoading) {
+    return (
+      <AppShell fullWidth={true}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 20 }}>
+          <CircularProgress color="primary" thickness={6} />
+        </Box>
+      </AppShell>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <AppShell fullWidth={true}>
-        <Box sx={{ width: '100%', py: 2.5, px: { xs: 3, md: 4.5 }, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <Box sx={{ width: '100%', py: 2, px: { xs: 3, md: 4.5 }, display: 'flex', flexDirection: 'column', gap: 3, pb: 8 }}>
 
-          {/* Header */}
+          {/* Header Section */}
           <Box sx={{
-            pt: 2.5,
-            pb: 2,
+            pt: 4,
+            pb: 3,
             px: { xs: 3, md: 4.5 },
             mx: { xs: -3, md: -4.5 },
-            mt: { xs: -2.5, md: -2.5 },
+            mt: -2.5,
             background: 'white',
             borderBottom: '1px solid #E5E7EB',
+            mb: 0.5,
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
+            alignItems: 'center',
+            flexWrap: 'wrap',
             gap: 2
           }}>
             <Box>
-              <Breadcrumbs 
-                separator={<NavigateNext fontSize="small" sx={{ opacity: 0.5 }} />} 
-                sx={{ mb: 0.8 }}
+              <Breadcrumbs
+                separator={<NavigateNext fontSize="small" sx={{ opacity: 0.5 }} />}
+                sx={{ mb: 1.5 }}
               >
-                <MuiLink 
-                  component={Link} 
-                  to="/dashboard" 
-                  underline="none" 
-                  color="text.secondary" 
+                <MuiLink
+                  component={RouterLink}
+                  to="/dashboard"
+                  underline="none"
+                  color="text.secondary"
                   sx={{ fontSize: '0.75rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
                 >
-                  DASHBOARD
+                  STAXHAUS
                 </MuiLink>
                 <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'text.primary' }}>
-                  REPORTS
+                  EVALUATION INTELLIGENCE
                 </Typography>
               </Breadcrumbs>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ 
-                  bgcolor: 'primary.main', 
-                  color: 'white', 
-                  p: 0.8, 
-                  borderRadius: 1.5, 
-                  display: 'flex', 
-                  boxShadow: '0 4px 12px rgba(232, 57, 29, 0.15)' 
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '6px',
+                  bgcolor: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  boxShadow: '0 4px 12px rgba(232, 57, 29, 0.15)'
                 }}>
-                  <Assessment fontSize="small" />
+                  <Assessment sx={{ fontSize: 18 }} />
                 </Box>
                 <Box>
-                  <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', mb: 0.1, fontSize: { xs: '1.25rem', sm: '1.5rem' }, textTransform: 'none' }}>
-                    Performance Analytics
+                  <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', mb: 0.1, fontSize: '1.35rem', textTransform: 'none', fontFamily: 'inherit' }}>
+                    Evaluation Intelligence Center
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
-                    Comprehensive overview of student and cohort performance
+                  <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ fontSize: '0.72rem' }}>
+                    Operational insights across technical assessments and interviewer performance.
                   </Typography>
                 </Box>
               </Box>
             </Box>
 
-            <Stack 
-              direction="row" 
-              spacing={1.5} 
-              sx={{ 
-                width: { xs: '100%', sm: 'auto' }, 
-                justifyContent: { xs: 'space-between', sm: 'flex-start' }
-              }}
-            >
-              <Button 
-                variant="outlined" 
-                startIcon={<DateRange />} 
-                sx={{ 
-                  color: 'text.primary', 
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  px: 2.5,
-                  py: 1,
-                  fontSize: '0.75rem',
-                  flex: { xs: 1, sm: 'none' }
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
+              <Chip
+                icon={<CalendarToday sx={{ color: 'primary.main !important', fontSize: '0.78rem' }} />}
+                label="ACTIVE QUARTER"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.04em',
+                  px: 1,
+                  bgcolor: 'rgba(232, 57, 29, 0.04)',
+                  border: '1px solid rgba(232, 57, 29, 0.15)',
+                  color: 'primary.main',
+                  borderRadius: '6px',
+                  fontFamily: 'inherit',
+                  height: 28
+                }}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Download sx={{ fontSize: 12 }} />}
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '0.7rem',
+                  fontWeight: 900,
+                  py: 0.5,
+                  px: 1.8,
+                  height: 28,
+                  boxShadow: 'none',
+                  letterSpacing: '0.02em'
                 }}
               >
-                Timeframe
-              </Button>
-              <Button 
-                variant="contained" 
-                startIcon={<Download />}
-                sx={{ 
-                  px: 3.5,
-                  py: 1,
-                  borderRadius: 2,
-                  fontSize: '0.75rem',
-                  boxShadow: '0 4px 12px rgba(232, 57, 29, 0.15)',
-                  flex: { xs: 1, sm: 'none' }
-                }}
-              >
-                Export Ledger
+                Export
               </Button>
             </Stack>
           </Box>
 
-          {/* Stats Section - Standardized 4-Box Grid */}
-          <Box sx={{ 
-            width: '100%',
+          {/* Performance Summary Metrics */}
+          <Box sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
-            gap: 2
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(3, 1fr)',
+              md: 'repeat(3, 1fr)',
+              lg: 'repeat(6, 1fr)'
+            },
+            gap: 2,
+            width: '100%'
           }}>
-            {KPI_DATA.map((kpi, i) => (
+            {metrics.map((m, i) => (
               <Card key={i} sx={{
-                transition: 'all 0.2s ease',
-                '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' },
-                borderRadius: '6px',
-                border: '1px solid rgba(0,0,0,0.04)',
-                minHeight: { xs: 72, sm: 88 },
-                height: 'auto',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                transition: 'all 0.2s ease-in-out',
+                border: '1px solid #E5E7EB',
+                borderTop: `3px solid ${m.color}`,
+                borderRadius: '4px',
+                bgcolor: '#FFFFFF',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
+                height: '100%',
                 display: 'flex',
-                alignItems: 'center',
-                minWidth: 0,
-                overflow: 'hidden',
-                bgcolor: 'white'
+                flexDirection: 'column',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                  borderColor: '#D1D5DB'
+                }
               }}>
-                <CardContent sx={{ 
-                  p: { xs: 1.2, sm: 1.5 }, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: { xs: 1, sm: 1.5 },
-                  width: '100%',
-                  '&:last-child': { pb: 1.5 }
-                }}>
-                  <Box sx={{ 
-                    p: 1, 
-                    bgcolor: `${kpi.color}10`, 
-                    color: kpi.color, 
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    {React.cloneElement(kpi.icon, { sx: { fontSize: { xs: 16, sm: 18, md: 20 } } })}
-                  </Box>
-                  <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography 
-                        variant="caption" 
-                        fontWeight={900} 
-                        color="text.secondary" 
-                        sx={{ 
-                          letterSpacing: '0.05em', 
-                          display: 'block',
-                          fontSize: { xs: '0.55rem', sm: '0.62rem', md: '0.68rem' },
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          lineHeight: 1
-                        }}
-                      >
-                        {kpi.label.toUpperCase()}
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', color: kpi.up ? 'success.main' : 'error.main' }}>
-                        {kpi.up ? <TrendingUp sx={{ fontSize: 10 }} /> : <TrendingDown sx={{ fontSize: 10 }} />}
-                        <Typography variant="caption" sx={{ fontSize: '0.55rem', fontWeight: 900, ml: 0.1 }}>{kpi.trend}</Typography>
+                <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: 1.5 }}>
+                  {/* TOP ROW */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <Typography variant="caption" sx={{ fontSize: '0.62rem', fontWeight: 800, color: 'text.secondary', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                      {m.label}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {/* Trend Indicator */}
+                      <Box sx={{
+                        fontSize: '0.62rem',
+                        fontWeight: 800,
+                        color: m.trendColor,
+                        bgcolor: m.trendBg,
+                        px: 0.8,
+                        py: 0.2,
+                        borderRadius: '3px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        fontFamily: 'inherit',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em',
+                        transition: 'opacity 0.2s',
+                        '&:hover': { opacity: 0.95 }
+                      }}>
+                        {m.trendType === 'up' && '↑'}
+                        {m.trendType === 'up-alert' && '↑'}
+                        {m.trendType === 'down' && '↓'}
+                        {m.trendType === 'live' && (
+                          <Box 
+                            sx={{ 
+                              width: 5, 
+                              height: 5, 
+                              borderRadius: '50%', 
+                              bgcolor: '#0288d1',
+                              animation: 'pulse 1.5s infinite ease-in-out',
+                              '@keyframes pulse': {
+                                '0%': { transform: 'scale(0.8)', opacity: 0.5 },
+                                '50%': { transform: 'scale(1.2)', opacity: 1 },
+                                '100%': { transform: 'scale(0.8)', opacity: 0.5 }
+                              }
+                            }} 
+                          />
+                        )}
+                        {m.trendText}
+                      </Box>
+                      {/* Icon */}
+                      <Box sx={{ color: m.color, display: 'flex', alignItems: 'center', opacity: 0.7, transition: 'opacity 0.2s', '&:hover': { opacity: 1 } }}>
+                        {React.cloneElement(m.icon, { sx: { fontSize: 14 } })}
                       </Box>
                     </Box>
-                    <Typography 
-                      variant="h4" 
-                      fontWeight={900} 
-                      sx={{ 
-                        fontFamily: 'Outfit', 
-                        color: 'secondary.main',
-                        fontSize: { xs: '1.05rem', sm: '1.35rem', md: '1.55rem' },
-                        mt: 0.1,
-                        lineHeight: 1
-                      }}
-                    >
-                      {kpi.value}
+                  </Box>
+
+                  {/* CENTER ROW */}
+                  <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <Typography variant="h5" sx={{ fontFamily: 'inherit', fontSize: '1.6rem', fontWeight: 950, color: 'secondary.main', lineHeight: 1.1, letterSpacing: '-0.03em' }}>
+                      {m.value}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 650, color: 'text.secondary', mt: 0.5, letterSpacing: '0.01em' }}>
+                      {m.subtext}
                     </Typography>
                   </Box>
-                </CardContent>
+
+                  {/* BOTTOM ROW */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    pt: 1.25, 
+                    borderTop: '1px solid #F3F4F6',
+                    width: '100%'
+                  }}>
+                    <Typography sx={{ fontSize: '0.62rem', fontWeight: 700, color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
+                      {m.insight}
+                    </Typography>
+                    <Box sx={{
+                      fontSize: '0.55rem',
+                      fontWeight: 900,
+                      color: m.color,
+                      bgcolor: `${m.color}0D`,
+                      border: `1px solid ${m.color}26`,
+                      px: 0.8,
+                      py: 0.15,
+                      borderRadius: '3px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}>
+                      {m.status}
+                    </Box>
+                  </Box>
+                </Box>
               </Card>
             ))}
           </Box>
 
-          {/* Section 1: Performance Control Center */}
-          {/* Section 1: Performance Control Center */}
-          <Card sx={{ 
-            borderRadius: '6px', 
-            border: '1px solid rgba(0,0,0,0.05)', 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
-            bgcolor: 'white'
+          {/* Analytics Charts Section (2-Column Layout) */}
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '2fr 1.2fr' },
+            gap: 2.5,
+            width: '100%',
+            alignItems: 'stretch'
           }}>
-            <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', md: 'row' }, 
-                justifyContent: 'space-between', 
-                alignItems: { xs: 'stretch', md: 'center' }, 
-                gap: 1.5 
+            
+            {/* LEFT COLUMN: Large Chart Panels */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
+              
+              {/* Chart Panel 1: Weekly Trend */}
+              <Card sx={{ width: '100%' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={900} color="secondary" sx={{ letterSpacing: '0.04em', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Timeline sx={{ fontSize: 16, color: 'primary.main' }} /> WEEKLY EVALUATION TREND
+                    </Typography>
+                    <Chip label="TRENDS" size="small" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 800, bgcolor: 'rgba(0,0,0,0.04)', borderRadius: '3px' }} />
+                  </Box>
+                  <Box sx={{ width: '100%', height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={weeklyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorEvaluations" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#1976d2" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="#1976d2" stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="colorPass" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="#2e7d32" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F1EF" />
+                        <XAxis dataKey="name" stroke="#9ca3af" fontSize={10} tickLine={false} />
+                        <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} />
+                        <Tooltip contentStyle={{ fontSize: 11, borderRadius: 4 }} />
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                        <Area type="monotone" dataKey="evaluations" name="Total Evaluations" stroke="#1976d2" strokeWidth={2} fillOpacity={1} fill="url(#colorEvaluations)" />
+                        <Area type="monotone" dataKey="pass" name="Passed" stroke="#2e7d32" strokeWidth={2} fillOpacity={1} fill="url(#colorPass)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Grid for two smaller chart panels */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 2.5,
+                width: '100%'
               }}>
                 
-                {/* Filters */}
-                <Stack 
-                  direction="row" 
-                  spacing={1.5} 
-                  sx={{ 
-                    flexWrap: 'wrap', 
-                    gap: 1, 
-                    width: { xs: '100%', md: 'auto' }, 
-                    justifyContent: { xs: 'space-between', md: 'flex-start' } 
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                    <FilterList sx={{ color: 'text.secondary', fontSize: '0.95rem' }} />
-                    <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em', fontSize: '0.68rem' }}>FILTERS:</Typography>
-                  </Box>
-                  
-                  {/* Timeframe Select */}
-                  <Box
-                    component="select"
-                    value={timeframe}
-                    onChange={(e) => {
-                      setTimeframe(e.target.value);
-                      toast.info(`Timeframe filtered to: ${e.target.value}`);
-                    }}
-                    sx={{
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid #E5E7EB',
-                      backgroundColor: '#F9FAFB',
-                      color: '#1E2126',
-                      fontFamily: 'Outfit',
-                      fontWeight: 600,
-                      fontSize: '0.7rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      flex: { xs: '1 1 auto', md: 'none' }
-                    }}
-                  >
-                    <option value="This Week">This Week</option>
-                    <option value="This Month">This Month</option>
-                    <option value="This Quarter">This Quarter</option>
-                    <option value="All Time">All Time</option>
-                  </Box>
-
-                  {/* Batch Select */}
-                  <Box
-                    component="select"
-                    value={batchFilter}
-                    onChange={(e) => {
-                      setBatchFilter(e.target.value);
-                      toast.info(`Batch filtered to: ${e.target.value}`);
-                    }}
-                    sx={{
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid #E5E7EB',
-                      backgroundColor: '#F9FAFB',
-                      color: '#1E2126',
-                      fontFamily: 'Outfit',
-                      fontWeight: 600,
-                      fontSize: '0.7rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      flex: { xs: '1 1 auto', md: 'none' }
-                    }}
-                  >
-                    <option value="All Batches">All Batches</option>
-                    <option value="MERN-STACK-2026-B1">MERN-STACK-2026-B1</option>
-                    <option value="MERN-STACK-2026-B2">MERN-STACK-2026-B2</option>
-                    <option value="JAVA-LEGACY-02">JAVA-LEGACY-02</option>
-                    <option value="UX-UI-DESIGN-B1">UX-UI-DESIGN-B1</option>
-                    <option value="DATA-SCIENCE-B3">DATA-SCIENCE-B3</option>
-                  </Box>
-
-                  {/* Module Select */}
-                  <Box
-                    component="select"
-                    value={moduleFilter}
-                    onChange={(e) => {
-                      setModuleFilter(e.target.value);
-                      toast.info(`Module filtered to: ${e.target.value}`);
-                    }}
-                    sx={{
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid #E5E7EB',
-                      backgroundColor: '#F9FAFB',
-                      color: '#1E2126',
-                      fontFamily: 'Outfit',
-                      fontWeight: 600,
-                      fontSize: '0.7rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      flex: { xs: '1 1 auto', md: 'none' }
-                    }}
-                  >
-                    <option value="All Modules">All Modules</option>
-                    <option value="HTML">HTML</option>
-                    <option value="JS">JS</option>
-                    <option value="React">React</option>
-                    <option value="Node">Node</option>
-                    <option value="DB">Database</option>
-                  </Box>
-                </Stack>
-
-                {/* Live Sync Status & Trigger */}
-                <Stack 
-                  direction="row" 
-                  spacing={1.5} 
-                  alignItems="center"
-                  justifyContent={{ xs: 'space-between', md: 'flex-end' }}
-                  sx={{ 
-                    width: { xs: '100%', md: 'auto' },
-                    borderTop: { xs: '1px dashed rgba(0,0,0,0.06)', md: 'none' },
-                    pt: { xs: 1.5, md: 0 }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                    <Box sx={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      bgcolor: '#2e7d32',
-                      boxShadow: '0 0 6px #2e7d32',
-                      ...(isSyncing ? spinAnimation : pulseAnimation)
-                    }} />
-                    <Typography variant="caption" sx={{ fontFamily: 'Outfit', fontWeight: 600, color: 'text.secondary', fontSize: '0.68rem' }}>
-                      Operational Sync
+                {/* Chart Panel 2: Performance Distribution */}
+                <Card sx={{ height: '100%', width: '100%' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={900} color="secondary" sx={{ letterSpacing: '0.04em', fontSize: '0.78rem', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Assessment sx={{ fontSize: 16, color: 'primary.main' }} /> SCORE DISTRIBUTION
                     </Typography>
-                  </Box>
-                  
-                  <Divider orientation="vertical" flexItem sx={{ height: 12 }} />
-
-                  <Typography variant="caption" sx={{ fontFamily: 'Outfit', color: 'text.disabled', fontWeight: 600, fontSize: '0.68rem' }}>
-                    Synced: {lastUpdated}
-                  </Typography>
-
-                  <Tooltip title="Synchronize Operations Data" arrow>
-                    <IconButton 
-                      size="small" 
-                      onClick={handleSync}
-                      disabled={isSyncing}
-                      sx={{ 
-                        color: 'primary.main', 
-                        bgcolor: 'rgba(232, 57, 29, 0.05)',
-                        p: 0.5,
-                        '&:hover': { bgcolor: 'rgba(232, 57, 29, 0.1)' }
-                      }}
-                    >
-                      <Sync sx={{ 
-                        fontSize: '0.95rem',
-                        ...(isSyncing && spinAnimation)
-                      }} />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Section 2: Academic Health Overview */}
-          <Box sx={{ width: '100%' }}>
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                Academic Health Overview
-              </Typography>
-            </Box>
-
-            <Box sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
-              gap: 3, 
-              width: '100%' 
-            }}>
-              {ACADEMIC_HEALTH_OVERVIEW_DATA.map((metric, i) => (
-                <Card key={i} sx={{
-                  borderRadius: '6px',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                  bgcolor: 'white',
-                  transition: 'all 0.25s ease',
-                  '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 10px 24px rgba(0,0,0,0.04)' }
-                }}>
-                  <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
-                    {/* Top Row: label and trend badge */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                      <Typography 
-                        variant="subtitle2" 
-                        sx={{ 
-                          fontWeight: 800, 
-                          color: '#4B5563',
-                          fontSize: '0.75rem', 
-                          letterSpacing: '0.04em', 
-                          textTransform: 'uppercase'
-                        }}
-                      >
-                        {metric.label}
-                      </Typography>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 0.5,
-                        px: 1.2,
-                        py: 0.4,
-                        borderRadius: '6px',
-                        bgcolor: metric.up ? 'rgba(46, 125, 50, 0.08)' : 'rgba(211, 47, 47, 0.08)',
-                        color: metric.up ? '#2e7d32' : '#d32f2f'
-                      }}>
-                        {metric.up ? <TrendingUp sx={{ fontSize: 13 }} /> : <TrendingDown sx={{ fontSize: 13 }} />}
-                        <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 800 }}>
-                          {metric.trend}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Middle Row: big number */}
-                    <Typography 
-                      variant="h3" 
-                      sx={{ 
-                        fontFamily: 'Outfit', 
-                        fontWeight: 900, 
-                        color: '#1E2126', 
-                        mt: 0.5, 
-                        mb: 1.5, 
-                        fontSize: { xs: '1.75rem', md: '2.25rem' },
-                        lineHeight: 1
-                      }}
-                    >
-                      {metric.value}
-                    </Typography>
-
-                    {/* Progress Bar */}
-                    <Box sx={{ width: '100%', mb: 2 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={metric.progress}
-                        sx={{
-                          height: 6,
-                          borderRadius: 3,
-                          bgcolor: 'rgba(0,0,0,0.04)',
-                          '& .MuiLinearProgress-bar': { 
-                            bgcolor: metric.color,
-                            borderRadius: 3
-                          },
-                          ...growProgressAnimation
-                        }}
-                      />
-                    </Box>
-
-                    {/* Bottom Row: Status and Threshold */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                      <Chip
-                        label={metric.status}
-                        size="small"
-                        sx={{
-                          fontWeight: 800,
-                          fontSize: '0.7rem',
-                          height: '24px',
-                          bgcolor: `${metric.color}12`,
-                          color: metric.color,
-                          borderRadius: '6px',
-                          px: 0.75
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ color: '#6B7280', fontSize: '0.72rem', fontWeight: 600 }}>
-                        {metric.threshold}
-                      </Typography>
+                    <Box sx={{ width: '100%', height: 180 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={distData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F1EF" />
+                          <XAxis dataKey="range" stroke="#9ca3af" fontSize={8} tickLine={false} />
+                          <YAxis stroke="#9ca3af" fontSize={8} tickLine={false} />
+                          <Tooltip contentStyle={{ fontSize: 10 }} />
+                          <Bar dataKey="count" name="Students" fill="#E8391D" radius={[2, 2, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </Box>
                   </CardContent>
                 </Card>
-              ))}
+
+                {/* Chart Panel 3: Ratio */}
+                <Card sx={{ height: '100%', width: '100%' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={900} color="secondary" sx={{ letterSpacing: '0.04em', fontSize: '0.78rem', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Star sx={{ fontSize: 16, color: 'primary.main' }} /> OUTCOME RATIO
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 180 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={ratioData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={45}
+                            outerRadius={65}
+                            paddingAngle={3}
+                            dataKey="value"
+                          >
+                            {ratioData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip contentStyle={{ fontSize: 10 }} />
+                          <Legend verticalAlign="bottom" height={24} iconSize={8} wrapperStyle={{ fontSize: 9 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+              </Box>
+
             </Box>
+
+            {/* RIGHT COLUMN: Operational Insight Widgets */}
+            <Box sx={{ width: '100%', height: '100%' }}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                  <Typography variant="subtitle2" fontWeight={900} color="secondary" sx={{ letterSpacing: '0.04em', fontSize: '0.78rem', pb: 1, borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <School sx={{ fontSize: 16, color: 'primary.main' }} /> EVALUATION INSIGHTS
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flexGrow: 1 }}>
+                    
+                    {/* Insight 1: Top Batch */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, border: '1px solid #E5E7EB', borderRadius: '4px' }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ fontSize: '0.62rem', textTransform: 'uppercase' }}>
+                          TOP PERFORMING BATCH
+                        </Typography>
+                        <Typography variant="subtitle2" fontWeight={850} color="secondary" sx={{ fontSize: '0.85rem', fontFamily: 'inherit' }}>
+                          {topBatchName}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="caption" color="success.main" fontWeight={900} sx={{ fontSize: '0.85rem', display: 'block' }}>
+                          ★ {topBatchAvg.toFixed(1)} avg
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem' }}>
+                          Based on completed evaluations
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Insight 2: Weakest Module */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, border: '1px solid #E5E7EB', borderRadius: '4px' }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ fontSize: '0.62rem', textTransform: 'uppercase' }}>
+                          WEAKEST ASSESSMENT MODULE
+                        </Typography>
+                        <Typography variant="subtitle2" fontWeight={850} color="secondary" sx={{ fontSize: '0.85rem', fontFamily: 'inherit' }}>
+                          {weakestModuleName}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="caption" color="error.main" fontWeight={900} sx={{ fontSize: '0.85rem', display: 'block' }}>
+                          ⚠️ {weakestModuleAvg.toFixed(1)} avg
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem' }}>
+                          Needs support / review
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Insight 3: Retry Index */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, border: '1px solid #E5E7EB', borderRadius: '4px' }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ fontSize: '0.62rem', textTransform: 'uppercase' }}>
+                          RE-INTERVIEW RETRY LOAD
+                        </Typography>
+                        <Typography variant="subtitle2" fontWeight={850} color="secondary" sx={{ fontSize: '0.85rem', fontFamily: 'inherit' }}>
+                          High Attempt Sessions
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="caption" color="warning.main" fontWeight={900} sx={{ fontSize: '0.85rem', display: 'block' }}>
+                          {retryStudentsCount} Students
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem' }}>
+                          Attempt #2 or higher
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Load Summary */}
+                    <Box sx={{ mt: 1.5 }}>
+                      <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ fontSize: '0.62rem', textTransform: 'uppercase', display: 'block', mb: 1.5 }}>
+                        INTERVIEW LOAD SUMMARY
+                      </Typography>
+                      <Stack spacing={2}>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.7rem' }}>Completed Evaluations</Typography>
+                            <Typography variant="caption" fontWeight={800} sx={{ fontSize: '0.7rem' }}>{totalCompleted} / 25 cap</Typography>
+                          </Box>
+                          <LinearProgress variant="determinate" value={Math.min((totalCompleted / 25) * 100, 100)} color="success" sx={{ height: 6, borderRadius: 3 }} />
+                        </Box>
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" fontWeight={700} sx={{ fontSize: '0.7rem' }}>Pending Queue</Typography>
+                            <Typography variant="caption" fontWeight={800} sx={{ fontSize: '0.7rem' }}>{pendingCount} active</Typography>
+                          </Box>
+                          <LinearProgress variant="determinate" value={Math.min((pendingCount / 10) * 100, 100)} color="warning" sx={{ height: 6, borderRadius: 3 }} />
+                        </Box>
+                      </Stack>
+                    </Box>
+
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+
           </Box>
 
-          {/* Section 3: Cohort Performance Matrix */}
-          <Card sx={{ overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '6px', boxShadow: '0 4px 15px rgba(0,0,0,0.01)', bgcolor: 'white' }}>
-            <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                  Cohort Performance Matrix
-                </Typography>
-              </Box>
-              <Chip
-                label="MAY 2026 CYCLE"
-                size="small"
-                sx={{ fontWeight: 900, bgcolor: 'secondary.main', color: 'white', borderRadius: 1, fontSize: '0.58rem', height: 18 }}
-              />
+          {/* Weak Students / Risk Alerts */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', pb: 0.5, borderBottom: '1px solid #E5E7EB', width: '100%' }}>
+              <Typography variant="subtitle1" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.04em' }}>
+                <ErrorIcon sx={{ color: '#c62828', fontSize: 16 }} /> CRITICAL ASSESSMENT RISK ALERTS (SCORE &lt; 24)
+              </Typography>
             </Box>
-            <TableContainer component={Paper} elevation={0} sx={{ display: { xs: 'none', md: 'block' }, borderRadius: 0 }}>
-              <Table sx={{ minWidth: 800 }} size="small">
-                <TableHead sx={{ bgcolor: '#F9FAFB', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', py: 1.2, fontSize: '0.65rem', pl: 2 }}>COHORT IDENTITY</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>RISK LEVEL</TableCell>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>ACTIVE STUDENTS</TableCell>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>AVG ATTENDANCE</TableCell>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>SCRUM SCORE</TableCell>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>INTERVIEW PASS %</TableCell>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>LEAVE VECTOR</TableCell>
-                    <TableCell sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>DEPLOYMENT PROMPTNESS</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', pr: 2 }}>ACTIONS</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {COHORT_MATRIX_DATA.map((cohort, i) => (
-                    <TableRow 
-                      key={i} 
-                      sx={{ 
-                        '&:hover': { bgcolor: 'rgba(0,0,0,0.01)' }, 
-                        transition: 'background-color 0.15s ease',
-                        borderBottom: '1px solid rgba(0,0,0,0.03)'
-                      }}
-                    >
-                      <TableCell sx={{ py: 1.2, pl: 2 }}>
-                        <Stack direction="row" spacing={1.2} alignItems="center">
-                          <Box sx={{ 
-                            width: 26, 
-                            height: 26, 
-                            bgcolor: `${cohort.statusColor}12`, 
-                            color: cohort.statusColor, 
-                            borderRadius: '6px', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            fontWeight: 900,
-                            fontSize: '0.72rem'
-                          }}>
-                            {cohort.name[0]}
-                          </Box>
-                          <Box>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.78rem', color: 'secondary.main' }}>
-                              {cohort.name}
+
+            {weakStudents.length === 0 ? (
+              <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', borderStyle: 'dashed', borderColor: '#D1D5DB', width: '100%', bgcolor: 'rgba(46, 125, 50, 0.01)' }}>
+                <CheckCircle color="success" sx={{ fontSize: 28, mb: 1 }} />
+                <Typography variant="subtitle2" color="secondary" fontWeight={850} sx={{ fontFamily: 'inherit', mb: 0.25 }}>
+                  Operational Shield Active
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={650} sx={{ display: 'block' }}>
+                  No critical performance risk alerts. All evaluated students are scoring above the safety threshold.
+                </Typography>
+              </Paper>
+            ) : (
+              <Stack spacing={2} sx={{ width: '100%' }}>
+                {weakStudents.map((iAlert) => (
+                  <Card 
+                    key={iAlert._id} 
+                    sx={{ 
+                      borderLeft: '4px solid #c62828', 
+                      bgcolor: 'white', 
+                      width: '100%',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <Box sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: '1.5fr 1fr 1fr auto' },
+                        gap: 3,
+                        alignItems: 'center'
+                      }}>
+                        
+                        {/* LEFT: Student Info */}
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', minWidth: 0 }}>
+                          <Avatar sx={{ width: 40, height: 40, bgcolor: 'secondary.main', color: 'white', fontWeight: 900, borderRadius: '6px', fontSize: '1rem', fontFamily: 'inherit' }}>
+                            {iAlert.student?.name?.[0]}
+                          </Avatar>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="subtitle2" fontWeight={850} sx={{ fontSize: '0.85rem', lineHeight: 1.2, fontFamily: 'inherit', color: 'secondary.main' }}>
+                              {iAlert.student?.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', display: 'block', mt: 0.25, fontWeight: 650 }}>
+                              Batch: <span style={{ color: '#1E2126', fontWeight: 800 }}>{iAlert.student?.batch?.name || 'MERN-B1'}</span> • Module: <span style={{ color: '#1E2126', fontWeight: 800 }}>{iAlert.module?.name}</span>
+                            </Typography>
+                            <Typography variant="caption" color="error" sx={{ fontSize: '0.62rem', fontWeight: 800, mt: 0.5, display: 'block', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                              Performance Drop Alert
                             </Typography>
                           </Box>
-                        </Stack>
-                      </TableCell>
-                      
-                      <TableCell align="center" sx={{ py: 1.2 }}>
-                        <Chip
-                          label={cohort.risk}
-                          size="small"
-                          icon={cohort.risk === 'High' ? <Warning style={{ color: 'inherit', fontSize: '0.75rem' }} /> : undefined}
-                          sx={{
-                            fontWeight: 900,
-                            fontSize: '0.58rem',
-                            height: 16,
-                            bgcolor: cohort.risk === 'Low' ? '#2e7d3212' : (cohort.risk === 'Medium' ? '#ed6c0212' : '#d32f2f12'),
-                            color: cohort.risk === 'Low' ? '#2e7d32' : (cohort.risk === 'Medium' ? '#ed6c02' : '#d32f2f'),
-                            border: `1px solid ${cohort.risk === 'Low' ? '#2e7d3220' : (cohort.risk === 'Medium' ? '#ed6c0220' : '#d32f2f20')}`,
-                            borderRadius: '4px',
-                            letterSpacing: '0.01em'
-                          }}
-                        />
-                      </TableCell>
-                      
-                      <TableCell sx={{ py: 1.2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>
-                          {cohort.students} Profiles
-                        </Typography>
-                      </TableCell>
+                        </Box>
 
-                      <TableCell sx={{ py: 1.2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>
-                          {cohort.attendance}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ py: 1.2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>
-                          {cohort.scrum}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ py: 1.2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>
-                          {cohort.interview}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ py: 1.2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>
-                          {cohort.leave}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell sx={{ py: 1.2, minWidth: 120 }}>
-                        <Stack direction="row" alignItems="center" spacing={1} sx={{ height: '100%' }}>
-                          <Box sx={{ flexGrow: 1 }}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={cohort.progress}
-                              sx={{
-                                height: 3,
-                                borderRadius: 1.5,
-                                bgcolor: 'rgba(0,0,0,0.04)',
-                                '& .MuiLinearProgress-bar': { bgcolor: cohort.statusColor }
-                              }}
-                            />
-                          </Box>
-                          <Typography variant="caption" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.7rem', minWidth: 24 }}>
-                            {cohort.progress}%
+                        {/* CENTER 1: Score Details */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            SCORE BREAKDOWN
                           </Typography>
-                        </Stack>
-                      </TableCell>
+                          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                            <Box sx={{ bgcolor: 'rgba(0,0,0,0.02)', px: 1.5, py: 0.5, borderRadius: '4px', border: '1px solid #E5E7EB' }}>
+                              <Typography variant="caption" sx={{ fontSize: '0.58rem', color: 'text.secondary', display: 'block', fontWeight: 700 }}>TECHNICAL</Typography>
+                              <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 900, color: 'secondary.main' }}>{iAlert.reviewScore || 0} / 10</Typography>
+                            </Box>
+                            <Box sx={{ bgcolor: 'rgba(0,0,0,0.02)', px: 1.5, py: 0.5, borderRadius: '4px', border: '1px solid #E5E7EB' }}>
+                              <Typography variant="caption" sx={{ fontSize: '0.58rem', color: 'text.secondary', display: 'block', fontWeight: 700 }}>COMMUNICATION</Typography>
+                              <Typography variant="body2" sx={{ fontSize: '0.78rem', fontWeight: 900, color: 'secondary.main' }}>{iAlert.taskScore || 0} / 10</Typography>
+                            </Box>
+                          </Box>
+                        </Box>
 
-                      <TableCell align="right" sx={{ py: 1.2, pr: 2 }}>
-                        <Button 
-                          size="small" 
+                        {/* CENTER 2: Total & Threshold */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            ACCUMULATED SCORE
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                            <Typography variant="h6" color="error.main" sx={{ fontSize: '1.2rem', fontWeight: 950, fontFamily: 'inherit', lineHeight: 1 }}>
+                              {iAlert.score || 0}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', fontWeight: 700 }}>
+                              / 40
+                            </Typography>
+                          </Box>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', fontWeight: 650 }}>
+                            Threshold: <span style={{ fontWeight: 800 }}>24</span> (Deficit: <span style={{ color: '#c62828', fontWeight: 800 }}>{24 - (iAlert.score || 0)}</span>)
+                          </Typography>
+                        </Box>
+
+                        {/* RIGHT: Status & Action */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                          <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+                            <Chip 
+                              label="CRITICAL" 
+                              size="small" 
+                              color="error" 
+                              sx={{ height: 18, fontSize: '0.58rem', fontWeight: 900, borderRadius: '4px', letterSpacing: '0.04em' }} 
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', display: 'block', mt: 0.5, fontWeight: 700 }}>
+                              Escalation: <span style={{ color: '#c62828', fontWeight: 800 }}>Awaiting Review</span>
+                            </Typography>
+                          </Box>
+                          
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="primary"
+                            onClick={() => navigate(`/interviews/${iAlert._id}`)}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.68rem',
+                              fontWeight: 900,
+                              py: 0.75,
+                              px: 2,
+                              height: 32,
+                              boxShadow: 'none',
+                              letterSpacing: '0.02em',
+                              '&:hover': {
+                                bgcolor: '#b71c1c',
+                                boxShadow: 'none'
+                              }
+                            }}
+                          >
+                            Re-Evaluate
+                          </Button>
+                        </Box>
+
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+            )}
+          </Box>
+
+          {/* Recent Evaluations Table */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', pb: 0.5, borderBottom: '1px solid #E5E7EB', width: '100%' }}>
+              <Typography variant="subtitle1" color="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.04em' }}>
+                <Timeline sx={{ color: 'primary.main', fontSize: 16 }} /> RECENT EVALUATIONS TABLE
+              </Typography>
+            </Box>
+
+            <Paper variant="outlined" sx={{ overflow: 'hidden', borderRadius: '6px', width: '100%', bgcolor: 'white' }}>
+              {/* Header Grid */}
+              <Box sx={{ 
+                display: { xs: 'none', md: 'grid' },
+                gridTemplateColumns: '2fr 1fr 1.5fr 1fr 1fr 1fr 1fr auto',
+                gap: 2,
+                bgcolor: 'rgba(0,0,0,0.02)', 
+                py: 1.5, 
+                px: 2.5, 
+                borderBottom: '1px solid #E5E7EB',
+                width: '100%'
+              }}>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>STUDENT</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>BATCH</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>MODULE</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>TECH SCORE</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>COMM SCORE</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>FINAL STATUS</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em' }}>EVALUATED DATE</Typography>
+                <Typography variant="caption" fontWeight={900} color="text.secondary" sx={{ letterSpacing: '0.05em', pr: 2, textAlign: 'right' }}>ACTIONS</Typography>
+              </Box>
+
+              {/* Rows Stack */}
+              <Stack spacing={0} sx={{ bgcolor: 'white', width: '100%' }}>
+                {recentEvaluations.map((row) => {
+                  const evaluatedDate = row.createdAt 
+                    ? new Date(row.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '—';
+
+                  return (
+                    <Box 
+                      key={row._id} 
+                      sx={{ 
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1.5fr 1fr 1fr 1fr 1fr auto' },
+                        gap: { xs: 1, md: 2 },
+                        py: 1.5, 
+                        px: 2.5, 
+                        alignItems: 'center', 
+                        borderBottom: '1px solid #F1F1EF',
+                        transition: 'background-color 0.15s',
+                        width: '100%',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.008)' }
+                      }}
+                    >
+                      {/* 1. Student */}
+                      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', minWidth: 0 }}>
+                        <Avatar sx={{ width: 28, height: 28, bgcolor: 'secondary.main', color: 'white', fontWeight: 800, borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'inherit' }}>
+                          {row.student?.name?.[0]}
+                        </Avatar>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={750} sx={{ fontSize: '0.8rem', color: '#1E2126', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>
+                            {row.student?.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem', display: { xs: 'block', md: 'none' } }}>
+                            Batch: {row.student?.batch?.name || 'MERN-B1'} • Module: {row.module?.name}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      {/* 2. Batch (Hidden on mobile) */}
+                      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                        <Typography variant="body2" fontWeight={700} sx={{ fontSize: '0.75rem', color: 'secondary.main' }}>
+                          {row.student?.batch?.name || 'MERN-B1'}
+                        </Typography>
+                      </Box>
+
+                      {/* 3. Module (Hidden on mobile) */}
+                      <Box sx={{ display: { xs: 'none', md: 'block' }, minWidth: 0 }}>
+                        <Typography variant="caption" color="text.primary" sx={{ fontSize: '0.72rem', fontWeight: 650, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'block' }}>
+                          {row.module?.name}
+                        </Typography>
+                      </Box>
+
+                      {/* 4. Tech Score */}
+                      <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'inline', md: 'none' }, fontSize: '0.65rem' }}>Tech:</Typography>
+                        <Typography variant="body2" fontWeight={800} sx={{ fontSize: '0.78rem', color: '#1E2126' }}>
+                          {['passed', 'failed', 're_interview_required', 'completed'].includes(row.status) ? `${row.reviewScore || 0} / 10` : '—'}
+                        </Typography>
+                      </Box>
+
+                      {/* 5. Comm Score */}
+                      <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'inline', md: 'none' }, fontSize: '0.65rem' }}>Comm:</Typography>
+                        <Typography variant="body2" fontWeight={800} sx={{ fontSize: '0.78rem', color: '#1E2126' }}>
+                          {['passed', 'failed', 're_interview_required', 'completed'].includes(row.status) ? `${row.taskScore || 0} / 10` : '—'}
+                        </Typography>
+                      </Box>
+
+                      {/* 6. Status Badge */}
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {getStatusChip(row.status)}
+                      </Box>
+
+                      {/* 7. Evaluated Date */}
+                      <Box>
+                        <Typography variant="body2" sx={{ fontSize: '0.72rem', color: 'text.secondary', fontWeight: 600 }}>
+                          {evaluatedDate}
+                        </Typography>
+                      </Box>
+
+                      {/* 8. Actions (Compact Action Group) */}
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center', mt: { xs: 1, md: 0 } }}>
+                        <Button
+                          size="small"
                           variant="outlined"
-                          onClick={() => handleInspectBatch(cohort.name)}
-                          sx={{ 
-                            py: 0.4,
-                            px: 1.2,
-                            fontSize: '0.58rem',
+                          onClick={() => navigate(`/interviews/${row._id}`)}
+                          sx={{
+                            textTransform: 'none',
+                            fontSize: '0.65rem',
                             fontWeight: 800,
-                            borderRadius: '4px',
+                            py: 0.3,
+                            px: 1.5,
+                            height: 24,
+                            borderColor: '#E5E7EB',
                             color: 'secondary.main',
-                            borderColor: 'rgba(0,0,0,0.1)',
-                            textTransform: 'uppercase',
                             '&:hover': {
-                              borderColor: 'primary.main',
-                              color: 'primary.main',
-                              bgcolor: 'rgba(232, 57, 29, 0.01)'
+                              borderColor: 'secondary.main',
+                              bgcolor: 'rgba(0,0,0,0.02)'
                             }
                           }}
                         >
-                          INSPECT
+                          Details
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {/* Mobile Cards View */}
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2, p: 2 }}>
-              {COHORT_MATRIX_DATA.map((cohort, i) => (
-                <Box 
-                  key={i} 
-                  sx={{ 
-                    p: 2, 
-                    border: '1px solid rgba(0,0,0,0.06)', 
-                    borderRadius: '6px', 
-                    bgcolor: 'white',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1.5,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Stack direction="row" spacing={1.2} alignItems="center">
-                      <Box sx={{ 
-                        width: 30, 
-                        height: 30, 
-                        bgcolor: `${cohort.statusColor}12`, 
-                        color: cohort.statusColor, 
-                        borderRadius: '6px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        fontWeight: 900,
-                        fontSize: '0.8rem'
-                      }}>
-                        {cohort.name[0]}
+                        {['passed', 'failed', 're_interview_required', 'completed'].includes(row.status) && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => navigate(`/interviews/${row._id}`)}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.65rem',
+                              fontWeight: 800,
+                              py: 0.3,
+                              px: 1.5,
+                              height: 24,
+                              borderColor: 'rgba(232, 57, 29, 0.15)',
+                              color: 'primary.main',
+                              '&:hover': {
+                                bgcolor: 'rgba(232, 57, 29, 0.04)',
+                                borderColor: 'primary.main'
+                              }
+                            }}
+                          >
+                            Re-Evaluate
+                          </Button>
+                        )}
                       </Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.78rem', color: 'secondary.main' }}>
-                        {cohort.name}
-                      </Typography>
-                    </Stack>
-                    
-                    <Chip
-                      label={cohort.risk}
-                      size="small"
-                      icon={cohort.risk === 'High' ? <Warning style={{ color: 'inherit', fontSize: '0.75rem' }} /> : undefined}
-                      sx={{
-                        fontWeight: 900,
-                        fontSize: '0.58rem',
-                        height: 18,
-                        bgcolor: cohort.risk === 'Low' ? '#2e7d3212' : (cohort.risk === 'Medium' ? '#ed6c0212' : '#d32f2f12'),
-                        color: cohort.risk === 'Low' ? '#2e7d32' : (cohort.risk === 'Medium' ? '#ed6c02' : '#d32f2f'),
-                        border: `1px solid ${cohort.risk === 'Low' ? '#2e7d3220' : (cohort.risk === 'Medium' ? '#ed6c0220' : '#d32f2f20')}`,
-                        borderRadius: '4px',
-                        letterSpacing: '0.01em'
-                      }}
-                    />
-                  </Box>
 
-                  <Divider />
-
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
-                    <Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>ACTIVE STUDENTS</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.students} Profiles</Typography>
                     </Box>
-                    <Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>AVG ATTENDANCE</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.attendance}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>SCRUM SCORE</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.scrum}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>INTERVIEW PASS %</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.interview}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem', display: 'block', mb: 0.2 }}>LEAVE VECTOR</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.75rem' }}>{cohort.leave}</Typography>
-                    </Box>
-                  </Box>
-
-                  <Divider />
-
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, fontSize: '0.58rem' }}>DEPLOYMENT PROMPTNESS</Typography>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Box sx={{ flexGrow: 1 }}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={cohort.progress}
-                          sx={{
-                            height: 4,
-                            borderRadius: 2,
-                            bgcolor: 'rgba(0,0,0,0.04)',
-                            '& .MuiLinearProgress-bar': { bgcolor: cohort.statusColor }
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="caption" sx={{ fontWeight: 800, color: 'secondary.main', fontSize: '0.7rem' }}>
-                        {cohort.progress}%
-                      </Typography>
-                    </Stack>
-                  </Box>
-
-                  <Button 
-                    fullWidth
-                    size="small"
-                    variant="outlined"
-                    onClick={() => handleInspectBatch(cohort.name)}
-                    sx={{ 
-                      py: 0.6,
-                      fontSize: '0.62rem',
-                      fontWeight: 800,
-                      borderRadius: '6px',
-                      color: 'secondary.main',
-                      borderColor: 'rgba(0,0,0,0.1)',
-                      textTransform: 'uppercase',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        bgcolor: 'rgba(232, 57, 29, 0.01)'
-                      }
-                    }}
-                  >
-                    INSPECT COHORT
-                  </Button>
-                </Box>
-              ))}
-            </Box>
-          </Card>
-
-          {/* Side by side: Section 4 (Student Risk Monitor) & Section 6 (Scrum Insight Panel) */}
-          <Box sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: { xs: '1fr', md: '1.1fr 1.4fr' }, 
-            gap: 2, 
-            width: '100%' 
-          }}>
-            
-            {/* Section 4: Student Risk Monitor */}
-            <Card sx={{ 
-              p: 2.5, 
-              border: '1px solid rgba(0,0,0,0.05)', 
-              borderRadius: '6px', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
-              bgcolor: 'white', 
-              height: { xs: 'auto', md: 400 }, 
-              display: 'flex', 
-              flexDirection: 'column',
-              width: '100%'
-            }}>
-              <Box sx={{ pb: 1.5, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                    Student Risk Monitor
-                  </Typography>
-                </Box>
-                <Chip
-                  label="4 ATTENTION FLAGS"
-                  size="small"
-                  color="error"
-                  sx={{ fontWeight: 900, borderRadius: 1, fontSize: '0.62rem', height: 20 }}
-                />
-              </Box>
-              
-              <Stack spacing={1.5} sx={{ 
-                overflowY: 'auto', 
-                flexGrow: 1, 
-                pt: 1.5,
-                pr: 0.5,
-                '&::-webkit-scrollbar': { width: '3px' },
-                '&::-webkit-scrollbar-track': { background: 'transparent' },
-                '&::-webkit-scrollbar-thumb': { background: '#E5E7EB', borderRadius: '3px' }
-              }}>
-                {STUDENT_RISK_DATA.map((student, idx) => (
-                  <Box 
-                    key={idx}
-                    sx={{
-                      p: 2,
-                      borderRadius: '10px',
-                      bgcolor: student.severity === 'Critical' ? 'rgba(211, 47, 47, 0.015)' : 'rgba(237, 108, 2, 0.015)',
-                      border: '1px solid',
-                      borderColor: student.severity === 'Critical' ? 'rgba(211, 47, 47, 0.12)' : 'rgba(237, 108, 2, 0.12)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1.2
-                    }}
-                  >
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexDirection: { xs: 'column', sm: 'row' }, 
-                      justifyContent: 'space-between', 
-                      alignItems: { xs: 'flex-start', sm: 'center' },
-                      gap: 1.5
-                    }}>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar sx={{ 
-                          width: 32, 
-                          height: 32, 
-                          fontSize: '0.75rem', 
-                          fontWeight: 800, 
-                          bgcolor: student.severity === 'Critical' ? '#d32f2f15' : '#ed6c0215',
-                          color: student.severity === 'Critical' ? '#d32f2f' : '#ed6c02',
-                          border: `1px solid ${student.severity === 'Critical' ? '#d32f2f22' : '#ed6c0222'}`
-                        }}>
-                          {student.avatar}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.78rem', color: 'secondary.main', lineHeight: 1.1 }}>
-                            {student.name}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.62rem', fontWeight: 600 }}>
-                            {student.batch}
-                          </Typography>
-                        </Box>
-                      </Stack>
-
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
-                        <Chip 
-                          label={student.category.toUpperCase()}
-                          size="small"
-                          sx={{ height: 18, fontSize: '0.58rem', fontWeight: 900, bgcolor: 'rgba(0,0,0,0.05)', color: 'secondary.main', borderRadius: '4px' }}
-                        />
-                        <Chip 
-                          label={student.severity.toUpperCase()}
-                          size="small"
-                          sx={{ 
-                            height: 18, 
-                            fontSize: '0.58rem', 
-                            fontWeight: 900, 
-                            bgcolor: student.severity === 'Critical' ? '#d32f2f' : '#ed6c02', 
-                            color: 'white', 
-                            borderRadius: '4px' 
-                          }}
-                        />
-                      </Stack>
-                    </Box>
-                    
-                    <Typography variant="body2" sx={{ color: 'text.primary', display: 'block', fontSize: '0.72rem', fontWeight: 500, pl: 0.1, lineHeight: 1.3 }}>
-                      {student.details}
+                  );
+                })}
+                {recentEvaluations.length === 0 && (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                      No evaluations recorded yet.
                     </Typography>
-
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', borderTop: '1px dashed rgba(0,0,0,0.06)', pt: 1 }}>
-                      <Button 
-                        size="small"
-                        onClick={() => handleIntervention(student.name, 'Activity Update')}
-                        sx={{ 
-                          py: 0.3, 
-                          px: 1.2, 
-                          fontSize: '0.62rem', 
-                          fontWeight: 800, 
-                          borderRadius: '4px',
-                          color: 'text.secondary',
-                          bgcolor: 'rgba(0,0,0,0.02)',
-                          textTransform: 'none',
-                          letterSpacing: '0.01em',
-                          '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
-                        }}
-                      >
-                        Sync Activity
-                      </Button>
-                      <Button 
-                        size="small"
-                        variant="contained"
-                        color={student.severity === 'Critical' ? 'error' : 'warning'}
-                        onClick={() => handleIntervention(student.name, 'Facilitator Alert')}
-                        startIcon={<Send sx={{ fontSize: '0.62rem !important' }} />}
-                        sx={{ 
-                          py: 0.3, 
-                          px: 1.4, 
-                          fontSize: '0.62rem', 
-                          fontWeight: 800, 
-                          borderRadius: '4px',
-                          textTransform: 'none',
-                          letterSpacing: '0.01em',
-                          boxShadow: 'none',
-                          '&:hover': { boxShadow: 'none' }
-                        }}
-                      >
-                        Alert
-                      </Button>
-                    </Box>
                   </Box>
-                ))}
+                )}
               </Stack>
-            </Card>
-
-            {/* Section 6: Scrum Insight Panel */}
-            <Card sx={{ 
-              p: 2.5, 
-              border: '1px solid rgba(0,0,0,0.05)', 
-              borderRadius: '6px', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
-              bgcolor: 'white', 
-              height: { xs: 'auto', md: 400 }, 
-              display: 'flex', 
-              flexDirection: 'column',
-              width: '100%'
-            }}>
-              <Box sx={{ pb: 1.5, borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                    Scrum Insight Panel
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ 
-                display: 'grid', 
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, 
-                gap: 2, 
-                flexGrow: 1, 
-                minHeight: 0, 
-                pt: 1.5, 
-                overflowY: 'auto' 
-              }}>
-                
-                {/* Column 1: Blocked */}
-                <Box sx={{ 
-                  borderRight: { sm: '1px solid rgba(0,0,0,0.08)' }, 
-                  pr: { sm: 2 }, 
-                  pb: { xs: 2, sm: 0 },
-                  borderBottom: { xs: '1px solid rgba(0,0,0,0.08)', sm: 'none' },
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: 1.2,
-                  minWidth: 0
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.5 }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main' }} />
-                    <Typography variant="caption" fontWeight={900} color="error.main" sx={{ fontSize: '0.62rem', letterSpacing: '0.05em' }}>BLOCKED ({SCRUM_INSIGHT_DATA.blocked.length})</Typography>
-                  </Box>
-                  
-                  <Stack spacing={1} sx={{ overflowY: 'auto', flexGrow: 1, pr: 0.5 }}>
-                    {SCRUM_INSIGHT_DATA.blocked.map((blocker, idx) => (
-                      <Box key={idx} sx={{ p: 1.2, border: '1px solid rgba(211, 47, 47, 0.15)', bgcolor: 'rgba(211, 47, 47, 0.015)', borderRadius: '8px' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.75rem', color: 'secondary.main' }}>{blocker.name}</Typography>
-                          <Chip label={blocker.duration} size="small" color="error" sx={{ height: 16, fontSize: '0.58rem', fontWeight: 900, borderRadius: '4px' }} />
-                        </Box>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.68rem', lineHeight: 1.25 }}>
-                          {blocker.detail}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Box>
-
-                {/* Column 2: Silent */}
-                <Box sx={{ 
-                  borderRight: { sm: '1px solid rgba(0,0,0,0.08)' }, 
-                  px: { sm: 2 }, 
-                  pb: { xs: 2, sm: 0 },
-                  borderBottom: { xs: '1px solid rgba(0,0,0,0.08)', sm: 'none' },
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: 1.2,
-                  minWidth: 0
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.5 }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'warning.main' }} />
-                    <Typography variant="caption" fontWeight={900} color="warning.main" sx={{ fontSize: '0.62rem', letterSpacing: '0.05em' }}>SILENT ({SCRUM_INSIGHT_DATA.silent.length})</Typography>
-                  </Box>
-
-                  <Stack spacing={1} sx={{ overflowY: 'auto', flexGrow: 1, pr: 0.5 }}>
-                    {SCRUM_INSIGHT_DATA.silent.map((silent, idx) => (
-                      <Box key={idx} sx={{ p: 1.2, border: '1px solid rgba(237, 108, 2, 0.15)', bgcolor: 'rgba(237, 108, 2, 0.015)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.75rem', color: 'secondary.main' }}>{silent.name}</Typography>
-                        <Chip label={silent.duration} size="small" color="warning" sx={{ height: 16, fontSize: '0.58rem', fontWeight: 900, borderRadius: '4px' }} />
-                      </Box>
-                    ))}
-                  </Stack>
-                </Box>
-
-                {/* Column 3: Contributors */}
-                <Box sx={{ 
-                  pl: { sm: 1 }, 
-                  pt: { xs: 1, sm: 0 },
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: 1.2,
-                  minWidth: 0
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.5 }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main' }} />
-                    <Typography variant="caption" fontWeight={900} color="success.main" sx={{ fontSize: '0.62rem', letterSpacing: '0.05em' }}>PEER SAVIORS ({SCRUM_INSIGHT_DATA.contributors.length})</Typography>
-                  </Box>
-
-                  <Stack spacing={1} sx={{ overflowY: 'auto', flexGrow: 1, pr: 0.5 }}>
-                    {SCRUM_INSIGHT_DATA.contributors.map((c, idx) => (
-                      <Box key={idx} sx={{ p: 1.2, border: '1px solid rgba(46, 125, 50, 0.15)', bgcolor: 'rgba(46, 125, 50, 0.015)', borderRadius: '8px' }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, fontSize: '0.75rem', color: 'secondary.main', mb: 0.2 }}>{c.name}</Typography>
-                        <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
-                          <Chip label={c.score} size="small" variant="outlined" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 800, borderRadius: '4px', color: '#2e7d32', borderColor: '#2e7d3230' }} />
-                          <Chip label={c.help} size="small" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 800, borderRadius: '4px', bgcolor: '#2e7d3210', color: '#2e7d32' }} />
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Box>
-
-              </Box>
-            </Card>
-
-          </Box>
-
-          {/* Section 5: Attendance + Interview Analytics (Charts) */}
-          <Box sx={{ 
-            display: 'grid', 
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, 
-            gap: 2, 
-            width: '100%' 
-          }}>
-            
-            {/* Attendance trajectory Chart */}
-            <Card sx={{ 
-              p: 2, 
-              borderRadius: '6px', 
-              border: '1px solid rgba(0,0,0,0.05)', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
-              bgcolor: 'white', 
-              height: 320, 
-              display: 'flex', 
-              flexDirection: 'column',
-              width: '100%'
-            }}>
-              <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                    Attendance Trajectory
-                  </Typography>
-                </Box>
-                <IconButton size="small" onClick={() => toast.info('Attendance Trajectory details.')}>
-                  <MoreVert sx={{ fontSize: '0.9rem' }} />
-                </IconButton>
-              </Box>
-              <Box sx={{ width: '100%', height: 230 }}>
-                <LineChart
-                  xAxis={[{ data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], scaleType: 'point' }]}
-                  series={[
-                    {
-                      data: [92, 95, 88, 94, 96, 90, 93],
-                      area: true,
-                      color: '#E8391D',
-                      label: 'Attendance Ratio (%)',
-                    },
-                  ]}
-                  margin={{ top: 10, bottom: 25, left: 30, right: 10 }}
-                />
-              </Box>
-            </Card>
-
-            {/* Interview outcome analytics Chart */}
-            <Card sx={{ 
-              p: 2, 
-              borderRadius: '6px', 
-              border: '1px solid rgba(0,0,0,0.05)', 
-              boxShadow: '0 4px 15px rgba(0,0,0,0.01)', 
-              bgcolor: 'white', 
-              height: 320, 
-              display: 'flex', 
-              flexDirection: 'column',
-              width: '100%'
-            }}>
-              <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem' }}>
-                    Interview Outcome Analysis
-                  </Typography>
-                </Box>
-                <IconButton size="small" onClick={() => toast.info('Interview Outcome details.')}>
-                  <MoreVert sx={{ fontSize: '0.9rem' }} />
-                </IconButton>
-              </Box>
-              <Box sx={{ width: '100%', height: 230 }}>
-                <BarChart
-                  xAxis={[{ scaleType: 'band', data: ['HTML', 'JS', 'React', 'Node', 'DB'] }]}
-                  series={[{ data: [98, 82, 75, 88, 92], color: '#1E2126', label: 'Pass Rate (%)' }]}
-                  margin={{ top: 10, bottom: 25, left: 30, right: 10 }}
-                />
-              </Box>
-            </Card>
-
+            </Paper>
           </Box>
 
 
-
-          {/* Section 8: Export & Report Actions (Footer Toolbar) */}
-          <Card sx={{ 
-            borderRadius: '6px', 
-            border: '1px solid rgba(0,0,0,0.05)', 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
-            bgcolor: 'white'
-          }}>
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', sm: 'row' }, 
-                justifyContent: 'space-between', 
-                alignItems: { xs: 'stretch', sm: 'center' }, 
-                gap: 2 
-              }}>
-                
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'secondary.main', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Info sx={{ color: 'primary.main', fontSize: '0.85rem' }} /> Action Operations
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.68rem' }}>
-                    Generate formal logs, print spreadsheets, or share secure snapshots
-                  </Typography>
-                </Box>
-
-                <Stack 
-                  direction="row" 
-                  spacing={1} 
-                  sx={{ 
-                    flexWrap: 'wrap', 
-                    gap: 1,
-                    width: { xs: '100%', sm: 'auto' },
-                    justifyContent: { xs: 'space-between', sm: 'flex-start' }
-                  }}
-                >
-                  
-                  {/* Export PDF Button */}
-                  <Button 
-                    variant="outlined" 
-                    size="small"
-                    onClick={() => triggerExport('PDF')}
-                    startIcon={<PictureAsPdf sx={{ fontSize: '0.85rem !important' }} />}
-                    sx={{ 
-                      color: '#E8391D', 
-                      borderColor: 'rgba(232, 57, 29, 0.15)',
-                      bgcolor: 'rgba(232, 57, 29, 0.01)',
-                      borderRadius: 1.5,
-                      px: 1.8,
-                      py: 0.6,
-                      fontSize: '0.65rem',
-                      flex: { xs: 1, sm: 'none' },
-                      '&:hover': {
-                        borderColor: '#E8391D',
-                        bgcolor: 'rgba(232, 57, 29, 0.04)'
-                      }
-                    }}
-                  >
-                    Export PDF
-                  </Button>
-
-                  {/* Export Excel Button */}
-                  <Button 
-                    variant="outlined" 
-                    size="small"
-                    onClick={() => triggerExport('Excel')}
-                    startIcon={<InsertDriveFile sx={{ fontSize: '0.85rem !important' }} />}
-                    sx={{ 
-                      color: '#2e7d32', 
-                      borderColor: 'rgba(46, 125, 50, 0.15)',
-                      bgcolor: 'rgba(46, 125, 50, 0.01)',
-                      borderRadius: 1.5,
-                      px: 1.8,
-                      py: 0.6,
-                      fontSize: '0.65rem',
-                      flex: { xs: 1, sm: 'none' },
-                      '&:hover': {
-                        borderColor: '#2e7d32',
-                        bgcolor: 'rgba(46, 125, 50, 0.04)'
-                      }
-                    }}
-                  >
-                    Excel
-                  </Button>
-
-                  {/* Share Snapshot Button */}
-                  <Button 
-                    variant="outlined" 
-                    size="small"
-                    onClick={() => triggerExport('Snapshot Share')}
-                    startIcon={<Share sx={{ fontSize: '0.85rem !important' }} />}
-                    sx={{ 
-                      color: 'secondary.main', 
-                      borderColor: 'rgba(0,0,0,0.08)',
-                      borderRadius: 1.5,
-                      px: 1.8,
-                      py: 0.6,
-                      fontSize: '0.65rem',
-                      flex: { xs: 1, sm: 'none' },
-                      '&:hover': {
-                        borderColor: 'secondary.main',
-                        bgcolor: 'rgba(0,0,0,0.02)'
-                      }
-                    }}
-                  >
-                    Share
-                  </Button>
-
-                  {/* Print Report Button */}
-                  <Button 
-                    variant="contained" 
-                    color="secondary"
-                    size="small"
-                    onClick={() => triggerExport('Print View')}
-                    startIcon={<Print sx={{ fontSize: '0.85rem !important' }} />}
-                    sx={{ 
-                      borderRadius: 1.5,
-                      px: 2,
-                      py: 0.6,
-                      fontSize: '0.65rem',
-                      boxShadow: 'none',
-                      flex: { xs: 1, sm: 'none' },
-                      '&:hover': {
-                        boxShadow: 'none'
-                      }
-                    }}
-                  >
-                    Print
-                  </Button>
-
-                </Stack>
-
-              </Box>
-            </CardContent>
-          </Card>
 
         </Box>
       </AppShell>

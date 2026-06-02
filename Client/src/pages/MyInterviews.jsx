@@ -87,6 +87,9 @@ const theme = createTheme({
 
 const MyInterviews = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [showOnlyScheduled, setShowOnlyScheduled] = React.useState(false);
+
   const { data: interviewsRes, isLoading } = useQuery({
     queryKey: ['my-interviews-list'],
     queryFn: () => interviewApi.getInterviews()
@@ -94,16 +97,87 @@ const MyInterviews = () => {
 
   const interviews = interviewsRes?.data || [];
 
-  const getStatusChip = (status) => {
+  const getStatusConfig = (status) => {
     switch (status) {
-      case 'scheduled': return <Chip label="Scheduled" color="info" size="small" sx={{ fontWeight: 900, borderRadius: 1.5 }} />;
+      case 'scheduled':
+        return {
+          label: 'Scheduled',
+          bg: 'rgba(2, 136, 209, 0.06)',
+          color: '#0288d1',
+          border: 'rgba(2, 136, 209, 0.15)'
+        };
       case 'in-progress':
-      case 'in_progress': return <Chip label="In Progress" color="primary" size="small" sx={{ fontWeight: 900, borderRadius: 1.5, animation: 'pulse 2s infinite' }} />;
-      case 'scored':
-      case 'completed': return <Chip label="Completed" color="success" size="small" sx={{ fontWeight: 900, borderRadius: 1.5 }} />;
-      default: return <Chip label={status} size="small" sx={{ fontWeight: 900, borderRadius: 1.5 }} />;
+      case 'in_progress':
+        return {
+          label: 'In Progress',
+          bg: 'rgba(232, 57, 29, 0.06)',
+          color: '#E8391D',
+          border: 'rgba(232, 57, 29, 0.15)'
+        };
+      case 'passed':
+      case 'completed':
+        return {
+          label: 'Passed',
+          bg: 'rgba(46, 125, 50, 0.06)',
+          color: '#2e7d32',
+          border: 'rgba(46, 125, 50, 0.15)'
+        };
+      case 'failed':
+        return {
+          label: 'Failed',
+          bg: 'rgba(198, 40, 40, 0.06)',
+          color: '#c62828',
+          border: 'rgba(198, 40, 40, 0.15)'
+        };
+      case 're_interview_required':
+        return {
+          label: 'Re-interview',
+          bg: 'rgba(239, 108, 0, 0.06)',
+          color: '#ef6c00',
+          border: 'rgba(239, 108, 0, 0.15)'
+        };
+      default:
+        return {
+          label: status?.toUpperCase() || 'UNKNOWN',
+          bg: 'rgba(146, 146, 146, 0.06)',
+          color: '#929292',
+          border: 'rgba(146, 146, 146, 0.15)'
+        };
     }
   };
+
+  const getStatusChip = (status) => {
+    const config = getStatusConfig(status);
+    return (
+      <Chip
+        label={config.label}
+        size="small"
+        sx={{
+          fontWeight: 850,
+          fontSize: '0.65rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          bgcolor: config.bg,
+          color: config.color,
+          border: `1px solid ${config.border}`,
+          borderRadius: '4px',
+          height: 20
+        }}
+      />
+    );
+  };
+
+  const filteredInterviews = interviews.filter((interview) => {
+    const studentName = interview.student?.name?.toLowerCase() || '';
+    const moduleName = interview.module?.name?.toLowerCase() || '';
+    const batchName = interview.student?.batch?.name?.toLowerCase() || '';
+    const query = searchQuery.toLowerCase();
+    
+    const matchesSearch = studentName.includes(query) || moduleName.includes(query) || batchName.includes(query);
+    const matchesStatus = !showOnlyScheduled || ['scheduled', 'in_progress', 'in-progress'].includes(interview.status);
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <ThemeProvider theme={theme}>
@@ -163,18 +237,54 @@ const MyInterviews = () => {
                 </Box>
               </Box>
 
-              <Stack direction="row" spacing={2} sx={{ width: { xs: '100%', md: 'auto' } }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', md: 'auto' } }}>
                 <TextField
-                  placeholder="Search student..."
+                  placeholder="Search student, batch, module..."
                   size="small"
-                  sx={{ bgcolor: 'white', width: { xs: '100%', md: 250 } }}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{
+                    bgcolor: 'white',
+                    width: { xs: '100%', md: 280 },
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '0.85rem',
+                      height: 40,
+                      '& fieldset': { borderColor: '#E5E7EB' },
+                      '&:hover fieldset': { borderColor: 'text.secondary' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: 1 }
+                    }
+                  }}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start"><Search sx={{ color: 'text.secondary', fontSize: 20 }} /></InputAdornment>
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: 'text.secondary', fontSize: 18 }} />
+                      </InputAdornment>
+                    )
                   }}
                 />
-                <IconButton sx={{ bgcolor: 'white', border: '1px solid', borderColor: '#E5E7EB', borderRadius: '6px', p: 1 }}>
-                  <FilterList sx={{ fontSize: 20 }} />
-                </IconButton>
+                <Button
+                  variant={showOnlyScheduled ? 'contained' : 'outlined'}
+                  color={showOnlyScheduled ? 'primary' : 'secondary'}
+                  onClick={() => setShowOnlyScheduled(!showOnlyScheduled)}
+                  startIcon={<FilterList sx={{ fontSize: 16 }} />}
+                  sx={{
+                    height: 40,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    letterSpacing: '0.02em',
+                    borderColor: showOnlyScheduled ? 'primary.main' : '#E5E7EB',
+                    color: showOnlyScheduled ? 'white' : 'text.secondary',
+                    px: 2,
+                    borderRadius: '6px',
+                    '&:hover': {
+                      borderColor: showOnlyScheduled ? 'primary.dark' : 'text.primary',
+                      bgcolor: showOnlyScheduled ? 'primary.dark' : 'rgba(0, 0, 0, 0.02)'
+                    }
+                  }}
+                >
+                  {showOnlyScheduled ? 'Scheduled Only' : 'All Statuses'}
+                </Button>
               </Stack>
             </Box>
           </Box>
@@ -186,79 +296,205 @@ const MyInterviews = () => {
                 <CircularProgress color="primary" thickness={6} />
               </Box>
             ) : (
-              interviews.map((interview) => (
+              filteredInterviews.map((interview) => (
                 <Card
                   key={interview._id}
                   onClick={() => navigate(`/interviews/${interview._id}`)}
                   sx={{
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                     border: '1px solid #E5E7EB',
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                    '&:hover': { transform: 'translateY(-2px)', borderColor: 'primary.main', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' }
+                    bgcolor: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03)',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      borderColor: 'primary.main',
+                      boxShadow: '0 10px 20px -5px rgba(232, 57, 29, 0.05), 0 4px 8px -2px rgba(0, 0, 0, 0.02)'
+                    }
                   }}
                 >
-                  <CardContent sx={{ p: 2.5 }}>
-                    <Grid container spacing={3} alignItems="center">
-                      <Grid item xs={12} md={7}>
+                  <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: { xs: 'column', md: 'row' }, 
+                      alignItems: { xs: 'stretch', md: 'center' }, 
+                      justifyContent: 'space-between', 
+                      gap: { xs: 2.5, md: 3 }, 
+                      width: '100%' 
+                    }}>
+                      
+                      {/* Left Side: Student Profile & Schedule */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                         <Stack direction="row" spacing={2.5} alignItems="center">
-                          <Avatar sx={{ width: 48, height: 48, bgcolor: 'secondary.main', fontWeight: 900, borderRadius: '6px', fontSize: '1.2rem', fontFamily: 'Outfit' }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 44, 
+                              height: 44, 
+                              bgcolor: 'secondary.main', 
+                              color: 'white',
+                              fontWeight: 850, 
+                              borderRadius: '6px', 
+                              fontSize: '1.1rem', 
+                              fontFamily: 'Outfit',
+                              boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+                            }}
+                          >
                             {interview.student?.name?.[0]}
                           </Avatar>
-                          <Box>
-                            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 0.5 }}>
-                              <Typography variant="subtitle1" fontWeight={900} color="secondary" sx={{ fontFamily: 'Outfit', lineHeight: 1.2 }}>
-                                {interview.student?.name}
-                              </Typography>
-                              {getStatusChip(interview.status)}
-                            </Stack>
-                            <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ gap: '8px' }}>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="subtitle1" fontWeight={800} color="secondary" sx={{ fontFamily: 'Outfit', lineHeight: 1.2, mb: 0.5, fontSize: '0.95rem' }}>
+                              {interview.student?.name}
+                            </Typography>
+                            
+                            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ gap: '6px' }}>
+                              <Chip 
+                                label={interview.student?.batch?.name || 'MERN-B1'} 
+                                size="small" 
+                                sx={{ 
+                                  height: 18, 
+                                  fontSize: '0.62rem', 
+                                  fontWeight: 800, 
+                                  bgcolor: 'rgba(30, 33, 38, 0.05)', 
+                                  color: 'secondary.main', 
+                                  borderRadius: '4px' 
+                                }} 
+                              />
                               <Stack direction="row" spacing={0.5} alignItems="center">
-                                <Group sx={{ fontSize: 13, color: '#929292' }} />
-                                <Typography variant="caption" fontWeight={700} color="text.secondary">
-                                  {interview.student?.batch?.name || 'MERN-B1'}
-                                </Typography>
-                              </Stack>
-                              <Stack direction="row" spacing={0.5} alignItems="center">
-                                <CalendarToday sx={{ fontSize: 13, color: '#929292' }} />
-                                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                                <CalendarToday sx={{ fontSize: 12, color: 'text.secondary' }} />
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                                   {format(new Date(interview.scheduledDate), 'dd MMM yyyy')}
                                 </Typography>
                               </Stack>
                               <Stack direction="row" spacing={0.5} alignItems="center">
-                                <Schedule sx={{ fontSize: 13, color: '#929292' }} />
-                                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                                <Schedule sx={{ fontSize: 12, color: 'text.secondary' }} />
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                                   {format(new Date(interview.scheduledDate), 'hh:mm a')}
                                 </Typography>
                               </Stack>
                             </Stack>
                           </Box>
                         </Stack>
-                      </Grid>
+                      </Box>
 
-                      <Grid item xs={12} md={5}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pl: { md: 3 }, borderLeft: { md: '1px solid #E5E7EB' } }}>
-                          <Box>
-                            <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ letterSpacing: '0.08em', display: 'block', mb: 0.2, textTransform: 'uppercase' }}>MODULE ASSESSMENT</Typography>
-                            <Typography variant="body2" fontWeight={800} color="secondary" sx={{ fontFamily: 'Outfit' }}>{interview.module?.name}</Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'primary.main' }}>
-                            <Typography variant="caption" sx={{ fontWeight: 900, letterSpacing: '0.05em' }}>DETAILS</Typography>
-                            <ChevronRight sx={{ fontSize: 16 }} />
-                          </Box>
+                      {/* Center: Assessment Metadata */}
+                      <Box sx={{ 
+                        pl: { md: 4 }, 
+                        borderLeft: { md: '1px solid #F1F1EF' },
+                        flex: 1,
+                        width: { xs: '100%', md: 'auto' },
+                        mt: { xs: 1, md: 0 }
+                      }}>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                          <Typography 
+                            variant="caption" 
+                            fontWeight={855} 
+                            color="primary.main" 
+                            sx={{ 
+                              letterSpacing: '0.08em', 
+                              fontSize: '0.62rem', 
+                              textTransform: 'uppercase',
+                              bgcolor: 'rgba(232, 57, 29, 0.05)',
+                              px: 1,
+                              py: 0.2,
+                              borderRadius: '3px'
+                            }}
+                          >
+                            Technical Round
+                          </Typography>
+                          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                            • Attempt #{(interview.reInterviewAttempt || 0) + 1}
+                          </Typography>
                         </Stack>
-                      </Grid>
-                    </Grid>
+                        <Typography variant="body2" fontWeight={850} color="secondary" sx={{ fontFamily: 'Outfit', fontSize: '0.85rem' }}>
+                          {interview.module?.name}
+                        </Typography>
+                      </Box>
+
+                      {/* Right Side: Status & Actions */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2, 
+                        justifyContent: { xs: 'space-between', md: 'flex-end' },
+                        width: { xs: '100%', md: 'auto' },
+                        ml: { md: 'auto' },
+                        mt: { xs: 1, md: 0 }
+                      }}>
+                        {getStatusChip(interview.status)}
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {interview.meetingLink && !['passed', 'failed', 're_interview_required', 'completed'].includes(interview.status) && (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="primary"
+                              href={interview.meetingLink}
+                              target="_blank"
+                              onClick={(e) => e.stopPropagation()}
+                              sx={{
+                                textTransform: 'none',
+                                fontWeight: 900,
+                                fontSize: '0.7rem',
+                                borderRadius: '6px',
+                                py: 0.5,
+                                px: 1.8,
+                                boxShadow: 'none',
+                                letterSpacing: '0.02em',
+                                '&:hover': {
+                                  bgcolor: 'primary.dark',
+                                  boxShadow: 'none'
+                                }
+                              }}
+                            >
+                              Join
+                            </Button>
+                          )}
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/interviews/${interview._id}`);
+                            }}
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 800,
+                              fontSize: '0.7rem',
+                              borderRadius: '6px',
+                              py: 0.5,
+                              px: 1.8,
+                              borderColor: '#E5E7EB',
+                              color: 'secondary.main',
+                              '&:hover': {
+                                borderColor: 'secondary.main',
+                                bgcolor: 'rgba(0, 0, 0, 0.02)'
+                              }
+                            }}
+                          >
+                            Details
+                          </Button>
+                        </Box>
+                      </Box>
+
+                    </Box>
                   </CardContent>
                 </Card>
               ))
             )}
 
-            {interviews.length === 0 && !isLoading && (
+            {filteredInterviews.length === 0 && !isLoading && (
               <Paper variant="outlined" sx={{ p: 8, textAlign: 'center', borderRadius: '6px', borderStyle: 'dashed', borderColor: '#D1D5DB' }}>
                 <EventBusy sx={{ fontSize: 48, color: 'text.secondary', mb: 1.5 }} />
-                <Typography variant="subtitle1" fontWeight={900} color="text.primary" sx={{ textTransform: 'uppercase', mb: 0.5 }}>No Interviews Assigned</Typography>
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>Your assessment queue is currently empty. Assigned interviews will appear here.</Typography>
+                <Typography variant="subtitle1" fontWeight={900} color="text.primary" sx={{ textTransform: 'uppercase', mb: 0.5 }}>
+                  {searchQuery ? 'No matching assessments' : 'No Interviews Assigned'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                  {searchQuery 
+                    ? `We couldn't find any assessments matching "${searchQuery}". Try adjusting your search query.`
+                    : 'Your assessment queue is currently empty. Assigned interviews will appear here.'}
+                </Typography>
               </Paper>
             )}
           </Stack>

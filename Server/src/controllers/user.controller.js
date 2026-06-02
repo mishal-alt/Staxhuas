@@ -27,7 +27,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
 });
 
 export const updateMe = asyncHandler(async (req, res) => {
-  const { name, email, phone, location, headline, socialLinks } = req.body;
+  const { name, email, phone, location, headline, socialLinks, developerType, skills } = req.body;
 
   const updateData = {};
   if (name !== undefined) updateData.name = name;
@@ -36,6 +36,8 @@ export const updateMe = asyncHandler(async (req, res) => {
   if (location !== undefined) updateData.location = location;
   if (headline !== undefined) updateData.headline = headline;
   if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
+  if (developerType !== undefined) updateData.developerType = developerType;
+  if (skills !== undefined) updateData.skills = skills;
 
   let user = await User.findById(req.user.id);
   if (!user) return apiResponse(res, 404, 'User not found');

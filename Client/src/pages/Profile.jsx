@@ -950,13 +950,51 @@ const Profile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [skillInput, setSkillInput] = useState('');
+
+  const handleAddSkill = async () => {
+    const trimmed = skillInput.trim();
+    if (!trimmed) return;
+    const currentSkills = user?.skills || [];
+    if (currentSkills.includes(trimmed)) {
+      setSkillInput('');
+      return;
+    }
+    const updatedSkills = [...currentSkills, trimmed];
+    setSkillInput('');
+    try {
+      const res = await userApi.updateMe({ skills: updatedSkills });
+      setUser(res.data);
+    } catch (err) {
+      console.error('Failed to add skill:', err);
+    }
+  };
+
+  const handleDeleteSkill = async (skillToDelete) => {
+    const currentSkills = user?.skills || [];
+    const updatedSkills = currentSkills.filter(s => s !== skillToDelete);
+    try {
+      const res = await userApi.updateMe({ skills: updatedSkills });
+      setUser(res.data);
+    } catch (err) {
+      console.error('Failed to delete skill:', err);
+    }
+  };
+
+  const handleSkillKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddSkill();
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
     headline: user?.headline || '',
     phone: user?.phone || '',
     location: user?.location || '',
-    email: user?.email || ''
+    email: user?.email || '',
+    developerType: user?.developerType || ''
   });
 
   const isInterviewer = user?.role === 'interviewer';
@@ -970,7 +1008,8 @@ const Profile = () => {
       headline: user?.headline || '',
       phone: user?.phone || '',
       location: user?.location || '',
-      email: user?.email || ''
+      email: user?.email || '',
+      developerType: user?.developerType || ''
     });
     setIsEditing(true);
   };
@@ -1192,6 +1231,13 @@ const Profile = () => {
                           variant="outlined"
                           sx={{ borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.6)', fontWeight: 800, fontSize: '0.6rem', borderRadius: 1.5 }}
                         />
+                        {isInterviewer && user?.developerType && (
+                          <Chip
+                            label={user.developerType.toUpperCase()}
+                            size="small"
+                            sx={{ bgcolor: 'rgba(21,101,192,0.25)', color: '#90caf9', fontWeight: 900, fontSize: '0.65rem', border: '1px solid rgba(21,101,192,0.4)', borderRadius: 1.5 }}
+                          />
+                        )}
                       </Stack>
                     </Box>
                   </Box>
@@ -1303,6 +1349,20 @@ const Profile = () => {
                         Identity & Contact
                       </Typography>
                       <Stack spacing={2.5}>
+                        {/* Developer Specialization */}
+                        {isInterviewer && user?.developerType && (
+                          <>
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                              <Box sx={{ mt: 0.2, color: '#929292' }}><Code sx={{ fontSize: 15 }} /></Box>
+                              <Box>
+                                <Typography sx={{ fontSize: '0.65rem', fontWeight: 800, color: '#929292', letterSpacing: '0.08em', textTransform: 'uppercase' }}>DEVELOPER SPECIALIZATION</Typography>
+                                <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E2126', mt: 0.2 }}>{user?.developerType}</Typography>
+                              </Box>
+                            </Box>
+                            <Divider />
+                          </>
+                        )}
+
                         {/* Email with copy */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
@@ -1355,6 +1415,88 @@ const Profile = () => {
                     </CardContent>
                   </Card>
                 </motion.div>
+
+                {/* Technical Skills for interviewer only */}
+                {isInterviewer && (
+                  <motion.div variants={fadeIn} initial="hidden" animate="visible" custom={4}>
+                    <Card sx={{ bgcolor: 'white', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+                      <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Code sx={{ fontSize: 15, color: '#E8391D' }} />
+                          <Typography sx={{ fontSize: '0.68rem', fontWeight: 900, color: '#6B7280', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                            Evaluation Skills
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            value={skillInput}
+                            onChange={(e) => setSkillInput(e.target.value)}
+                            onKeyDown={handleSkillKeyDown}
+                            placeholder="Type skill & press Enter (e.g. React)"
+                            InputProps={{
+                              sx: { 
+                                fontSize: '0.8rem', 
+                                borderRadius: '4px',
+                                '& input::placeholder': { fontSize: '0.75rem', opacity: 0.8 }
+                              }
+                            }}
+                          />
+                          <Button
+                            onClick={handleAddSkill}
+                            variant="contained"
+                            color="primary"
+                            disabled={!skillInput.trim()}
+                            sx={{
+                              fontSize: '0.7rem',
+                              py: 0.5,
+                              px: 2,
+                              height: 36,
+                              boxShadow: 'none',
+                              textTransform: 'none',
+                              fontWeight: 800,
+                              letterSpacing: 'normal'
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
+                          {user?.skills && user.skills.length > 0 ? (
+                            user.skills.map((skill, index) => (
+                              <Chip
+                                key={index}
+                                label={skill}
+                                onDelete={() => handleDeleteSkill(skill)}
+                                size="small"
+                                sx={{
+                                  fontWeight: 750,
+                                  fontSize: '0.72rem',
+                                  bgcolor: 'rgba(232, 57, 29, 0.04)',
+                                  color: '#E8391D',
+                                  border: '1px solid rgba(232, 57, 29, 0.15)',
+                                  borderRadius: '4px',
+                                  '& .MuiChip-deleteIcon': {
+                                    color: '#E8391D',
+                                    opacity: 0.6,
+                                    '&:hover': { color: '#E8391D', opacity: 1 }
+                                  }
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <Typography sx={{ fontSize: '0.72rem', color: '#9CA3AF', fontWeight: 650, py: 1 }}>
+                              No skills listed. Type a skill above and press Enter to add one.
+                            </Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
 
                 {/* LeetCode stats for student only */}
                 {!isStaff && (
@@ -1636,6 +1778,18 @@ const Profile = () => {
             placeholder="e.g. Lead Academic Facilitator"
             InputProps={{ sx: { borderRadius: 2 } }}
           />
+          {isInterviewer && (
+            <TextField
+              fullWidth
+              label="Developer Specialization"
+              name="developerType"
+              value={formData.developerType}
+              onChange={handleInputChange}
+              placeholder="e.g. MERN Stack Developer, Frontend Developer"
+              InputProps={{ sx: { borderRadius: 2 } }}
+              helperText="Specify the type of developer role / stack you evaluate"
+            />
+          )}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField

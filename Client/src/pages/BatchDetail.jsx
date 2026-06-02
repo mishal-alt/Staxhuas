@@ -1975,22 +1975,6 @@ const BatchDetail = () => {
                               </TableCell>
                               <TableCell align="right">
                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                  <Tooltip title={intv.status === 'passed' || intv.status === 'failed' || intv.status === 're_interview_required' ? 'Edit Score' : 'Record Score'}>
-                                    <IconButton size="small" color="primary" onClick={() => {
-                                      setSelectedInterviewForScore(intv);
-                                      setScoreForm({
-                                        reviewScore: intv.reviewScore || '',
-                                        taskScore: intv.taskScore || '',
-                                        attendanceScore: intv.attendanceScore || '',
-                                        disciplineScore: intv.disciplineScore || '',
-                                        facilitatorEvaluation: intv.facilitatorEvaluation || '',
-                                        isPass: intv.status === 'failed' || intv.status === 're_interview_required' ? false : true,
-                                        reInterviewAttempt: intv.reInterviewAttempt || 0,
-                                        maxReInterviewLimit: intv.maxReInterviewLimit || 2,
-                                      });
-                                      setScoreModalOpen(true);
-                                    }}><DoneAll fontSize="small" /></IconButton>
-                                  </Tooltip>
                                   {(intv.status === 'failed' || intv.status === 're_interview_required') && intv.reInterviewAttempt < intv.maxReInterviewLimit && (
                                     <Tooltip title="Schedule Re-Interview">
                                       <IconButton size="small" color="error" onClick={() => { setSelectedInterviewForScore(intv); setReInterviewModalOpen(true); }}><Repeat fontSize="small" /></IconButton>
